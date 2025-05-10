@@ -9,8 +9,11 @@ interface Props {}
 const Navbar = (props: Props) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
+  const toggleMenu = () => { 
+    setIsOpen(!isOpen); 
+    if (isOpen){
+      document.querySelector('.menu')?.classList
+    }
   };
 
   return (
@@ -19,10 +22,13 @@ const Navbar = (props: Props) => {
         <img src={logo} alt="logo" className="w-32 h-8 max-md:absolute top-3" />
       </a>
 
-      <ul
-        className="menu flex justify-center gap-7 font-semibold text-gray-700 mx-auto flex-grow 
-    max-md:flex-col max-md:mt-15 max-md:gap-10 max-md:items-center max-md:text-lg "
-      >
+<ul
+  className={`menu flex justify-center gap-7 font-semibold text-gray-700 mx-auto flex-grow
+    max-md:flex-col max-md:mt-8 max-md:gap-10 max-md:items-center max-md:text-lg
+    max-md:transition-all max-md:duration-500 max-md:overflow-hidden
+    ${isOpen ? "max-md:max-h-96 max-md:opacity-100 max-md:mt-12" : "max-md:max-h-0 max-md:opacity-0"}`}
+>
+
         <li className="btn">
           <a className="active">Home</a>
         </li>
