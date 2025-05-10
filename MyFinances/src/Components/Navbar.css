@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+.btn{
+    @apply hover:text-blue-600 cursor-pointer;
+}
+
+.active{
+    @apply text-blue-600 cursor-default;
+}
+
+li a {
+    position: relative;
+    display: inline-block;
+}
+
+li a::after {
+    content: "";
+    position: absolute;
+    width: 40%;
+    height: 2px;
+    bottom: -2px;
+    left: 0px;
+    background: #155dfc;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+li a:hover::after,
+li a.active::after {
+  opacity: 1;
+}
