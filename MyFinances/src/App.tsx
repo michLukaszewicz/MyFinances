@@ -6,11 +6,12 @@ import PageContent from "./Components/PageContent/PageContent";
 import type { Transaction } from "./Models/Transaction";
 import transactionHistory from "./TestData/TransactionHistory.json";
 
-const history: Transaction[] = transactionHistory.map((item) => ({
-  ...item,
-  date: new Date(item.date),
-  type: item.amount > 0 ? "income" : "expense",
-}));
+const history: Transaction[] = transactionHistory
+  .map((item) => ({
+    ...item,
+    date: new Date(item.date),
+  }))
+  .sort((a, b) => b.date.getTime() - a.date.getTime());
 
 function App() {
   return (
