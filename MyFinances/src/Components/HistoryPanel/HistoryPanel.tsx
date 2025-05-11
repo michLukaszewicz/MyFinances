@@ -1,6 +1,5 @@
 import type { Transaction } from "../../Models/Transaction";
 import Box from "../Box/Box";
-import "./HistoryPanel.css";
 import ListRow from "./ListRow/ListRow";
 
 interface Props {
