@@ -1,5 +1,5 @@
 import "./Navbar.css";
-import logo from "../assets/logo.png";
+import logo from "../../assets/logo.png";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { useState } from "react";
 import { RiCloseLargeFill } from "react-icons/ri";

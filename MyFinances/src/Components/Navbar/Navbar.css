@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 .btn{
-    @apply hover:text-blue-600 cursor-pointer;
+    @apply hover:text-blue-700 cursor-pointer;
 }
 
 .active{
-    @apply text-blue-600 cursor-default;
+    @apply text-blue-700 cursor-default;
 }
 
 li a {
@@ -20,7 +20,7 @@ li a::after {
     height: 2px;
     bottom: -2px;
     left: 0px;
-    background: #155dfc;
+    background: #1447e6;
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -29,3 +29,5 @@ li a:hover::after,
 li a.active::after {
   opacity: 1;
 }
+
+/* blue-900, blue-700, cyan-500, cyan-200, trueGray-200 */

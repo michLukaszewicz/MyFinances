@@ -1,13 +1,15 @@
-import { useState } from "react";
 import "./App.css";
-import Navbar from "./Components/Navbar";
+import HistoryPanel from "./Components/HistoryPanel/HistoryPanel";
+import Navbar from "./Components/Navbar/Navbar";
+import PageContent from "./Components/PageContent/PageContent";
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
-    <div className="w-full h-full absolute bg-white">
+    <div className="w-full h-full">
       <Navbar />
+      <PageContent>
+        <HistoryPanel />
+      </PageContent>
     </div>
   );
 }
