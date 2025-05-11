@@ -31,7 +31,7 @@ const Navbar = () => {
 
       <ul
         className={`menu flex justify-center gap-7 font-semibold text-gray-700 mx-auto flex-grow ml-10
-        max-md:flex-col max-md:mt-8 max-md:gap-10 max-md:items-center max-md:text-lg
+        max-md:flex-col max-md:mt-8 max-md:gap-10 max-md:items-center max-md:text-lg max-md:mb-2
         max-md:transition-all max-md:duration-500 max-md:overflow-hidden
         ${
           isOpen
