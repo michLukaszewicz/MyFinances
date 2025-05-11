@@ -1,4 +1,5 @@
 import "./App.css";
+import BalanceChart from "./Components/BalanceChart/BalanceChart";
 import HistoryPanel from "./Components/HistoryPanel/HistoryPanel";
 import Navbar from "./Components/Navbar/Navbar";
 import PageContent from "./Components/PageContent/PageContent";
@@ -16,6 +17,7 @@ function App() {
     <div className="w-full h-full">
       <Navbar />
       <PageContent>
+        <BalanceChart history={history} />
         <HistoryPanel history={history} />
       </PageContent>
     </div>
