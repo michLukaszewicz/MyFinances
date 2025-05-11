@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "date": "2025-05-01",
+    "description": "Biedronka - Zakupy spożywcze",
+    "amount": -87.45,
+    "category": "Groceries",
+    "account": "Bank Pekao",
+    "otherAccount": "Biedronka SA"
+  },
+  {
+    "id": 2,
+    "date": "2025-05-02",
+    "description": "Wynagrodzenie - Umowa o pracę",
+    "amount": 5200.00,
+    "category": "Salary",
+    "account": "Bank Pekao",
+    "otherAccount": "ABC COMPANY"
+  },
+  {
+    "id": 3,
+    "date": "2025-05-03",
+    "description": "Netflix",
+    "amount": -55.99,
+    "category": "Entertainment",
+    "account": "Revolut",
+    "otherAccount": "Netflix Inc."
+  },
+  {
+    "id": 4,
+    "date": "2025-05-04",
+    "description": "PKP Intercity - Bilet",
+    "amount": -79.00,
+    "category": "Transport",
+    "account": "Bank Millennium",
+    "otherAccount": "PKP Intercity"
+  },
+  {
+    "id": 5,
+    "date": "2025-05-04",
+    "description": "Allegro - Zakup książki",
+    "amount": -38.50,
+    "category": "Shopping",
+    "account": "Revolut", 
+    "otherAccount": "Allegro.pl"
+  }
+]
