@@ -1,4 +1,5 @@
 import type { Transaction } from "../../../Models/Transaction";
+import { IoIosArrowDown } from "react-icons/io";
 
 type Props = {
   transaction: Transaction;
@@ -8,8 +9,10 @@ const ListRow = ({ transaction }: Props) => {
   return (
     <div className="grid [grid-template-columns:2.5fr_1fr_1fr] gap-4 mx-2 my-2 items-center border-b border-gray-200 pb-2">
       <div>
-        <p className="text-blue-700 text-md">
+        <p className="text-blue-700 text-md flex-row flex items-center">
           {transaction.otherAccount}
+          <p className="text-gray-500 ml-auto"> {transaction.category}</p>
+          <IoIosArrowDown className="ml-0.5 text-gray-500"/>
         </p>
         <p className="text-xs text-gray-500">{transaction.description}</p>
       </div>

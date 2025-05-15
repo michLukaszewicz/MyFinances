@@ -7,8 +7,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { Transaction } from "../../Models/Transaction";
-import Box from "../Box/Box";
+import type { Transaction } from "../../../Models/Transaction";
+import Box from "../../Box/Box";
 import { useState } from "react";
 
 enum TimePeriod {
@@ -43,6 +43,7 @@ const BalanceChart = ({ history }: Props) => {
         <p className="font-bold text-2xl mb-3">Balance Chart</p>
         <div>
           <p className="text-gray-500 text-xs">Select Time Period</p>
+          {/* dodać tutaj combobox */}
           <p className="text-blue-600 text-sm text-right">{timePeriod}</p>
         </div>
       </div>
