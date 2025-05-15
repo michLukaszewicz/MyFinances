@@ -3,7 +3,7 @@
     "id": 1,
     "date": "2025-05-01",
     "description": "Biedronka - Zakupy spożywcze",
-    "amount": -87.45,
+    "amount": -1000.45,
     "category": "Groceries",
     "account": "Bank Pekao",
     "otherAccount": "Biedronka SA"
@@ -30,7 +30,7 @@
     "id": 4,
     "date": "2025-05-04",
     "description": "PKP Intercity - Bilet",
-    "amount": -79.00,
+    "amount": -300.00,
     "category": "Transport",
     "account": "Bank Millennium",
     "otherAccount": "PKP Intercity"
@@ -39,7 +39,7 @@
     "id": 5,
     "date": "2025-05-04",
     "description": "Allegro - Zakup książki",
-    "amount": -38.50,
+    "amount": -500.50,
     "category": "Shopping",
     "account": "Revolut", 
     "otherAccount": "Allegro.pl"

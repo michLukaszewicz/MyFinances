@@ -20,7 +20,7 @@ function App() {
       <Navbar />
       <PageContent>
         <BalanceChart history={history} />
-        <CategoryChart />
+        <CategoryChart history={history}/>
         <HistoryPanel history={history} />
       </PageContent>
     </div>
