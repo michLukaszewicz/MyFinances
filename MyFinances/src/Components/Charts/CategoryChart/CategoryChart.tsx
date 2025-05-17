@@ -46,9 +46,8 @@ const CategoryChart = ({ history }: Props) => {
   }));
 
   return (
-    <Box>
+    <Box header="Expenses by Category">
       <div className="flex justify-between mb-3">
-        <p className="font-bold text-2xl mb-3">Expenses by Category</p>
         <div>
           {/* tutaj można dodać ustawienia filtrowania */}
           <p className="text-blue-600 text-sm text-right cursor-pointer">Settings</p>

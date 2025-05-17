@@ -8,9 +8,8 @@ interface Props {
 
 const HistoryPanel = ({history}: Props) => {
   return (
-    <Box>
+    <Box header="History Panel">
       <div className="flex justify-between mb-3">
-        <h1 className="font-bold text-2xl">History Panel</h1>
         <a href="#" className="text-gray-500">
           View All &gt;
         </a>

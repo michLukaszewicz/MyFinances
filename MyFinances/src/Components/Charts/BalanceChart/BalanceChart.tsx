@@ -32,15 +32,14 @@ const BalanceChart = ({ history }: Props) => {
   const lastMonthName: string = history[0].date.toLocaleString('default', { month: 'long' })
   const income = history.filter((item) => item.date.getMonth() === now.getMonth() && item.date.getFullYear() === now.getFullYear())
   .filter((item) => item.amount > 0).reduce((sum, item) => sum + item.amount, 0);
-    const expencess = history.filter((item) => item.date.getMonth() === now.getMonth() && item.date.getFullYear() === now.getFullYear())
+    const expenses = history.filter((item) => item.date.getMonth() === now.getMonth() && item.date.getFullYear() === now.getFullYear())
   .filter((item) => item.amount < 0).reduce((sum, item) => sum + -item.amount, 0);
 
-  const data = [{ name: lastMonthName, expenses: expencess, income: income }];
+  const data = [{ name: lastMonthName, expenses: expenses, income: income }];
 
   return (
-    <Box>
+    <Box header="Balance Chart">
       <div className="flex justify-between mb-3">
-        <p className="font-bold text-2xl mb-3">Balance Chart</p>
         <div>
           <p className="text-gray-500 text-xs">Select Time Period</p>
           {/* dodać tutaj combobox */}
