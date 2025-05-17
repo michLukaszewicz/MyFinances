@@ -2,9 +2,7 @@ import { Link } from "react-router-dom";
 import Box from "../Components/Box/Box";
 import PageContent from "../Components/PageContent/PageContent";
 
-type Props = {};
-
-const RegisterPage = (props: Props) => {
+const RegisterPage = () => {
   return (
     <PageContent>
       <div className="sm:w-xl sm:mx-auto">

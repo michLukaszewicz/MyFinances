@@ -2,9 +2,7 @@ import { Link } from "react-router-dom";
 import Box from "../Components/Box/Box";
 import PageContent from "../Components/PageContent/PageContent";
 
-type Props = {};
-
-const LoginPage = (props: Props) => {
+const LoginPage = () => {
   return (
     <PageContent>
       <div className="sm:w-xl sm:mx-auto">
@@ -47,8 +45,8 @@ const LoginPage = (props: Props) => {
                   Login
                 </button>
               </div>
-              <hr className="my-6 text-gray-200 font-bold"/>
-              <Link to={"/register"} >
+              <hr className="my-6 text-gray-200 font-bold" />
+              <Link to={"/register"}>
                 <button className="w-full py-2 px-4 bg-gray-300 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                   Register
                 </button>
