@@ -1,7 +1,24 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\michal.lukaszewicz\\source\\repos\\MyFinancesAPI\\",
-  "Documents": [],
+  "WorkspaceRootPath": "C:\\Users\\michal.lukaszewicz\\source\\repos\\michLukaszewicz\\React\\MyFinances\\MyFinancesAPI\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{307B5783-0A6A-4FE5-BE03-BEF1E9F28807}|MyFinancesAPI\\MyFinancesAPI.csproj|c:\\users\\michal.lukaszewicz\\source\\repos\\michlukaszewicz\\react\\myfinances\\myfinancesapi\\myfinancesapi\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{307B5783-0A6A-4FE5-BE03-BEF1E9F28807}|MyFinancesAPI\\MyFinancesAPI.csproj|solutionrelative:myfinancesapi\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{307B5783-0A6A-4FE5-BE03-BEF1E9F28807}|MyFinancesAPI\\MyFinancesAPI.csproj|c:\\users\\michal.lukaszewicz\\source\\repos\\michlukaszewicz\\react\\myfinances\\myfinancesapi\\myfinancesapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{307B5783-0A6A-4FE5-BE03-BEF1E9F28807}|MyFinancesAPI\\MyFinancesAPI.csproj|solutionrelative:myfinancesapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{307B5783-0A6A-4FE5-BE03-BEF1E9F28807}|MyFinancesAPI\\MyFinancesAPI.csproj|c:\\users\\michal.lukaszewicz\\source\\repos\\michlukaszewicz\\react\\myfinances\\myfinancesapi\\myfinancesapi\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{307B5783-0A6A-4FE5-BE03-BEF1E9F28807}|MyFinancesAPI\\MyFinancesAPI.csproj|solutionrelative:myfinancesapi\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{307B5783-0A6A-4FE5-BE03-BEF1E9F28807}|MyFinancesAPI\\MyFinancesAPI.csproj|c:\\users\\michal.lukaszewicz\\source\\repos\\michlukaszewicz\\react\\myfinances\\myfinancesapi\\myfinancesapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{307B5783-0A6A-4FE5-BE03-BEF1E9F28807}|MyFinancesAPI\\MyFinancesAPI.csproj|solutionrelative:myfinancesapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +26,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 249,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 15,
           "Children": [
             {
               "$type": "Bookmark",
@@ -60,8 +77,56 @@
               "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
             },
             {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\michal.lukaszewicz\\source\\repos\\michLukaszewicz\\React\\MyFinances\\MyFinancesAPI\\MyFinancesAPI\\Program.cs",
+              "RelativeDocumentMoniker": "MyFinancesAPI\\Program.cs",
+              "ToolTip": "C:\\Users\\michal.lukaszewicz\\source\\repos\\michLukaszewicz\\React\\MyFinances\\MyFinancesAPI\\MyFinancesAPI\\Program.cs",
+              "RelativeToolTip": "MyFinancesAPI\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-17T15:01:27.896Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\michal.lukaszewicz\\source\\repos\\michLukaszewicz\\React\\MyFinances\\MyFinancesAPI\\MyFinancesAPI\\appsettings.json",
+              "RelativeDocumentMoniker": "MyFinancesAPI\\appsettings.json",
+              "ToolTip": "C:\\Users\\michal.lukaszewicz\\source\\repos\\michLukaszewicz\\React\\MyFinances\\MyFinancesAPI\\MyFinancesAPI\\appsettings.json",
+              "RelativeToolTip": "MyFinancesAPI\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-05-17T15:10:01.705Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "appsettings.Development.json",
+              "DocumentMoniker": "C:\\Users\\michal.lukaszewicz\\source\\repos\\michLukaszewicz\\React\\MyFinances\\MyFinancesAPI\\MyFinancesAPI\\appsettings.Development.json",
+              "RelativeDocumentMoniker": "MyFinancesAPI\\appsettings.Development.json",
+              "ToolTip": "C:\\Users\\michal.lukaszewicz\\source\\repos\\michLukaszewicz\\React\\MyFinances\\MyFinancesAPI\\MyFinancesAPI\\appsettings.Development.json",
+              "RelativeToolTip": "MyFinancesAPI\\appsettings.Development.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-05-17T15:10:13.413Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "launchSettings.json",
+              "DocumentMoniker": "C:\\Users\\michal.lukaszewicz\\source\\repos\\michLukaszewicz\\React\\MyFinances\\MyFinancesAPI\\MyFinancesAPI\\Properties\\launchSettings.json",
+              "RelativeDocumentMoniker": "MyFinancesAPI\\Properties\\launchSettings.json",
+              "ToolTip": "C:\\Users\\michal.lukaszewicz\\source\\repos\\michLukaszewicz\\React\\MyFinances\\MyFinancesAPI\\MyFinancesAPI\\Properties\\launchSettings.json",
+              "RelativeToolTip": "MyFinancesAPI\\Properties\\launchSettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAcAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-05-17T15:10:19.011Z",
+              "EditorCaption": ""
             }
           ]
         },
