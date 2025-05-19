@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace MyFinancesAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class TestDataController : ControllerBase
     {
@@ -12,7 +12,7 @@ namespace MyFinancesAPI.Controllers
 
         [ProducesResponseType(typeof(ContentResult), 200)]
         [HttpGet]
-        public IActionResult GetJsonAsObject()
+        public IActionResult Get()
         {
             if (!System.IO.File.Exists(TEST_DATA_PATH))
             {
@@ -21,7 +21,8 @@ namespace MyFinancesAPI.Controllers
             string testData = System.IO.File.ReadAllText(TEST_DATA_PATH);
             if (testData != null && !string.IsNullOrEmpty(testData))
             {
-                return Ok(testData);
+                Transaction[]? deserialized = JsonSerializer.Deserialize<Transaction[]>(testData);
+                return Ok(deserialized);
             }
             return NotFound();
         }

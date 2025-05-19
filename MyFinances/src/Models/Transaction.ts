@@ -4,6 +4,6 @@ export interface Transaction {
     description: string;
     amount: number;
     category: string;
-    account: string;
-    otherAccount: string;
+    bankAccount: string;
+    otherSideOfTransaction: string;
 }

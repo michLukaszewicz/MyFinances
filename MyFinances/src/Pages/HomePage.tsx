@@ -1,20 +1,30 @@
+import { useEffect, useState } from 'react'
 import BalanceChart from '../Components/Charts/BalanceChart/BalanceChart'
 import CategoryChart from '../Components/Charts/CategoryChart/CategoryChart'
 import HistoryPanel from '../Components/HistoryPanel/HistoryPanel'
 import PageContent from '../Components/PageContent/PageContent'
 import type { Transaction } from '../Models/Transaction'
-import transactionHistory from '../TestData/transactionHistory.json'
+import transactionService from '../Services/transactionService'
 
 type Props = {}
 
-const history: Transaction[] = transactionHistory
-  .map((item) => ({
-    ...item,
-    date: new Date(item.date),
-  }))
-  .sort((a, b) => b.date.getTime() - a.date.getTime());
-
 const HomePage = (props: Props) => {
+const [history, setHistory] = useState<Transaction[]>([]);
+
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const response: Transaction[] = await transactionService.getTestData();
+      setHistory(response);
+      console.log('Fetched transactions:', response);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    }
+  }
+
+  fetchData();
+}, [])
+
   return (
     <PageContent>
         <BalanceChart history={history} />
