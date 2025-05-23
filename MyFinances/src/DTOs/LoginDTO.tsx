@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 
-type LoginDTO = {
-    userName: string;
+export type LoginDTO = {
+    username: string;
     password: string;
 }
 
