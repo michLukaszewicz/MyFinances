@@ -16,16 +16,37 @@ export const router = createBrowserRouter([
       {
         path: "",
         element: isAuthenticated() ? (
-          <RequiredAuth>
+          <RequiredAuth requireLoggedOut={false}>
             <DashboardPage />
           </RequiredAuth>
         ) : (
           <HomePage />
         ),
       },
-      { path: "login", element: <LoginPage /> },
-      { path: "register", element: <RegisterPage /> },
-      { path: "forgot-password", element: <ForgotPasswordPage /> },
+      {
+        path: "login",
+        element: (
+          <RequiredAuth requireLoggedOut={true}>
+            <LoginPage />
+          </RequiredAuth>
+        ),
+      },
+      {
+        path: "register",
+        element: (
+          <RequiredAuth requireLoggedOut={true}>
+            <RegisterPage />
+          </RequiredAuth>
+        ),
+      },
+      {
+        path: "forgot-password",
+        element: (
+          <RequiredAuth requireLoggedOut={true}>
+            <ForgotPasswordPage />
+          </RequiredAuth>
+        ),
+      },
     ],
   },
 ]);
