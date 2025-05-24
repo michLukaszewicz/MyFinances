@@ -4,7 +4,7 @@ import { GiHamburgerMenu } from "react-icons/gi";
 import { useState } from "react";
 import { RiCloseLargeFill } from "react-icons/ri";
 import { NavLink } from "react-router-dom";
-import { isAuthenticated, logout } from "../../Services/AuthenticationService";
+import { isAuthenticated, logout } from "../../Services/Api/AuthService";
 
 const links = [
   { path: "/", label: "Home" },
