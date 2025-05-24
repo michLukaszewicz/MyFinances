@@ -1,8 +1,8 @@
 import { useForm } from "react-hook-form";
 
 export type LoginDTO = {
-    username: string;
-    password: string;
+    UserName: string;
+    Password: string;
 }
 
 const { register, handleSubmit, formState: { errors } } = useForm<LoginDTO>();

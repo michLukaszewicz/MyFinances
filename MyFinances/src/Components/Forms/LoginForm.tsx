@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import type { LoginDTO } from "../../DTOs/LoginDTO";
+import { Authenticate } from "../../Services/api/AuthService";
 
 const LoginForm = () => {
   const {
@@ -10,8 +11,7 @@ const LoginForm = () => {
   } = useForm<LoginDTO>();
 
   const onSubmit = (data: LoginDTO) => {
-    console.log("Login data:", data);
-    // Tu możesz dodać wywołanie API
+    var success = Authenticate(data);
   };
 
   return (
@@ -23,24 +23,24 @@ const LoginForm = () => {
           </label>
           <input
             autoFocus
-            type="username"  
-            id="username"
-            {...register("username", { required: "Email is required" })}
+            type="UserName"  
+            id="UserName"
+            {...register("UserName", { required: "Email is required" })}
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:outline-none focus:border-blue-500 block w-full p-2.5"
             placeholder="email@exeple.com"></input>
-          {errors.username && <span className="text-red-500 text-sm">{errors.username.message}</span>}
+          {errors.UserName && <span className="text-red-500 text-sm">{errors.UserName.message}</span>}
         </div>
         <div className="mb-2 flex flex-col gap-2">
           <label htmlFor="password" className="block text-xl font-medium text-gray-700">
             Password
           </label>
           <input
-            type="password"
-            id="password"
-            {...register("password", { required: "Password is required" })}
+            type="Password"
+            id="Password"
+            {...register("Password", { required: "Password is required" })}
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:outline-none focus:border-blue-500 block w-full p-2.5"
             placeholder="**********"></input>
-          {errors.password && <span className="text-red-500 text-sm">{errors.password.message}</span>}
+          {errors.Password && <span className="text-red-500 text-sm">{errors.Password.message}</span>}
         </div>
         <div className="flex items-center mb-5">
           <input type="checkbox" id="RememberMe" className="mr-3 w-4.5 h-4.5" />

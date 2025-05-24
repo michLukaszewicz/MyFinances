@@ -1,9 +1,9 @@
 import axios from 'axios';
-import type { Transaction } from '../Models/Transaction';
+import type { Transaction } from '../../Models/Transaction';
 
 const transactionService = {
   async getTestData(): Promise<Transaction[]> {
-    const response = await axios.get<Transaction[]>(`/testdata`);
+    const response = await axios.get<Transaction[]>(`https://localhost:7121/TestData`);
 
     return response.data.map(t => ({
       ...t,
