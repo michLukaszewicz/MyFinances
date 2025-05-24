@@ -25,7 +25,6 @@ namespace MyFinancesAPI.Controllers
                 {
                     new Claim(ClaimTypes.Name, "admin"),
                     new Claim(ClaimTypes.Email, "admin@email.com"),
-                    new Claim("Admin", "true"),
                     new Claim("User", "true"),
                 };
                 var expireTime = DateTimeOffset.UtcNow.AddMinutes(3);

@@ -4,16 +4,32 @@ import App from "../App";
 import LoginPage from "../Pages/LoginPage";
 import RegisterPage from "../Pages/RegisterPage";
 import ForgotPasswordPage from "../Pages/ForgotPasswordPage";
+import DashboardPage from "../Pages/DashboardPage";
+import RequiredAuth from "../Components/Auth/RequiredAuth";
+
+const isAuthenticated = (): boolean => {
+  const token = localStorage.getItem("access_token");
+  return !!token;
+};
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     children: [
-        { path: "", element: <HomePage /> },
-        { path: "login", element: <LoginPage /> }, 
-        { path: "register", element: <RegisterPage /> }, 
-        { path: "forgot-password", element: <ForgotPasswordPage /> }, 
+      {
+        path: "",
+        element: isAuthenticated() ? (
+          <RequiredAuth>
+            <DashboardPage />
+          </RequiredAuth>
+        ) : (
+          <HomePage />
+        ),
+      },
+      { path: "login", element: <LoginPage /> },
+      { path: "register", element: <RegisterPage /> },
+      { path: "forgot-password", element: <ForgotPasswordPage /> },
     ],
   },
 ]);
