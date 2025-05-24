@@ -4,7 +4,7 @@ import CategoryChart from "../Components/Charts/CategoryChart/CategoryChart";
 import HistoryPanel from "../Components/HistoryPanel/HistoryPanel";
 import PageContent from "../Components/PageContent/PageContent";
 import type { Transaction } from "../Models/Transaction";
-import transactionService from "../Services/api/transactionService";
+import transactionService from "../Services/Api/transactionService";
 import Box from "../Components/Box/Box";
 
 const HomePage = () => {
