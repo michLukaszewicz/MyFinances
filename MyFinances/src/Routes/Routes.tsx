@@ -6,11 +6,7 @@ import RegisterPage from "../Pages/RegisterPage";
 import ForgotPasswordPage from "../Pages/ForgotPasswordPage";
 import DashboardPage from "../Pages/DashboardPage";
 import RequiredAuth from "../Components/Auth/RequiredAuth";
-
-const isAuthenticated = (): boolean => {
-  const token = localStorage.getItem("access_token");
-  return !!token;
-};
+import { isAuthenticated } from "../Services/AuthenticationService";
 
 export const router = createBrowserRouter([
   {
