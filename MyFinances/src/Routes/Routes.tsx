@@ -4,16 +4,49 @@ import App from "../App";
 import LoginPage from "../Pages/LoginPage";
 import RegisterPage from "../Pages/RegisterPage";
 import ForgotPasswordPage from "../Pages/ForgotPasswordPage";
+import DashboardPage from "../Pages/DashboardPage";
+import RequiredAuth from "../Components/Auth/RequiredAuth";
+import { isAuthenticated } from "../Services/Api/AuthService";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     children: [
-        { path: "", element: <HomePage /> },
-        { path: "login", element: <LoginPage /> }, 
-        { path: "register", element: <RegisterPage /> }, 
-        { path: "forgot-password", element: <ForgotPasswordPage /> }, 
+      {
+        path: "",
+        element: isAuthenticated() ? (
+          <RequiredAuth requireLoggedOut={false}>
+            <DashboardPage />
+          </RequiredAuth>
+        ) : (
+          <HomePage />
+        ),
+      },
+      {
+        path: "login",
+        element: (
+          <RequiredAuth requireLoggedOut={true}>
+            <LoginPage />
+          </RequiredAuth>
+        ),
+      },
+      {
+        path: "register",
+        element: (
+          <RequiredAuth requireLoggedOut={true}>
+            <RegisterPage />
+          </RequiredAuth>
+        ),
+      },
+      {
+        path: "forgot-password",
+        element: (
+          <RequiredAuth requireLoggedOut={true}>
+            <ForgotPasswordPage />
+          </RequiredAuth>
+        ),
+      },
     ],
   },
 ]);

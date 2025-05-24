@@ -1,0 +1,47 @@
+[
+    {
+        "Id": 1,
+        "Date": "2025-05-01T00:00:00",
+        "Description": "Biedronka - Zakupy spożywcze",
+        "Amount": -1000.45,
+        "Category": "Groceries",
+        "BankAccount": "Alior ROR",
+        "OtherSideOfTransaction": "Biedronka S.A."
+    },
+    {
+        "Id": 2,
+        "Date": "2025-05-02T00:00:00",
+        "Description": "Wynagrodzenie - Umowa o pracę",
+        "Amount": 5200.00,
+        "Category": "Salary",
+        "BankAccount": "ING Osobiste",
+        "OtherSideOfTransaction": "ACME Sp. z o.o."
+    },
+    {
+        "Id": 3,
+        "Date": "2025-05-03T00:00:00",
+        "Description": "Netflix",
+        "Amount": -55.99,
+        "Category": "Entertainment",
+        "BankAccount": "Revolut PLN",
+        "OtherSideOfTransaction": "Netflix International B.V."
+    },
+    {
+        "Id": 4,
+        "Date": "2025-05-04T00:00:00",
+        "Description": "PKP Intercity - Bilet",
+        "Amount": -300.00,
+        "Category": "Transport",
+        "BankAccount": "Alior ROR",
+        "OtherSideOfTransaction": "PKP Intercity"
+    },
+    {
+        "Id": 5,
+        "Date": "2025-05-04T00:00:00",
+        "Description": "Allegro - Zakup książki",
+        "Amount": -500.50,
+        "Category": "Shopping",
+        "BankAccount": "ING Osobiste",
+        "OtherSideOfTransaction": "Allegro.pl"
+    }
+]

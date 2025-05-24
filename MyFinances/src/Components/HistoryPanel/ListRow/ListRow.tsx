@@ -10,8 +10,8 @@ const ListRow = ({ transaction }: Props) => {
     <div className="grid [grid-template-columns:2.5fr_1fr_1fr] gap-4 mx-2 my-2 items-center border-b border-gray-200 pb-2">
       <div>
         <p className="text-blue-700 text-md flex-row flex items-center">
-          {transaction.otherAccount}
-          <p className="text-gray-500 ml-auto"> {transaction.category}</p>
+          {transaction.otherSideOfTransaction}
+          <span className="text-gray-500 ml-auto"> {transaction.category}</span>
           <IoIosArrowDown className="ml-0.5 text-gray-500"/>
         </p>
         <p className="text-xs text-gray-500">{transaction.description}</p>
@@ -23,7 +23,7 @@ const ListRow = ({ transaction }: Props) => {
             month: "2-digit",
           })}
         </p>
-        <p className="text-xs text-gray-500">{transaction.account}</p>
+        <p className="text-xs text-gray-500">{transaction.bankAccount}</p>
       </div>
       <div className="text-right">
         <p

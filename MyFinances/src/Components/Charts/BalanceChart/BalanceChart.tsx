@@ -29,7 +29,7 @@ const BalanceChart = ({ history }: Props) => {
   
   const now = new Date();
   // To powinno być w jakiejś osobnej klasie ale chyba i tak będzie w api
-  const lastMonthName: string = history[0].date.toLocaleString('default', { month: 'long' })
+  const lastMonthName: string = history[0]?.date.toLocaleString('default', { month: 'long' })
   const income = history.filter((item) => item.date.getMonth() === now.getMonth() && item.date.getFullYear() === now.getFullYear())
   .filter((item) => item.amount > 0).reduce((sum, item) => sum + item.amount, 0);
     const expenses = history.filter((item) => item.date.getMonth() === now.getMonth() && item.date.getFullYear() === now.getFullYear())
