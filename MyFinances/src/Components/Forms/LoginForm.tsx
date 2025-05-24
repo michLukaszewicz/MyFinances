@@ -10,8 +10,13 @@ const LoginForm = () => {
     formState: { errors },
   } = useForm<LoginDTO>();
 
-  const onSubmit = (data: LoginDTO) => {
-    var success = Authenticate(data);
+  const onSubmit = async (data: LoginDTO) => {
+    var success = await Authenticate(data);
+    if (success) {
+      window.location.href = "/";
+    } else {
+      alert("Login failed. Please check your credentials.");
+    }
   };
 
   return (
