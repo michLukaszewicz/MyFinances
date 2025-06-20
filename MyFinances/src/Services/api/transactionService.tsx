@@ -12,6 +12,9 @@ const transactionService = {
 
   async getTransactionHistory(): Promise<Transaction[]> {
     const token = localStorage.getItem('access_token');
+    if (!token) {
+      throw new Error('No access token found. Please log in.');
+    }
     const response = await axios.get<Transaction[]>(`https://localhost:7121/Transactions`, {
       headers: {
         Authorization: `Bearer ${token}`,
