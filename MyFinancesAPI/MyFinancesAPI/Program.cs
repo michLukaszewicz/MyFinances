@@ -11,11 +11,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+// Use pooled DbContext for better performance under high load
+builder.Services.AddDbContextPool<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
 });
 
+// Configure Identity with minimal allocations
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     options.Password.RequiredLength = 8;
@@ -27,8 +29,6 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
     options.User.RequireUniqueEmail = true;
-    options.User.AllowedUserNameCharacters =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
@@ -38,8 +38,6 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
     options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
-    options.LoginPath = "/"; 
-    options.AccessDeniedPath = "/";
     options.SlidingExpiration = true;
     options.Events.OnRedirectToLogin = context =>
     {
@@ -53,6 +51,10 @@ builder.Services.ConfigureApplicationCookie(options =>
     };
 });
 
+// Cache the JWT secret key to avoid repeated allocations
+var jwtSecret = builder.Configuration["Jwt:Secret"];
+var jwtKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret ?? string.Empty));
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -64,7 +66,7 @@ builder.Services.AddAuthentication(options =>
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Secret"] ?? string.Empty)),
+        IssuerSigningKey = jwtKey,
         ValidateLifetime = true,
         ValidateIssuer = false,
         ValidateAudience = false,
@@ -76,6 +78,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Register CORS policy with preflight cache for better performance
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
@@ -83,7 +86,8 @@ builder.Services.AddCors(options =>
         {
             policy.WithOrigins("http://localhost:5173")
                   .AllowAnyHeader()
-                  .AllowAnyMethod();
+                  .AllowAnyMethod()
+                  .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
         });
 });
 
