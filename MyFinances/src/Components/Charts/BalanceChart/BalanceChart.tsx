@@ -23,19 +23,20 @@ type Props = {
 };
 
 const BalanceChart = ({ history }: Props) => {
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>(
-    TimePeriod.LastMonth
-  );
-  
-  const now = new Date();
-  // To powinno być w jakiejś osobnej klasie ale chyba i tak będzie w api
-  const lastMonthName: string = history[0]?.date.toLocaleString('default', { month: 'long' })
-  const income = history.filter((item) => item.date.getMonth() === now.getMonth() && item.date.getFullYear() === now.getFullYear())
-  .filter((item) => item.amount > 0).reduce((sum, item) => sum + item.amount, 0);
-    const expenses = history.filter((item) => item.date.getMonth() === now.getMonth() && item.date.getFullYear() === now.getFullYear())
-  .filter((item) => item.amount < 0).reduce((sum, item) => sum + -item.amount, 0);
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>(TimePeriod.LastMonth);
 
-  const data = [{ name: lastMonthName, expenses: expenses, income: income }];
+  const lastDate = history.length > 0 ? new Date(Math.max(...history.map(item => item.date.getTime()))) : new Date();
+  const lastMonthName: string = history[0]?.date.toLocaleString('default', { month: 'long' });
+  const income = history
+    .filter((item) => item.date.getMonth() === lastDate.getMonth() && item.date.getFullYear() === lastDate.getFullYear())
+    .filter((item) => item.amount > 0)
+    .reduce((sum, item) => sum + item.amount, 0);
+  const expenses = history
+    .filter((item) => item.date.getMonth() === lastDate.getMonth() && item.date.getFullYear() === lastDate.getFullYear())
+    .filter((item) => item.amount < 0)
+    .reduce((sum, item) => sum + -item.amount, 0);
+    const data = [{ name: lastMonthName, expenses: expenses, income: income }];
+
 
   return (
     <Box header="Balance Chart">
