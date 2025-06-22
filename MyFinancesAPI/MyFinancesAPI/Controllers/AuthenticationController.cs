@@ -4,41 +4,64 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using MyFinancesAPI.Models.Identity;
 using MyFinancesAPI.Services;
 using System.Security.Claims;
+using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace MyFinancesAPI.Controllers
 {
+    //TOOD: Spit the controller into two separate controllers: AuthenticationController and RegistrationController
     [Route("[controller]")]
     [ApiController]
-    public class AuthenticationController(IJwtProvider jetProvider, UserManager<User> userManager) : ControllerBase
+    public class AuthenticationController(IJwtProvider jetProvider, UserManager<User> userManager, SignInManager<User> signInManager) : ControllerBase
     {
+        private DateTimeOffset DefaultExpireTime => DateTimeOffset.UtcNow.AddMinutes(3);
         private readonly IJwtProvider jwtProvider = jetProvider;
+        private readonly SignInManager<User> signInManager = signInManager;
         private readonly UserManager<User> userManager = userManager;
 
-        
         [HttpPost]
-        //TODO: zmienić też we frontend [HttpPost("Authenticate")]
+        //TODO: Swagger working really slow
+        //TODO: zmienić też we frontend [HttpPost("Login")] and change the name of the method
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ModelStateDictionary))]
-        public IActionResult Authenticate([FromBody] LoginDto credential)
+        public async Task<IActionResult> Authenticate([FromBody] LoginDto credential)
         {
-            if (credential.UserName == "admin" && credential.Password == "password")
+            if (credential.UserName is null || credential.Password is null)
             {
-                var claims = new List<Claim>()
+                ModelState.AddModelError("NullProperties", "All fields are required.");
+                return BadRequest(ModelState);
+            }
+
+            //TODO: Update names of the credential in frontend and backend
+            var user = await userManager.FindByEmailAsync(credential.UserName);
+
+            if (user is null)
+            {
+                return BadRequest("Invalid credentials");
+            }
+
+            SignInResult results = await signInManager.CheckPasswordSignInAsync(user, credential.Password, lockoutOnFailure: false);
+            if (results.Succeeded)
+            {
+                string token = GenerateJwtToken(DefaultExpireTime);
+                return Ok(new
+                {
+                    access_token = token,
+                    expires_at = DefaultExpireTime,
+                });
+            }
+            ModelState.AddModelError("Unauthorized", "Invalid credentials");
+            return Unauthorized(ModelState);
+        }
+
+        private string GenerateJwtToken(DateTimeOffset expireTimeOffset)
+        {
+            var claims = new List<Claim>()
                 {
                     new Claim(ClaimTypes.Name, "admen"),
                     new Claim(ClaimTypes.Email, "admin@email.com"),
                     new Claim("User", "true"),
                 };
-                var expireTime = DateTimeOffset.UtcNow.AddMinutes(3);
-
-                return Ok(new
-                {
-                    access_token = jwtProvider.GetJwtToken(claims, expireTime.UtcDateTime),
-                    expires_at = expireTime,
-                });
-            }
-            ModelState.AddModelError("Unauthorized", "Wrong credentials");
-            return Unauthorized(ModelState);
+            return jwtProvider.GetJwtToken(claims, expireTimeOffset.UtcDateTime);
         }
 
         [HttpPost("register")]
