@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyFinancesAPI.Data;
+using MyFinancesAPI.Models.Identity;
 using MyFinancesAPI.Services;
 using System.Text;
 
@@ -14,11 +15,11 @@ builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 // Use pooled DbContext for better performance under high load
 builder.Services.AddDbContextPool<ApplicationDbContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
 // Configure Identity with minimal allocations
-builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.Password.RequiredLength = 8;
     options.Password.RequireUppercase = true;

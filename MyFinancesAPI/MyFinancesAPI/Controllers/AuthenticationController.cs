@@ -14,7 +14,9 @@ namespace MyFinancesAPI.Controllers
         private readonly IJwtProvider jwtProvider = jetProvider;
         private readonly UserManager<User> userManager = userManager;
 
+        
         [HttpPost]
+        //TODO: zmienić też we frontend [HttpPost("Authenticate")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ModelStateDictionary))]
         public IActionResult Authenticate([FromBody] LoginDto credential)
@@ -39,7 +41,7 @@ namespace MyFinancesAPI.Controllers
             return Unauthorized(ModelState);
         }
 
-        [HttpPost]
+        [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
             if (IsDtoInvalid(registerDto))
