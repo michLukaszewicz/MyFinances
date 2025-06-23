@@ -1,22 +1,19 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using MyFinancesAPI.Models.Identity;
-using MyFinancesAPI.Services;
-using System.Security.Claims;
+using MyFinancesAPI.Services.Abstractions;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace MyFinancesAPI.Controllers
 {
-    //TOOD: Spit the controller into two separate controllers: AuthenticationController and RegistrationController
     [Route("[controller]")]
     [ApiController]
     public class AuthenticationController(IJwtProvider jetProvider, UserManager<User> userManager, SignInManager<User> signInManager) : ControllerBase
     {
-        private static DateTimeOffset DefaultExpireTime => DateTimeOffset.UtcNow.AddMinutes(3);
         private readonly IJwtProvider jwtProvider = jetProvider;
         private readonly SignInManager<User> signInManager = signInManager;
         private readonly UserManager<User> userManager = userManager;
+        private static DateTimeOffset DefaultExpireTime => DateTimeOffset.UtcNow.AddMinutes(3);
 
         [HttpPost]
         //TODO: zmienić też we frontend [HttpPost("Login")] and change the name of the method
@@ -42,7 +39,7 @@ namespace MyFinancesAPI.Controllers
             SignInResult results = await signInManager.CheckPasswordSignInAsync(user, credential.Password, lockoutOnFailure: false);
             if (results.Succeeded)
             {
-                string token = GenerateJwtToken(DefaultExpireTime);
+                string token = jwtProvider.GetJwtTokenForUser(DefaultExpireTime, user);
                 return Ok(new
                 {
                     access_token = token,
@@ -53,21 +50,10 @@ namespace MyFinancesAPI.Controllers
             return Unauthorized(ModelState);
         }
 
-        private string GenerateJwtToken(DateTimeOffset expireTimeOffset)
-        {
-            var claims = new List<Claim>()
-                {
-                    new Claim(ClaimTypes.Name, "admen"),
-                    new Claim(ClaimTypes.Email, "admin@email.com"),
-                    new Claim("User", "true"),
-                };
-            return jwtProvider.GetJwtToken(claims, expireTimeOffset.UtcDateTime);
-        }
-
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
-            if (IsDtoInvalid(registerDto))
+            if (!IsDtoValid(registerDto))
             {
                 ModelState.AddModelError("NullProperties", "All fields are required.");
                 return BadRequest(ModelState);
@@ -81,7 +67,6 @@ namespace MyFinancesAPI.Controllers
             };
 
             IdentityResult result = await userManager.CreateAsync(user, registerDto.Password!);
-
             if (result.Succeeded)
             {
                 return Ok();
@@ -91,11 +76,11 @@ namespace MyFinancesAPI.Controllers
             return BadRequest(new { Errors = errorDescriptions });
         }
 
-        private static bool IsDtoInvalid(RegisterDto registerDto) =>
-            registerDto.FirstName is null ||
-            registerDto.Email is null ||
-            registerDto.Password is null ||
-            registerDto.ConfirmPassword is null ||
-            registerDto.Password != registerDto.ConfirmPassword;
+        private static bool IsDtoValid(RegisterDto registerDto) =>
+            !(registerDto.FirstName is not null &&
+              registerDto.Email is not null &&
+              registerDto.Password is not null &&
+              registerDto.ConfirmPassword is not null &&
+              registerDto.Password == registerDto.ConfirmPassword);
     }
 }

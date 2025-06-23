@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using MyFinancesAPI.Data;
 using MyFinancesAPI.Models.Identity;
 using MyFinancesAPI.Services;
+using MyFinancesAPI.Services.Abstractions;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
