@@ -1,42 +1,85 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using MyFinancesAPI.Models.Identity;
-using MyFinancesAPI.Services;
-using System.Security.Claims;
+using MyFinancesAPI.Services.Abstractions;
+using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace MyFinancesAPI.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    public class AuthenticationController : ControllerBase
+    public class AuthenticationController(IJwtProvider jetProvider, UserManager<User> userManager, SignInManager<User> signInManager) : ControllerBase
     {
-        private readonly IJwtProvider jwtProvider;
+        private readonly IJwtProvider jwtProvider = jetProvider;
+        private readonly SignInManager<User> signInManager = signInManager;
+        private readonly UserManager<User> userManager = userManager;
+        private static DateTimeOffset DefaultExpireTime => DateTimeOffset.UtcNow.AddMinutes(3);
 
-        public AuthenticationController(IJwtProvider jwtProvider)
+        [HttpPost("Login")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> Login([FromBody] LoginDto credential)
         {
-            this.jwtProvider = jwtProvider;
-        }
-
-        [HttpPost]
-        public IActionResult Authenticate([FromBody] Credential credential)
-        {
-            if (credential.UserName == "admin" && credential.Password == "password")
+            if (credential.Email is null || credential.Password is null)
             {
-                var claims = new List<Claim>()
-                {
-                    new Claim(ClaimTypes.Name, "admin"),
-                    new Claim(ClaimTypes.Email, "admin@email.com"),
-                    new Claim("User", "true"),
-                };
-                var expireTime = DateTimeOffset.UtcNow.AddMinutes(3);
+                ModelState.AddModelError("NullProperties", "All fields are required.");
+                return BadRequest(ModelState);
+            }
 
+            //TODO: Update names of the credential names in frontend and backend
+            var user = await userManager.FindByEmailAsync(credential.Email);
+
+            if (user is null)
+            {
+                return Unauthorized("Invalid credentials");
+            }
+
+            SignInResult results = await signInManager.CheckPasswordSignInAsync(user, credential.Password, lockoutOnFailure: false);
+            if (results.Succeeded)
+            {
+                string token = jwtProvider.GetJwtTokenForUser(DefaultExpireTime, user);
                 return Ok(new
                 {
-                    access_token = jwtProvider.GetJwtToken(claims, expireTime.UtcDateTime),
-                    expires_at = expireTime,
+                    access_token = token,
+                    expires_at = DefaultExpireTime,
                 });
             }
-            ModelState.AddModelError("Unauthorized", "Wrong credentials");
+            ModelState.AddModelError("Unauthorized", "Invalid credentials");
             return Unauthorized(ModelState);
         }
+
+        [HttpPost("Register")]
+        public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
+        {
+            if (!IsDtoValid(registerDto))
+            {
+                ModelState.AddModelError("NullProperties", "All fields are required.");
+                return BadRequest(ModelState);
+            }
+
+            var user = new User
+            {
+                FirstName = registerDto.FirstName!,
+                UserName = registerDto.Email,
+                Email = registerDto.Email,
+            };
+
+            IdentityResult result = await userManager.CreateAsync(user, registerDto.Password!);
+            if (result.Succeeded)
+            {
+                return Ok();
+            }
+
+            string[] errorDescriptions = result.Errors.Select(error => error.Description).ToArray();
+            return BadRequest(new { Errors = errorDescriptions });
+        }
+
+        private static bool IsDtoValid(RegisterDto registerDto) =>
+            !(registerDto.FirstName is not null &&
+              registerDto.Email is not null &&
+              registerDto.Password is not null &&
+              registerDto.ConfirmPassword is not null &&
+              registerDto.Password == registerDto.ConfirmPassword);
     }
 }

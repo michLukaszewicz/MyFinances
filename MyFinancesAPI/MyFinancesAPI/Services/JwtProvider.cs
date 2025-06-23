@@ -1,4 +1,6 @@
 ﻿using Microsoft.IdentityModel.Tokens;
+using MyFinancesAPI.Models.Identity;
+using MyFinancesAPI.Services.Abstractions;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -13,7 +15,19 @@ namespace MyFinancesAPI.Services
         {
             this.configuration = configuration;
         }
-        public string GetJwtToken(IEnumerable<Claim> claims, DateTime expireTime)
+
+        public string GetJwtTokenForUser(DateTimeOffset expireTimeOffset, User user)
+        {
+            var claims = new List<Claim>()
+                {
+                    new Claim(ClaimTypes.Name, user.FirstName),
+                    new Claim(ClaimTypes.Email, user.Email!),
+                    new Claim("User", "true"),
+                };
+            return GetJwtToken(claims, expireTimeOffset.UtcDateTime);
+        }
+
+        private string GetJwtToken(IEnumerable<Claim> claims, DateTime expireTime)
         {
             var jwt = new JwtSecurityToken(
                 claims: claims,
@@ -25,6 +39,5 @@ namespace MyFinancesAPI.Services
 
             return new JwtSecurityTokenHandler().WriteToken(jwt);
         }
-
     }
 }

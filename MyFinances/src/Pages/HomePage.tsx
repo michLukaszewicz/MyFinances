@@ -5,7 +5,7 @@ import HistoryPanel from "../Components/HistoryPanel/HistoryPanel";
 import PageContent from "../Components/PageContent/PageContent";
 import type { Transaction } from "../Models/Transaction";
 import Box from "../Components/Box/Box";
-import transactionService from "../Services/api/transactionService";
+import TransactionService from "../Services/ApiServices/TransactionService";
 
 const HomePage = () => {
   const [history, setHistory] = useState<Transaction[]>([]);
@@ -13,7 +13,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response: Transaction[] = await transactionService.getTestData();
+        const response: Transaction[] = await TransactionService.getTestData();
         setHistory(response);
       } catch (error) {
         console.error("Error fetching transactions:", error);

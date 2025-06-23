@@ -1,19 +1,19 @@
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
-import type { LoginDTO } from "../../DTOs/LoginDTO";
-import { Authenticate } from "../../Services/Api/AuthService";
+import type { LoginDto } from "../../Dtos/LoginDto";
+import { Login } from "../../Services/ApiServices/AuthenticationService";
 
 const LoginForm = () => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginDTO>();
+  } = useForm<LoginDto>();
 
-  const onSubmit = async (data: LoginDTO) => {
-    var success = await Authenticate(data);
+  const onSubmit = async (data: LoginDto) => {
+    var success = await Login(data);
     if (success) {
-      window.location.href = "/";
+      window.location.href = "/dashboard";
     } else {
       alert("Login failed. Please check your credentials.");
     }
@@ -28,12 +28,12 @@ const LoginForm = () => {
           </label>
           <input
             autoFocus
-            type="UserName"  
-            id="UserName"
-            {...register("UserName", { required: "Email is required" })}
+            type="email"
+            id="Email"
+            {...register("Email", { required: "Email is required" })}
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:outline-none focus:border-blue-500 block w-full p-2.5"
             placeholder="email@exeple.com"></input>
-          {errors.UserName && <span className="text-red-500 text-sm">{errors.UserName.message}</span>}
+          {errors.Email && <span className="text-red-500 text-sm">{errors.Email.message}</span>}
         </div>
         <div className="mb-2 flex flex-col gap-2">
           <label htmlFor="password" className="block text-xl font-medium text-gray-700">
