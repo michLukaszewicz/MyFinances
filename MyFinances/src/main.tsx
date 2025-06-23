@@ -3,7 +3,7 @@ import "./index.css";
 import { RouterProvider } from "react-router-dom";
 import { StrictMode } from "react";
 import { router } from "./Routes/Routes.tsx";
-import "./Services/Api/ApiClient.tsx"
+import "./Services/ApiClients/ApiClient.tsx"
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

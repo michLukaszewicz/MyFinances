@@ -6,7 +6,7 @@ import RegisterPage from "../Pages/RegisterPage";
 import ForgotPasswordPage from "../Pages/ForgotPasswordPage";
 import DashboardPage from "../Pages/DashboardPage";
 import RequiredAuth from "../Components/Auth/RequiredAuth";
-import { isAuthenticated } from "../Services/Api/AuthService";
+import { isAuthenticated } from "../Services/ApiServices/AuthService";
 
 export const router = createBrowserRouter([
   {
