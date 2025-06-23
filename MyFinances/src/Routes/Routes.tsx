@@ -1,12 +1,11 @@
 import { createBrowserRouter } from "react-router-dom";
-import HomePage from "../Pages/HomePage";
 import App from "../App";
 import LoginPage from "../Pages/LoginPage";
 import RegisterPage from "../Pages/RegisterPage";
 import ForgotPasswordPage from "../Pages/ForgotPasswordPage";
 import DashboardPage from "../Pages/DashboardPage";
 import RequiredAuth from "../Components/Auth/RequiredAuth";
-import { isAuthenticated } from "../Services/ApiServices/AuthService";
+import HomePage from "../Pages/HomePage";
 
 export const router = createBrowserRouter([
   {
@@ -15,12 +14,18 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "",
-        element: isAuthenticated() ? (
-          <RequiredAuth requireLoggedOut={false}>
+        element: (
+          <RequiredAuth requireLoggedOut={true} redirectTo="/dashboard">
+            <HomePage />
+          </RequiredAuth>
+        ),
+      },
+      {
+        path: "dashboard",
+        element: (
+          <RequiredAuth requireLoggedOut={false} redirectTo="/login">
             <DashboardPage />
           </RequiredAuth>
-        ) : (
-          <HomePage />
         ),
       },
       {
