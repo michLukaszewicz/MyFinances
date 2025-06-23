@@ -13,16 +13,16 @@ namespace MyFinancesAPI.Controllers
     [ApiController]
     public class AuthenticationController(IJwtProvider jetProvider, UserManager<User> userManager, SignInManager<User> signInManager) : ControllerBase
     {
-        private DateTimeOffset DefaultExpireTime => DateTimeOffset.UtcNow.AddMinutes(3);
+        private static DateTimeOffset DefaultExpireTime => DateTimeOffset.UtcNow.AddMinutes(3);
         private readonly IJwtProvider jwtProvider = jetProvider;
         private readonly SignInManager<User> signInManager = signInManager;
         private readonly UserManager<User> userManager = userManager;
 
         [HttpPost]
-        //TODO: Swagger working really slow
         //TODO: zmienić też we frontend [HttpPost("Login")] and change the name of the method
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ModelStateDictionary))]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Authenticate([FromBody] LoginDto credential)
         {
             if (credential.UserName is null || credential.Password is null)
@@ -31,12 +31,12 @@ namespace MyFinancesAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            //TODO: Update names of the credential in frontend and backend
+            //TODO: Update names of the credential names in frontend and backend
             var user = await userManager.FindByEmailAsync(credential.UserName);
 
             if (user is null)
             {
-                return BadRequest("Invalid credentials");
+                return Unauthorized("Invalid credentials");
             }
 
             SignInResult results = await signInManager.CheckPasswordSignInAsync(user, credential.Password, lockoutOnFailure: false);
