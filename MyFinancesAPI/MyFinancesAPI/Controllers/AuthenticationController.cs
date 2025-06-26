@@ -27,7 +27,6 @@ namespace MyFinancesAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            //TODO: Update names of the credential names in frontend and backend
             var user = await userManager.FindByEmailAsync(credential.Email);
 
             if (user is null)
@@ -60,7 +59,7 @@ namespace MyFinancesAPI.Controllers
 
             var user = new User
             {
-                FirstName = registerDto.FirstName!,
+                FirstName = registerDto.Name!,
                 UserName = registerDto.Email,
                 Email = registerDto.Email,
             };
@@ -76,10 +75,10 @@ namespace MyFinancesAPI.Controllers
         }
 
         private static bool IsDtoValid(RegisterDto registerDto) =>
-            !(registerDto.FirstName is not null &&
-              registerDto.Email is not null &&
-              registerDto.Password is not null &&
-              registerDto.ConfirmPassword is not null &&
-              registerDto.Password == registerDto.ConfirmPassword);
+            registerDto.Name is not null &&
+            registerDto.Email is not null &&
+            registerDto.Password is not null &&
+            registerDto.ConfirmPassword is not null &&
+            registerDto.Password == registerDto.ConfirmPassword;
     }
 }
