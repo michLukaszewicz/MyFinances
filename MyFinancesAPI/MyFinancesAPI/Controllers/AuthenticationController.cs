@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MyFinancesAPI.Models.Identity;
 using MyFinancesAPI.Services.Abstractions;
 using MyFinancesAPI.Services.EmailServices.Abstractions;
+using System.Web;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace MyFinancesAPI.Controllers
@@ -78,7 +79,8 @@ namespace MyFinancesAPI.Controllers
             try
             {
                 string token = await userManager.GeneratePasswordResetTokenAsync(user);
-                await emailService.SendForgotPasswordAsync(forgotPasswordDto.Email, token, forgotPasswordDto.FrontedBaseUrl);
+                string encodedToken = HttpUtility.UrlEncode(token);
+                await emailService.SendForgotPasswordAsync(forgotPasswordDto.Email, encodedToken, forgotPasswordDto.FrontedBaseUrl);
                 return Ok();
             }
             catch (Exception ex)
@@ -97,7 +99,8 @@ namespace MyFinancesAPI.Controllers
                 return BadRequest("Invalid email address");
             }
 
-            IdentityResult result = await userManager.ResetPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword!);
+            string decodedToken = HttpUtility.UrlDecode(resetPasswordDto.Token);
+            IdentityResult result = await userManager.ResetPasswordAsync(user, decodedToken, resetPasswordDto.NewPassword!);
             if (result.Succeeded)
             {
                 return Ok();
