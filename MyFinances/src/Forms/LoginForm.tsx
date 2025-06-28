@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
-import type { LoginDto } from "../../Dtos/LoginDto";
-import { Login } from "../../Services/ApiServices/AuthenticationService";
+import type { LoginDto } from "../Dtos/LoginDto";
+import { Login } from "../Services/ApiServices/AuthenticationService";
 
 const LoginForm = () => {
   const {

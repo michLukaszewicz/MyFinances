@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import Box from "../Components/Box/Box";
 import PageContent from "../Components/PageContent/PageContent";
-import RegisterForm from "../Components/Forms/RegisterForm";
+import RegisterForm from "../Forms/RegisterForm";
 
 const RegisterPage = () => {
   return (
