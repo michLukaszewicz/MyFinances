@@ -27,13 +27,13 @@ namespace MyFinancesAPI.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Login([FromBody] LoginDto credential)
         {
-            User? user = await userManager.FindByEmailAsync(credential.Email);
+            User? user = await userManager.FindByEmailAsync(credential.Email!);
             if (user is null)
             {
                 return Unauthorized("Invalid credentials");
             }
 
-            SignInResult results = await signInManager.CheckPasswordSignInAsync(user, credential.Password, lockoutOnFailure: false);
+            SignInResult results = await signInManager.CheckPasswordSignInAsync(user, credential.Password!, lockoutOnFailure: false);
             if (results.Succeeded)
             {
                 string token = jwtProvider.GetJwtTokenForUser(DefaultExpireTime, user);
@@ -86,6 +86,24 @@ namespace MyFinancesAPI.Controllers
                 Console.WriteLine($"Error sending forgot password email: {ex.Message}");
                 return StatusCode(StatusCodes.Status500InternalServerError, "Failed to send email");
             }
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
+        {
+            User? user = await userManager.FindByEmailAsync(resetPasswordDto.Email);
+            if (user is null)
+            {
+                return BadRequest("Invalid email address");
+            }
+
+            IdentityResult result = await userManager.ResetPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword!);
+            if (result.Succeeded)
+            {
+                return Ok();
+            }
+            string[] errorDescriptions = [.. result.Errors.Select(error => error.Description)];
+            return BadRequest(new { Errors = errorDescriptions });
         }
     }
 }
