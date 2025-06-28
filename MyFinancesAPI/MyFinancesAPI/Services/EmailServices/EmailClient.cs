@@ -1,16 +1,13 @@
-﻿using MyFinancesAPI.Models;
+﻿using MyFinancesAPI.Exceptions;
+using MyFinancesAPI.Models;
+using MyFinancesAPI.Services.EmailServices.Abstractions;
 using System.Net.Mail;
 
 namespace MyFinancesAPI.Services.MailClient
 {
-    public class MailService
+    public class EmailClient(EmailSettings settings) : IEmailClient
     {
-        private readonly EmailSettings settings;
-
-        public MailService(EmailSettings settings)
-        {
-            this.settings = settings;
-        }
+        private readonly EmailSettings settings = settings;
 
         public async Task SendEmailAsync(string toEmail, string subject, string body)
         {
@@ -34,7 +31,10 @@ namespace MyFinancesAPI.Services.MailClient
             {
                 if (task.IsFaulted)
                 {
-                    Console.WriteLine($"Error sending email: {task.Exception?.Message}");
+                    throw new SendEmailException(
+                        "Failed to send email",
+                        task.Exception?.GetBaseException() ?? new Exception("Unknown email send error")
+                    );
                 }
             });
         }

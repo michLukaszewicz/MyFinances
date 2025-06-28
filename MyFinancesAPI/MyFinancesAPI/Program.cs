@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,9 @@ using MyFinancesAPI.Models;
 using MyFinancesAPI.Models.Identity;
 using MyFinancesAPI.Services;
 using MyFinancesAPI.Services.Abstractions;
+using MyFinancesAPI.Services.EmailServices;
+using MyFinancesAPI.Services.EmailServices.Abstractions;
+using MyFinancesAPI.Services.MailClient;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,7 +54,6 @@ builder.Services.ConfigureApplicationCookie(options =>
     };
 });
 
-builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 var jwtSecret = builder.Configuration["Jwt:Secret"];
 var jwtKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret ?? string.Empty));
 
@@ -87,6 +90,13 @@ builder.Services.AddCors(options =>
                   .AllowAnyMethod()
                   .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
         });
+});
+
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IEmailClient, EmailClient>(sp =>
+{
+    var settings = sp.GetRequiredService<IOptions<EmailSettings>>().Value;
+    return new EmailClient(settings);
 });
 
 var app = builder.Build();
