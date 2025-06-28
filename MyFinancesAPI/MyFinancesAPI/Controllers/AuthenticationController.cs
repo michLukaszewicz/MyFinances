@@ -2,39 +2,39 @@
 using Microsoft.AspNetCore.Mvc;
 using MyFinancesAPI.Models.Identity;
 using MyFinancesAPI.Services.Abstractions;
+using MyFinancesAPI.Services.EmailServices.Abstractions;
+using System.Web;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace MyFinancesAPI.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    public class AuthenticationController(IJwtProvider jetProvider, UserManager<User> userManager, SignInManager<User> signInManager) : ControllerBase
+    public class AuthenticationController(
+        IJwtProvider jetProvider,
+        UserManager<User> userManager,
+        SignInManager<User> signInManager,
+        IEmailService emailService) : ControllerBase
     {
         private readonly IJwtProvider jwtProvider = jetProvider;
         private readonly SignInManager<User> signInManager = signInManager;
+        private readonly IEmailService emailService = emailService;
         private readonly UserManager<User> userManager = userManager;
         private static DateTimeOffset DefaultExpireTime => DateTimeOffset.UtcNow.AddMinutes(3);
 
-        [HttpPost("Login")]
+        [HttpPost("login")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Login([FromBody] LoginDto credential)
         {
-            if (credential.Email is null || credential.Password is null)
-            {
-                ModelState.AddModelError("NullProperties", "All fields are required.");
-                return BadRequest(ModelState);
-            }
-
-            var user = await userManager.FindByEmailAsync(credential.Email);
-
+            User? user = await userManager.FindByEmailAsync(credential.Email!);
             if (user is null)
             {
                 return Unauthorized("Invalid credentials");
             }
 
-            SignInResult results = await signInManager.CheckPasswordSignInAsync(user, credential.Password, lockoutOnFailure: false);
+            SignInResult results = await signInManager.CheckPasswordSignInAsync(user, credential.Password!, lockoutOnFailure: false);
             if (results.Succeeded)
             {
                 string token = jwtProvider.GetJwtTokenForUser(DefaultExpireTime, user);
@@ -48,15 +48,9 @@ namespace MyFinancesAPI.Controllers
             return Unauthorized(ModelState);
         }
 
-        [HttpPost("Register")]
+        [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
-            if (!IsDtoValid(registerDto))
-            {
-                ModelState.AddModelError("NullProperties", "All fields are required.");
-                return BadRequest(ModelState);
-            }
-
             var user = new User
             {
                 FirstName = registerDto.Name!,
@@ -69,16 +63,50 @@ namespace MyFinancesAPI.Controllers
             {
                 return Ok();
             }
-
-            string[] errorDescriptions = result.Errors.Select(error => error.Description).ToArray();
+            string[] errorDescriptions = [.. result.Errors.Select(error => error.Description)];
             return BadRequest(new { Errors = errorDescriptions });
         }
 
-        private static bool IsDtoValid(RegisterDto registerDto) =>
-            registerDto.Name is not null &&
-            registerDto.Email is not null &&
-            registerDto.Password is not null &&
-            registerDto.ConfirmPassword is not null &&
-            registerDto.Password == registerDto.ConfirmPassword;
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
+        {
+            User? user = await userManager.FindByEmailAsync(forgotPasswordDto.Email);
+            if (user is null)
+            {
+                return Ok(); // Do not reveal whether the user exists for security reasons
+            }
+
+            try
+            {
+                string token = await userManager.GeneratePasswordResetTokenAsync(user);
+                string encodedToken = HttpUtility.UrlEncode(token);
+                await emailService.SendForgotPasswordAsync(forgotPasswordDto.Email, encodedToken, forgotPasswordDto.FrontedBaseUrl);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending forgot password email: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to send email");
+            }
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
+        {
+            User? user = await userManager.FindByEmailAsync(resetPasswordDto.Email);
+            if (user is null)
+            {
+                return BadRequest("Invalid email address");
+            }
+
+            string decodedToken = HttpUtility.UrlDecode(resetPasswordDto.Token);
+            IdentityResult result = await userManager.ResetPasswordAsync(user, decodedToken, resetPasswordDto.NewPassword!);
+            if (result.Succeeded)
+            {
+                return Ok();
+            }
+            string[] errorDescriptions = [.. result.Errors.Select(error => error.Description)];
+            return BadRequest(new { Errors = errorDescriptions });
+        }
     }
 }

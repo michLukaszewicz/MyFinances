@@ -1,25 +1,27 @@
+using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyFinancesAPI.Data;
+using MyFinancesAPI.Models;
 using MyFinancesAPI.Models.Identity;
 using MyFinancesAPI.Services;
 using MyFinancesAPI.Services.Abstractions;
+using MyFinancesAPI.Services.EmailServices;
+using MyFinancesAPI.Services.EmailServices.Abstractions;
+using MyFinancesAPI.Services.MailClient;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 
-// Use pooled DbContext for better performance under high load
 builder.Services.AddDbContextPool<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
-// Configure Identity with minimal allocations
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.Password.RequiredLength = 8;
@@ -35,7 +37,6 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// Remove cookie authentication and set JwtBearer as default
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
@@ -53,7 +54,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     };
 });
 
-// Cache the JWT secret key to avoid repeated allocations
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 var jwtSecret = builder.Configuration["Jwt:Secret"];
 var jwtKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret ?? string.Empty));
 
@@ -80,7 +81,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Register CORS policy with preflight cache for better performance
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
@@ -92,6 +92,9 @@ builder.Services.AddCors(options =>
                   .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
         });
 });
+
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IEmailClient, EmailClient>();
 
 var app = builder.Build();
 

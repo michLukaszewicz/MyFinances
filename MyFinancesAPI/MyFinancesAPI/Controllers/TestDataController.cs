@@ -10,7 +10,6 @@ namespace MyFinancesAPI.Controllers
     {
         private const string TEST_DATA_PATH = "TestData/TransactionHistory.json";
 
-        // DELETE api/<TestDataController>/5
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
@@ -18,23 +17,26 @@ namespace MyFinancesAPI.Controllers
             {
                 return NotFound("Could not find the test data file");
             }
+
             string json = System.IO.File.ReadAllText(TEST_DATA_PATH);
             List<Transaction>? transactions = JsonSerializer.Deserialize<List<Transaction>>(json, new JsonSerializerOptions()
             {
                 PropertyNameCaseInsensitive = true
             });
+
             Transaction? transactionToDelete = transactions?.FirstOrDefault(t => t.Id == id);
             if (transactionToDelete == null)
             {
                 return NotFound($"Could not find the transaction with given id: {id}");
             }
+
             transactions!.Remove(transactionToDelete);
-            var updatedJson = JsonSerializer.Serialize(transactions, new JsonSerializerOptions()
+            string updatedJson = JsonSerializer.Serialize(transactions, new JsonSerializerOptions()
             {
                 WriteIndented = true,
             });
-            System.IO.File.WriteAllText(TEST_DATA_PATH, updatedJson);
 
+            System.IO.File.WriteAllText(TEST_DATA_PATH, updatedJson);
             return NoContent();
         }
 
@@ -46,12 +48,14 @@ namespace MyFinancesAPI.Controllers
             {
                 return NotFound("Could not find the test data file");
             }
+
             string testData = System.IO.File.ReadAllText(TEST_DATA_PATH);
             if (testData != null && !string.IsNullOrEmpty(testData))
             {
                 Transaction[]? deserialized = JsonSerializer.Deserialize<Transaction[]>(testData);
                 return Ok(deserialized);
             }
+
             return NotFound();
         }
 
