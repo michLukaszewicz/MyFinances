@@ -1,13 +1,14 @@
-﻿using MyFinancesAPI.Exceptions;
+﻿using Microsoft.Extensions.Options;
+using MyFinancesAPI.Exceptions;
 using MyFinancesAPI.Models;
 using MyFinancesAPI.Services.EmailServices.Abstractions;
 using System.Net.Mail;
 
 namespace MyFinancesAPI.Services.MailClient
 {
-    public class EmailClient(EmailSettings settings) : IEmailClient
+    public class EmailClient(IOptions<EmailSettings> options) : IEmailClient
     {
-        private readonly EmailSettings settings = settings;
+        private readonly EmailSettings settings = options.Value;
 
         public async Task SendEmailAsync(string toEmail, string subject, string body)
         {

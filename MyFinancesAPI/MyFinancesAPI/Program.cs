@@ -54,6 +54,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     };
 });
 
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 var jwtSecret = builder.Configuration["Jwt:Secret"];
 var jwtKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret ?? string.Empty));
 
@@ -93,11 +94,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IEmailClient, EmailClient>(sp =>
-{
-    var settings = sp.GetRequiredService<IOptions<EmailSettings>>().Value;
-    return new EmailClient(settings);
-});
+builder.Services.AddScoped<IEmailClient, EmailClient>();
 
 var app = builder.Build();
 
