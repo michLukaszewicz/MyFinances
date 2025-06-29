@@ -14,6 +14,7 @@ namespace MyFinancesAPI.Models.Identity
         public string NewPassword { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Confirm password is required.")]
+        [Compare("Password", ErrorMessage = "Passwords do not match.")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 }
