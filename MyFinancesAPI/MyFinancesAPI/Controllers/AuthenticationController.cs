@@ -80,7 +80,8 @@ namespace MyFinancesAPI.Controllers
             {
                 string token = await userManager.GeneratePasswordResetTokenAsync(user);
                 string encodedToken = HttpUtility.UrlEncode(token);
-                await emailService.SendForgotPasswordAsync(forgotPasswordDto.Email, encodedToken, forgotPasswordDto.FrontedBaseUrl);
+                string encodedUserId = HttpUtility.UrlEncode(user.Id);
+                await emailService.SendForgotPasswordAsync(forgotPasswordDto.Email, encodedToken, encodedUserId, forgotPasswordDto.FrontedBaseUrl);
                 return Ok();
             }
             catch (Exception ex)
@@ -93,7 +94,7 @@ namespace MyFinancesAPI.Controllers
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
         {
-            User? user = await userManager.FindByEmailAsync(resetPasswordDto.Email);
+            User? user = await userManager.FindByIdAsync(resetPasswordDto.UserId);
             if (user is null)
             {
                 return BadRequest("Invalid email address");

@@ -9,10 +9,10 @@ namespace MyFinancesAPI.Services.EmailServices
         private readonly ILogger<EmailService> logger = logger;
         private readonly IEmailClient emailClient = emailClient;
 
-        public async Task SendForgotPasswordAsync(string toEmail, string token, string frontendUrl)
+        public async Task SendForgotPasswordAsync(string toEmail, string token, string userId, string frontendUrl)
         {
             string body = $"<p>To reset your password, please click the link below:</p>" +
-                          $"<a href='{frontendUrl}{token}'>Reset Password</a>";
+                          $"<a href='{frontendUrl}/{userId}/{token}'>Reset Password</a>";
             try
             {
                 await emailClient.SendEmailAsync(toEmail, subject, body);
@@ -27,7 +27,7 @@ namespace MyFinancesAPI.Services.EmailServices
         public async Task SendValidateEmailAsync(string toEmail, string token, string frontendUrl)
         {
             string body = $"<p>To confirm your email address, please click the link below:</p>" +
-                          $"<a href='{frontendUrl}{token}'>Confirm Your Email Address</a>";
+                          $"<a href='{frontendUrl}/{token}'>Confirm Your Email Address</a>";
             try
             {
                 await emailClient.SendEmailAsync(toEmail, subject, body);

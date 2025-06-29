@@ -8,7 +8,7 @@ namespace MyFinancesAPI.Models.Identity
         public string Token { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Email is required.")]
-        public string Email { get; set; } = string.Empty;
+        public string UserId { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "New password is required.")]
         public string NewPassword { get; set; } = string.Empty;

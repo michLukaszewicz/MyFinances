@@ -2,6 +2,7 @@ import axios from "axios";
 import type { LoginDto } from "../../Dtos/LoginDto";
 import type { RegisterDto } from "../../Dtos/RegisterDto";
 import type { LoginResponse } from "../../Models/LoginResponse";
+import type { ResetPasswordDto } from "../../Dtos/ResetPasswordDto";
 
 export async function Login(loginDto: LoginDto): Promise<boolean> {
   try {
@@ -31,6 +32,22 @@ export async function Register(registerDto: RegisterDto): Promise<string[] | nul
   }
 }
 
+export async function ResetPassword(resetPasswordDto: ResetPasswordDto): Promise<string[] | null> {
+  try {
+    await axios.post(`https://localhost:7121/Authentication/reset-password`, resetPasswordDto);
+    return null;
+  } catch (error: any) {
+    if (axios.isAxiosError(error) && error.response) {
+      if (Array.isArray(error.response.data.Errors)) {
+        return error.response.data.Errors;
+      }
+      if (Array.isArray(error.response.data.errors)) {
+        return error.response.data.errors;
+      }
+    }
+    return ["Registration failed. Please try again."];
+  }
+}
 
 export const isAuthenticated = (): boolean => {
   const token = localStorage.getItem("access_token");
