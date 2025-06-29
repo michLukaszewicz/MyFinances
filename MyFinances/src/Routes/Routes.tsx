@@ -6,6 +6,7 @@ import ForgotPasswordPage from "../Pages/ForgotPasswordPage";
 import DashboardPage from "../Pages/DashboardPage";
 import RequiredAuth from "../Components/Auth/RequiredAuth";
 import HomePage from "../Pages/HomePage";
+import ResetPasswordPage from "../Pages/ResetPasswordPage";
 
 export const router = createBrowserRouter([
   {
@@ -52,6 +53,12 @@ export const router = createBrowserRouter([
           </RequiredAuth>
         ),
       },
+      {
+        path: "reset-password",
+        element: (
+            <ResetPasswordPage />
+        ),
+      }
     ],
   },
 ]);

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using MyFinancesAPI.Models.Identity;
 using MyFinancesAPI.Services.Abstractions;
 using MyFinancesAPI.Services.EmailServices.Abstractions;
-using System.Web;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace MyFinancesAPI.Controllers
@@ -16,11 +15,33 @@ namespace MyFinancesAPI.Controllers
         SignInManager<User> signInManager,
         IEmailService emailService) : ControllerBase
     {
+        private readonly IEmailService emailService = emailService;
         private readonly IJwtProvider jwtProvider = jetProvider;
         private readonly SignInManager<User> signInManager = signInManager;
-        private readonly IEmailService emailService = emailService;
         private readonly UserManager<User> userManager = userManager;
         private static DateTimeOffset DefaultExpireTime => DateTimeOffset.UtcNow.AddMinutes(3);
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
+        {
+            User? user = await userManager.FindByEmailAsync(forgotPasswordDto.Email);
+            if (user is null)
+            {
+                return Ok();
+            }
+
+            try
+            {
+                string token = await userManager.GeneratePasswordResetTokenAsync(user);
+                await emailService.SendForgotPasswordAsync(forgotPasswordDto.Email, token, user.Id, forgotPasswordDto.FrontedBaseUrl);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending forgot password email: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to send email");
+            }
+        }
 
         [HttpPost("login")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -67,40 +88,16 @@ namespace MyFinancesAPI.Controllers
             return BadRequest(new { Errors = errorDescriptions });
         }
 
-        [HttpPost("forgot-password")]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
-        {
-            User? user = await userManager.FindByEmailAsync(forgotPasswordDto.Email);
-            if (user is null)
-            {
-                return Ok(); // Do not reveal whether the user exists for security reasons
-            }
-
-            try
-            {
-                string token = await userManager.GeneratePasswordResetTokenAsync(user);
-                string encodedToken = HttpUtility.UrlEncode(token);
-                await emailService.SendForgotPasswordAsync(forgotPasswordDto.Email, encodedToken, forgotPasswordDto.FrontedBaseUrl);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error sending forgot password email: {ex.Message}");
-                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to send email");
-            }
-        }
-
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
         {
-            User? user = await userManager.FindByEmailAsync(resetPasswordDto.Email);
+            User? user = await userManager.FindByIdAsync(resetPasswordDto.UserId);
             if (user is null)
             {
-                return BadRequest("Invalid email address");
+                return Ok();
             }
 
-            string decodedToken = HttpUtility.UrlDecode(resetPasswordDto.Token);
-            IdentityResult result = await userManager.ResetPasswordAsync(user, decodedToken, resetPasswordDto.NewPassword!);
+            IdentityResult result = await userManager.ResetPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword!);
             if (result.Succeeded)
             {
                 return Ok();

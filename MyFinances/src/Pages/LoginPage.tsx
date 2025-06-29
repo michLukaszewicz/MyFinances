@@ -1,6 +1,6 @@
 import Box from "../Components/Box/Box";
 import PageContent from "../Components/PageContent/PageContent";
-import LoginForm from "../Components/Forms/LoginForm";
+import LoginForm from "../Forms/LoginForm";
 
 const LoginPage = () => {
   return (
