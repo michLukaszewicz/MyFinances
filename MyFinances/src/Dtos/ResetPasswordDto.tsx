@@ -1,5 +1,5 @@
 export type ResetPasswordDto = {
-    Email: string;
+    userId: string;
     Token: string;
     NewPassword: string;
     ConfirmPassword: string;

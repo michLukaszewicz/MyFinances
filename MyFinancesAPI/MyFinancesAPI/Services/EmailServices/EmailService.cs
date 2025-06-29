@@ -11,8 +11,9 @@ namespace MyFinancesAPI.Services.EmailServices
 
         public async Task SendForgotPasswordAsync(string toEmail, string token, string userId, string frontendUrl)
         {
+            string cleanFrontendUrl = frontendUrl.TrimEnd('/');
             string body = $"<p>To reset your password, please click the link below:</p>" +
-                          $"<a href='{frontendUrl}/{userId}/{token}'>Reset Password</a>";
+                          $"<a href='{cleanFrontendUrl}?userId={userId}&token={token}'>Reset Password</a>";
             try
             {
                 await emailClient.SendEmailAsync(toEmail, subject, body);

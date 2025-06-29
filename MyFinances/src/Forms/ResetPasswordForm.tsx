@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import type { ResetPasswordDto } from "../Dtos/ResetPasswordDto";
+import { ResetPassword } from "../Services/ApiServices/AuthenticationService";
 
 const ResetPasswordForm = () => {
   const {
@@ -10,6 +11,8 @@ const ResetPasswordForm = () => {
   } = useForm<ResetPasswordDto>({ mode: "onSubmit" });
 
   const onSubmit = async (data: ResetPasswordDto) => {
+    data.Token = useParams().token || "";
+    data.userId = useParams().userid || "";
     var success = await ResetPassword(data);
     if (success) {
       window.location.href = "/login";

@@ -94,7 +94,8 @@ namespace MyFinancesAPI.Controllers
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
         {
-            User? user = await userManager.FindByIdAsync(resetPasswordDto.UserId);
+            string decodedUserId = HttpUtility.UrlDecode(resetPasswordDto.UserId);
+            User? user = await userManager.FindByIdAsync(decodedUserId);
             if (user is null)
             {
                 return BadRequest("Invalid email address");
