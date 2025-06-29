@@ -31,21 +31,24 @@ export async function Register(registerDto: RegisterDto): Promise<string[] | nul
     return ["Registration failed. Please try again."];
   }
 }
-
 export async function ResetPassword(resetPasswordDto: ResetPasswordDto): Promise<string[] | null> {
   try {
     await axios.post(`https://localhost:7121/Authentication/reset-password`, resetPasswordDto);
     return null;
   } catch (error: any) {
     if (axios.isAxiosError(error) && error.response) {
-      if (Array.isArray(error.response.data.Errors)) {
-        return error.response.data.Errors;
+      const data = error.response.data;
+      if (Array.isArray(data.Errors)) {
+        return data.Errors;
       }
-      if (Array.isArray(error.response.data.errors)) {
-        return error.response.data.errors;
+      if (Array.isArray(data.errors)) {
+        return data.errors;
+      }
+      if (typeof data === "string") {
+        return [data]; 
       }
     }
-    return ["Registration failed. Please try again."];
+    return ["Password reset failed. Please try again."];
   }
 }
 

@@ -9,23 +9,28 @@ const ResetPasswordForm = () => {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<ResetPasswordDto>({ mode: "onSubmit" });
 
   const onSubmit = async (data: ResetPasswordDto) => {
     data.Token = searchParams.get("token") || "";
     data.userId = searchParams.get("userId") || "";
-    var success = await ResetPassword(data);
-    if (success) {
+    var results = await ResetPassword(data);
+    if (results === null) {
       window.location.href = "/login";
     } else {
-      alert("Reset failed. Please check the form");
+      setError("root", {
+        type: "server",
+        message: results.join("\n"),
+      });
     }
   };
 
   return (
-    <form className="p-5" onSubmit={handleSubmit(onSubmit)}>
+    <form className="p-5" onSubmit={handleSubmit(onSubmit)} noValidate>
       <div className="flex flex-col gap-2 mb-3">
+        {errors.root?.message && <div className="text-red-500 text-sm mb-2 whitespace-pre-line">{errors.root.message}</div>}
         <label htmlFor="new-password" className="block text-xl font-medium text-gray-700">
           New Password
         </label>

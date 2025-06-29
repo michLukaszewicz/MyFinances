@@ -1,5 +1,6 @@
 ﻿using MyFinancesAPI.Exceptions;
 using MyFinancesAPI.Services.EmailServices.Abstractions;
+using System.Web;
 
 namespace MyFinancesAPI.Services.EmailServices
 {
@@ -11,9 +12,17 @@ namespace MyFinancesAPI.Services.EmailServices
 
         public async Task SendForgotPasswordAsync(string toEmail, string token, string userId, string frontendUrl)
         {
+            //TODO: Sprawdzić poprawność tego, może uda się skrócić. Też zastanawiam się czy nie użyć inndego encodowania
             string cleanFrontendUrl = frontendUrl.TrimEnd('/');
-            string body = $"<p>To reset your password, please click the link below:</p>" +
-                          $"<a href='{cleanFrontendUrl}?userId={userId}&token={token}'>Reset Password</a>";
+            string encodedToken = HttpUtility.UrlEncode(token);
+            string encodedUserId = HttpUtility.UrlEncode(userId);
+            string encodedUrl = $"{cleanFrontendUrl}?userId={encodedUserId}&token={encodedToken}";
+            string safeHref = System.Net.WebUtility.HtmlEncode(encodedUrl);
+
+            string body = $@"<p>To reset your password, please click the link below:</p>
+                             <a href='{safeHref}'>Reset Password</a>
+                             <p>Or copy and paste this link into your browser:</p>
+                             <p>{safeHref}</p>";
             try
             {
                 await emailClient.SendEmailAsync(toEmail, subject, body);
