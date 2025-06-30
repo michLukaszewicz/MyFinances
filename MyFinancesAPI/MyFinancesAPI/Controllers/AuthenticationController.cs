@@ -9,6 +9,9 @@ namespace MyFinancesAPI.Controllers
 {
     [Route("[controller]")]
     [ApiController]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public class AuthenticationController(
         IJwtProvider jetProvider,
         UserManager<User> userManager,
@@ -44,9 +47,7 @@ namespace MyFinancesAPI.Controllers
         }
 
         [HttpPost("login")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Login([FromBody] LoginDto credential)
         {
             User? user = await userManager.FindByEmailAsync(credential.Email!);
@@ -82,6 +83,20 @@ namespace MyFinancesAPI.Controllers
             IdentityResult result = await userManager.CreateAsync(user, registerDto.Password!);
             if (result.Succeeded)
             {
+                try
+                {
+                    var validationEmailDto = new SendValidationEmailDto()
+                    {
+                        Email = registerDto.Email,
+                        FrontendBaseUrl = registerDto.FrontendBaseUrl
+                    };
+                    await SendValidationEmailAsync(validationEmailDto);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error sending confirmation email: {ex.Message}");
+                    return StatusCode(StatusCodes.Status500InternalServerError, "Failed to send confirmation email");
+                }
                 return Ok();
             }
             string[] errorDescriptions = [.. result.Errors.Select(error => error.Description)];
@@ -98,6 +113,44 @@ namespace MyFinancesAPI.Controllers
             }
 
             IdentityResult result = await userManager.ResetPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword!);
+            if (result.Succeeded)
+            {
+                return Ok();
+            }
+            string[] errorDescriptions = [.. result.Errors.Select(error => error.Description)];
+            return BadRequest(new { Errors = errorDescriptions });
+        }
+
+        [HttpPost("send-validation-email")]
+        public async Task<IActionResult> SendValidationEmailAsync([FromBody] SendValidationEmailDto sendValidationEmailDto)
+        {
+            try
+            {
+                User? user = await userManager.FindByEmailAsync(sendValidationEmailDto.Email!);
+                if (user is null || user.EmailConfirmed)
+                {
+                    return Ok();
+                }
+                string token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+                await emailService.SendValidateEmailAsync(user.Email!, token, user.Id, sendValidationEmailDto.FrontendBaseUrl!);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending validation email: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to send validation email");
+            }
+        }
+
+        [HttpPost("validate-email")]
+        public async Task<IActionResult> ValidateEmail([FromBody] ValidateEmailDto validateEmailDto)
+        {
+            User? user = await userManager.FindByIdAsync(validateEmailDto.UserId!);
+            if (user is null)
+            {
+                return Ok();
+            }
+            IdentityResult result = await userManager.ConfirmEmailAsync(user, validateEmailDto.Token!);
             if (result.Succeeded)
             {
                 return Ok();
