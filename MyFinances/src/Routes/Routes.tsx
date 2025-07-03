@@ -7,6 +7,7 @@ import DashboardPage from "../Pages/DashboardPage";
 import RequiredAuth from "../Components/Auth/RequiredAuth";
 import HomePage from "../Pages/HomePage";
 import ResetPasswordPage from "../Pages/ResetPasswordPage";
+import EmailConfirmationPage from "../Pages/EmailConfirmationPage";
 
 export const router = createBrowserRouter([
   {
@@ -56,8 +57,16 @@ export const router = createBrowserRouter([
       {
         path: "reset-password",
         element: (
+          <RequiredAuth requireLoggedOut={false}>
             <ResetPasswordPage />
+          </RequiredAuth>
         ),
+      },
+      {
+        path: "email-confirmation",
+        element: (
+          <EmailConfirmationPage />
+        )
       }
     ],
   },

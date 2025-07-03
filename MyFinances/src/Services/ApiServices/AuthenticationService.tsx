@@ -1,9 +1,10 @@
 import axios from "axios";
-import type { LoginDto } from "../../Dtos/LoginDto";
-import type { RegisterDto } from "../../Dtos/RegisterDto";
+import type { RegisterDto } from "../../Models/Dtos/RegisterDto";
 import type { LoginResponse } from "../../Models/LoginResponse";
-import type { ResetPasswordDto } from "../../Dtos/ResetPasswordDto";
-import type { ForgotPasswordDto } from "../../Dtos/ForgotPasswordDto";
+import type { ResetPasswordDto } from "../../Models/Dtos/ResetPasswordDto";
+import type { ForgotPasswordDto } from "../../Models/Dtos/ForgotPasswordDto";
+import type { LoginDto } from "../../Models/Dtos/LoginDto";
+import type { ValidateEmailDto } from "../../Models/Dtos/ValidateEmailDto";
 
 export async function Login(loginDto: LoginDto): Promise<boolean> {
   try {
@@ -16,8 +17,18 @@ export async function Login(loginDto: LoginDto): Promise<boolean> {
   }
 }
 
+export async function ValidateEmail(validateEmailDto: ValidateEmailDto): Promise<boolean> {
+  try {
+    await axios.post<LoginResponse>(`https://localhost:7121/Authentication/validate-email`, validateEmailDto);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 export async function Register(registerDto: RegisterDto): Promise<string[] | null> {
   try {
+    registerDto.FrontendBaseUrl = `${window.location.origin}/email-confirmation`;
     await axios.post(`https://localhost:7121/Authentication/Register`, registerDto);
     return null;
   } catch (error: any) {
@@ -33,7 +44,7 @@ export async function Register(registerDto: RegisterDto): Promise<string[] | nul
         return [data];
       }
     }
-    return ["Password reset failed. Please try again."];
+    return ["Registration failed. Please try again."];
   }
 }
 
@@ -76,7 +87,7 @@ export async function ForgotPassword(forgotPasswordDto: ForgotPasswordDto): Prom
         return [data];
       }
     }
-    return ["Password reset failed. Please try again."];
+    return ["Sending reset email failed. Please try again."];
   }
 }
 

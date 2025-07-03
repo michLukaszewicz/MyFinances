@@ -48,7 +48,7 @@ namespace MyFinancesAPI.Services.EmailServices
         private static string PrepareUrl(string token, string userId, string frontendUrl)
         {
             string cleanFrontendUrl = frontendUrl.TrimEnd('/');
-            string url = $"{cleanFrontendUrl}?userId={userId}&token={token}";
+            string url = $"{cleanFrontendUrl}?userId={Uri.EscapeDataString(userId)}&token={Uri.EscapeDataString(token)}";
             string safeUrl = System.Net.WebUtility.HtmlEncode(url);
             return safeUrl;
         }
