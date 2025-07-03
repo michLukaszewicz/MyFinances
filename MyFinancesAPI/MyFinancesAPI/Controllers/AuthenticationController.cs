@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MyFinancesAPI.Models.Identity;
 using MyFinancesAPI.Services.Abstractions;
@@ -16,10 +17,12 @@ namespace MyFinancesAPI.Controllers
         IJwtProvider jetProvider,
         UserManager<User> userManager,
         SignInManager<User> signInManager,
-        IEmailService emailService) : ControllerBase
+        IEmailService emailService,
+        IMapper mapper) : ControllerBase
     {
         private readonly IEmailService emailService = emailService;
         private readonly IJwtProvider jwtProvider = jetProvider;
+        private readonly IMapper mapper = mapper;
         private readonly SignInManager<User> signInManager = signInManager;
         private readonly UserManager<User> userManager = userManager;
         private static DateTimeOffset DefaultExpireTime => DateTimeOffset.UtcNow.AddMinutes(3);
@@ -55,6 +58,10 @@ namespace MyFinancesAPI.Controllers
             {
                 return Unauthorized("Invalid credentials");
             }
+            else if (!user.EmailConfirmed)
+            {
+                return Unauthorized("Email not confirmed");
+            }
 
             SignInResult results = await signInManager.CheckPasswordSignInAsync(user, credential.Password!, lockoutOnFailure: false);
             if (results.Succeeded)
@@ -66,30 +73,19 @@ namespace MyFinancesAPI.Controllers
                     expires_at = DefaultExpireTime,
                 });
             }
-            ModelState.AddModelError("Unauthorized", "Invalid credentials");
-            return Unauthorized(ModelState);
+            return Unauthorized("Invalid credentials");
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
-            var user = new User
-            {
-                FirstName = registerDto.Name!,
-                UserName = registerDto.Email,
-                Email = registerDto.Email,
-            };
-
+            var user = mapper.Map<User>(registerDto);
             IdentityResult result = await userManager.CreateAsync(user, registerDto.Password!);
             if (result.Succeeded)
             {
                 try
                 {
-                    var validationEmailDto = new SendValidationEmailDto()
-                    {
-                        Email = registerDto.Email,
-                        FrontendBaseUrl = registerDto.FrontendBaseUrl
-                    };
+                    var validationEmailDto = mapper.Map<SendValidationEmailDto>(registerDto);
                     await SendValidationEmailAsync(validationEmailDto);
                 }
                 catch (Exception ex)
