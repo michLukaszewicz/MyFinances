@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { Login, Register } from "../Services/ApiServices/AuthenticationService";
-import type { RegisterDto } from "../Dtos/RegisterDto";
+import type { RegisterDto } from "../Models/Dtos/RegisterDto";
 
 const RegisterForm = () => {
   const {

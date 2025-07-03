@@ -1,28 +1,21 @@
 ﻿using MyFinancesAPI.Exceptions;
 using MyFinancesAPI.Services.EmailServices.Abstractions;
-using System.Web;
 
 namespace MyFinancesAPI.Services.EmailServices
 {
     public class EmailService(ILogger<EmailService> logger, IEmailClient emailClient) : IEmailService
     {
         private const string subject = "Reset Your Password - MyFinances";
-        private readonly ILogger<EmailService> logger = logger;
         private readonly IEmailClient emailClient = emailClient;
+        private readonly ILogger<EmailService> logger = logger;
 
         public async Task SendForgotPasswordAsync(string toEmail, string token, string userId, string frontendUrl)
         {
-            //TODO: Sprawdzić poprawność tego, może uda się skrócić. Też zastanawiam się czy nie użyć inndego encodowania
-            string cleanFrontendUrl = frontendUrl.TrimEnd('/');
-            string encodedToken = HttpUtility.UrlEncode(token);
-            string encodedUserId = HttpUtility.UrlEncode(userId);
-            string encodedUrl = $"{cleanFrontendUrl}?userId={encodedUserId}&token={encodedToken}";
-            string safeHref = System.Net.WebUtility.HtmlEncode(encodedUrl);
-
+            string safeUrl = PrepareUrl(token, userId, frontendUrl);
             string body = $@"<p>To reset your password, please click the link below:</p>
-                             <a href='{safeHref}'>Reset Password</a>
+                             <a href='{safeUrl}'>Reset Password</a>
                              <p>Or copy and paste this link into your browser:</p>
-                             <p>{safeHref}</p>";
+                             <p>{safeUrl}</p>";
             try
             {
                 await emailClient.SendEmailAsync(toEmail, subject, body);
@@ -34,10 +27,13 @@ namespace MyFinancesAPI.Services.EmailServices
             }
         }
 
-        public async Task SendValidateEmailAsync(string toEmail, string token, string frontendUrl)
+        public async Task SendValidateEmailAsync(string toEmail, string token, string userId, string frontendUrl)
         {
-            string body = $"<p>To confirm your email address, please click the link below:</p>" +
-                          $"<a href='{frontendUrl}/{token}'>Confirm Your Email Address</a>";
+            string safeUrl = PrepareUrl(token, userId, frontendUrl);
+            string body = $@"<p>To confirm your email address, please click the link below:</p>
+                             <a href='{safeUrl}'>Confirm email address</a>
+                             <p>Or copy and paste this link into your browser:</p>
+                             <p>{safeUrl}</p>";
             try
             {
                 await emailClient.SendEmailAsync(toEmail, subject, body);
@@ -47,6 +43,14 @@ namespace MyFinancesAPI.Services.EmailServices
                 logger.LogError(ex, "Error sending confirmation email: {Message}", ex.Message);
                 throw new SendEmailException("Error when sending Validation email", ex);
             }
+        }
+
+        private static string PrepareUrl(string token, string userId, string frontendUrl)
+        {
+            string cleanFrontendUrl = frontendUrl.TrimEnd('/');
+            string url = $"{cleanFrontendUrl}?userId={Uri.EscapeDataString(userId)}&token={Uri.EscapeDataString(token)}";
+            string safeUrl = System.Net.WebUtility.HtmlEncode(url);
+            return safeUrl;
         }
     }
 }
