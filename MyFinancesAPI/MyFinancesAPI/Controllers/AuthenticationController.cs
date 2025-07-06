@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using MyFinancesAPI.Models.Configurations;
 using MyFinancesAPI.Models.Identity;
 using MyFinancesAPI.Services.Abstractions;
 using MyFinancesAPI.Services.EmailServices.Abstractions;
@@ -19,11 +21,13 @@ namespace MyFinancesAPI.Controllers
         UserManager<User> userManager,
         SignInManager<User> signInManager,
         IEmailService emailService,
-        IMapper mapper) : ControllerBase
+        IMapper mapper,
+        IOptions<FrontendSettings> options) : ControllerBase
     {
         private readonly IEmailService emailService = emailService;
         private readonly IJwtProvider jwtProvider = jwtProvider;
         private readonly IMapper mapper = mapper;
+        private readonly FrontendSettings options = options.Value;
         private readonly SignInManager<User> signInManager = signInManager;
         private readonly UserManager<User> userManager = userManager;
         private static DateTimeOffset DefaultExpireTime => DateTimeOffset.UtcNow.AddMinutes(3);
@@ -40,8 +44,7 @@ namespace MyFinancesAPI.Controllers
         public async Task<IActionResult> GoogleResponse(string redirectUrl = "/")
         {
             //TODO: Add the rest of the Google authentication logic here.
-            //TODO: Move const localhost to configuration.
-            return Redirect($"http://localhost:5173{redirectUrl}");
+            return Redirect($"{options.BaseUrl}{redirectUrl}");
         }
 
         [HttpPost("forgot-password")]

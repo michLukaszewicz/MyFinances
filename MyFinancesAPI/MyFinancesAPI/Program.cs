@@ -14,6 +14,7 @@ using MyFinancesAPI.Services.MailClient;
 using System.Text;
 using AutoMapper;
 using MyFinancesAPI.Maps;
+using MyFinancesAPI.Models.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -102,6 +103,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IEmailClient, EmailClient>();
+builder.Services.Configure<FrontendSettings>(builder.Configuration.GetSection("Frontend"));
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<RegisterDtoToUser>());
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<RegisterDtoToSendValidationEmailDto>());
 

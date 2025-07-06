@@ -59,7 +59,7 @@ const LoginForm = () => {
         </button>
       </div>
       <button
-        onClick={() => window.location.href='https://localhost:7121/authentication/google-login?redirectUrl=/dashboard'}
+        onClick={() => window.location.href='https://localhost:7121/authentication/google-login?redirectUrl=dashboard'}
         className="w-full py-2 px-4 mt-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
         Zaloguj się przez Google
       </button>
