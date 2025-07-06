@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MyFinancesAPI.Models.Identity;
@@ -14,25 +15,33 @@ namespace MyFinancesAPI.Controllers
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public class AuthenticationController(
-        IJwtProvider jetProvider,
+        IJwtProvider jwtProvider,
         UserManager<User> userManager,
         SignInManager<User> signInManager,
         IEmailService emailService,
         IMapper mapper) : ControllerBase
     {
         private readonly IEmailService emailService = emailService;
-        private readonly IJwtProvider jwtProvider = jetProvider;
+        private readonly IJwtProvider jwtProvider = jwtProvider;
         private readonly IMapper mapper = mapper;
         private readonly SignInManager<User> signInManager = signInManager;
         private readonly UserManager<User> userManager = userManager;
         private static DateTimeOffset DefaultExpireTime => DateTimeOffset.UtcNow.AddMinutes(3);
 
-        [HttpPost("signin-google")]
-        public async Task<IActionResult> SignInGoogle()
+        [HttpGet("google-login")]
+        public IActionResult GoogleLogin(string redirectUrl = "")
         {
-            // This endpoint is not implemented in the original code.
-            // You can implement Google Sign-In logic here if needed.
-            return BadRequest("Google Sign-In not implemented.");
+            string? redirectUri = Url.Action(nameof(GoogleResponse), "Authentication", new { redirectUrl }, Request.Scheme);
+            Microsoft.AspNetCore.Authentication.AuthenticationProperties properties = signInManager.ConfigureExternalAuthenticationProperties(GoogleDefaults.AuthenticationScheme, redirectUri);
+            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+        }
+
+        [HttpGet("google-response")]
+        public async Task<IActionResult> GoogleResponse(string redirectUrl = "/")
+        {
+            //TODO: Add the rest of the Google authentication logic here.
+            //TODO: Move const localhost to configuration.
+            return Redirect($"http://localhost:5173{redirectUrl}");
         }
 
         [HttpPost("forgot-password")]

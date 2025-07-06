@@ -12,6 +12,8 @@ using MyFinancesAPI.Services.EmailServices;
 using MyFinancesAPI.Services.EmailServices.Abstractions;
 using MyFinancesAPI.Services.MailClient;
 using System.Text;
+using AutoMapper;
+using MyFinancesAPI.Maps;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,6 +69,7 @@ builder.Services.AddAuthentication(options =>
 {
     options.ClientId = builder.Configuration["Google:ClientId"] ?? string.Empty;
     options.ClientSecret = builder.Configuration["Google:ClientSecret"] ?? string.Empty;
+    options.CallbackPath = "/google-response";
 })
 .AddJwtBearer(options =>
 {
@@ -99,6 +102,9 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IEmailClient, EmailClient>();
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<RegisterDtoToUser>());
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<RegisterDtoToSendValidationEmailDto>());
+
 
 var app = builder.Build();
 
