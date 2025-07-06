@@ -63,6 +63,10 @@ builder.Services.AddAuthentication(options =>
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddGoogle(options =>
+{
+    options.ClientId = builder.Configuration["Google:ClientId"] ?? string.Empty;
+    options.ClientSecret = builder.Configuration["Google:ClientSecret"] ?? string.Empty;
 })
 .AddJwtBearer(options =>
 {

@@ -27,6 +27,14 @@ namespace MyFinancesAPI.Controllers
         private readonly UserManager<User> userManager = userManager;
         private static DateTimeOffset DefaultExpireTime => DateTimeOffset.UtcNow.AddMinutes(3);
 
+        [HttpPost("signin-google")]
+        public async Task<IActionResult> SignInGoogle()
+        {
+            // This endpoint is not implemented in the original code.
+            // You can implement Google Sign-In logic here if needed.
+            return BadRequest("Google Sign-In not implemented.");
+        }
+
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
         {
