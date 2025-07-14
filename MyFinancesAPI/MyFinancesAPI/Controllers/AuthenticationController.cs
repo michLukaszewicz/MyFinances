@@ -7,6 +7,7 @@ using MyFinancesAPI.Models.Configurations;
 using MyFinancesAPI.Models.Identity;
 using MyFinancesAPI.Services.Abstractions;
 using MyFinancesAPI.Services.EmailServices.Abstractions;
+using System.Security.Claims;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace MyFinancesAPI.Controllers
@@ -32,21 +33,6 @@ namespace MyFinancesAPI.Controllers
         private readonly UserManager<User> userManager = userManager;
         private static DateTimeOffset DefaultExpireTime => DateTimeOffset.UtcNow.AddMinutes(3);
 
-        [HttpGet("google-login")]
-        public IActionResult GoogleLogin(string redirectUrl = "")
-        {
-            string? redirectUri = Url.Action(nameof(GoogleResponse), "Authentication", new { redirectUrl }, Request.Scheme);
-            Microsoft.AspNetCore.Authentication.AuthenticationProperties properties = signInManager.ConfigureExternalAuthenticationProperties(GoogleDefaults.AuthenticationScheme, redirectUri);
-            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
-        }
-
-        [HttpGet("google-response")]
-        public async Task<IActionResult> GoogleResponse(string redirectUrl = "/")
-        {
-            //TODO: Add the rest of the Google authentication logic here.
-            return Redirect($"{options.BaseUrl}{redirectUrl}");
-        }
-
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
         {
@@ -67,6 +53,87 @@ namespace MyFinancesAPI.Controllers
                 Console.WriteLine($"Error sending forgot password email: {ex.Message}");
                 return StatusCode(StatusCodes.Status500InternalServerError, "Failed to send email");
             }
+        }
+
+        [HttpGet("google-login")]
+        public IActionResult GoogleLogin(string redirectUrl = "")
+        {
+            string? redirectUri = Url.Action(nameof(GoogleResponse), "Authentication", new { redirectUrl }, Request.Scheme);
+            Microsoft.AspNetCore.Authentication.AuthenticationProperties properties = signInManager.ConfigureExternalAuthenticationProperties(GoogleDefaults.AuthenticationScheme, redirectUri);
+            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+        }
+
+        //TODO: Move google-methods to a separate controller.
+        [HttpGet("google-response")]
+        public async Task<IActionResult> GoogleResponse(string redirectUrl = "/")
+        {
+            ExternalLoginInfo? info = await signInManager.GetExternalLoginInfoAsync();
+            if (info is null)
+            {
+                return Redirect($"{options.BaseUrl}/login?error=external-login-info-not-found");
+            }
+
+            string? email = info.Principal.FindFirstValue(ClaimTypes.Email);
+            if (email is null)
+            {
+                return Redirect($"{options.BaseUrl}/login?error=email-not-found");
+            }
+
+            Task<SignInResult> result = signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
+            if (result.IsCompletedSuccessfully)
+            {
+                User? user = await userManager.FindByEmailAsync(email);
+                if (user is null)
+                {
+                    return Redirect($"{options.BaseUrl}/login?error=external-login-info-not-found");
+                }
+
+                string token = jwtProvider.GetJwtTokenForUser(DefaultExpireTime, user);
+                return Redirect($"{options.BaseUrl}/{redirectUrl}?access_token={token}&expires_at={DefaultExpireTime}");
+            }
+
+            User? existingUser = await userManager.FindByEmailAsync(email);
+            if (existingUser is not null)
+            {
+                var loginProviders = await userManager.GetLoginsAsync(existingUser);
+                bool hasGoogleLogin = loginProviders.Any(login => login.LoginProvider == info.LoginProvider && login.ProviderKey == info.ProviderKey);
+                if (hasGoogleLogin)
+                {
+                    return Redirect($"{options.BaseUrl}/login?error=external-login-not-linked");
+                }
+
+                return Redirect($"{options.BaseUrl}/login?error=external-login-failed");
+            }
+
+            var name = info.Principal.FindFirstValue(ClaimTypes.Name) ?? "User";
+            var password = Guid.NewGuid().ToString("N");
+            var registerDto = new RegisterDto()
+            {
+                Name = name,
+                Email = email,
+                Password = password,
+                ConfirmPassword = password,
+            };
+
+            IActionResult registerResult = await Register(registerDto);
+            if (registerResult is OkResult || registerResult is ObjectResult { StatusCode: 200 })
+            {
+                User? newUser = await userManager.FindByEmailAsync(email);
+                if (newUser is null)
+                {
+                    return Redirect($"{options.BaseUrl}/login?error=external-login-failed");
+                }
+                IdentityResult linkResult = await userManager.AddLoginAsync(newUser, info);
+                if (!linkResult.Succeeded)
+                {
+                    string[] errorDescriptions = [.. linkResult.Errors.Select(error => error.Description)];
+                    return BadRequest(new { Errors = errorDescriptions });
+                }
+                string token = jwtProvider.GetJwtTokenForUser(DefaultExpireTime, newUser);
+                return Redirect($"{options.BaseUrl}/{redirectUrl}?access_token={token}&expires_at={DefaultExpireTime}");
+            }
+
+            return Redirect($"{options.BaseUrl}/login?error=external-login-failed");
         }
 
         [HttpPost("login")]
