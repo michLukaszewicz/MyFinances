@@ -104,9 +104,11 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IEmailClient, EmailClient>();
 builder.Services.Configure<FrontendSettings>(builder.Configuration.GetSection("Frontend"));
-builder.Services.AddAutoMapper(cfg => cfg.AddProfile<RegisterDtoToUser>());
-builder.Services.AddAutoMapper(cfg => cfg.AddProfile<RegisterDtoToSendValidationEmailDto>());
-
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddProfile<RegisterDtoToUser>();
+    cfg.AddProfile<RegisterDtoToSendValidationEmailDto>();
+});
 
 var app = builder.Build();
 

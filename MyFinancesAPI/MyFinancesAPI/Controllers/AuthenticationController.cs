@@ -7,6 +7,7 @@ using MyFinancesAPI.Models.Configurations;
 using MyFinancesAPI.Models.Identity;
 using MyFinancesAPI.Services.Abstractions;
 using MyFinancesAPI.Services.EmailServices.Abstractions;
+using PasswordGenerator;
 using System.Security.Claims;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
@@ -64,6 +65,7 @@ namespace MyFinancesAPI.Controllers
         }
 
         //TODO: Move google-methods to a separate controller.
+        //TODO: Add frontendURL in frontend to be able to send valid token in case where we register the new user
         [HttpGet("google-response")]
         public async Task<IActionResult> GoogleResponse(string redirectUrl = "/")
         {
@@ -79,8 +81,8 @@ namespace MyFinancesAPI.Controllers
                 return Redirect($"{options.BaseUrl}/login?error=email-not-found");
             }
 
-            Task<SignInResult> result = signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
-            if (result.IsCompletedSuccessfully)
+            SignInResult result = await signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
+            if (result.Succeeded)
             {
                 User? user = await userManager.FindByEmailAsync(email);
                 if (user is null)
@@ -95,7 +97,7 @@ namespace MyFinancesAPI.Controllers
             User? existingUser = await userManager.FindByEmailAsync(email);
             if (existingUser is not null)
             {
-                var loginProviders = await userManager.GetLoginsAsync(existingUser);
+                IList<UserLoginInfo> loginProviders = await userManager.GetLoginsAsync(existingUser);
                 bool hasGoogleLogin = loginProviders.Any(login => login.LoginProvider == info.LoginProvider && login.ProviderKey == info.ProviderKey);
                 if (hasGoogleLogin)
                 {
@@ -105,8 +107,8 @@ namespace MyFinancesAPI.Controllers
                 return Redirect($"{options.BaseUrl}/login?error=external-login-failed");
             }
 
-            var name = info.Principal.FindFirstValue(ClaimTypes.Name) ?? "User";
-            var password = Guid.NewGuid().ToString("N");
+            string name = info.Principal.FindFirstValue(ClaimTypes.Name) ?? "User";
+            string password = new Password().IncludeNumeric().IncludeSpecial().IncludeLowercase().IncludeUppercase().LengthRequired(12).Next();
             var registerDto = new RegisterDto()
             {
                 Name = name,
@@ -166,7 +168,7 @@ namespace MyFinancesAPI.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
-            var user = mapper.Map<User>(registerDto);
+            User user = mapper.Map<User>(registerDto);
             IdentityResult result = await userManager.CreateAsync(user, registerDto.Password!);
             if (result.Succeeded)
             {
