@@ -8,7 +8,13 @@ type Props = {
 };
 
 const RequiredAuth: React.FC<Props> = ({ children, requireLoggedOut, redirectTo }) => {
-  const token = localStorage.getItem("access_token");
+const params = new URLSearchParams(window.location.search);
+const queryToken = params.get("access_token");
+const token = localStorage.getItem("access_token") || queryToken;
+
+if (queryToken && !localStorage.getItem("access_token")) {
+  localStorage.setItem("access_token", queryToken);
+}
   const isLoggedIn = !!token;
   if (isLoggedIn && IsTokenExpired(token)) {
     localStorage.removeItem("access_token");

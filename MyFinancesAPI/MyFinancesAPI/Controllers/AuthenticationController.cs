@@ -91,7 +91,7 @@ namespace MyFinancesAPI.Controllers
                 }
 
                 string token = jwtProvider.GetJwtTokenForUser(DefaultExpireTime, user);
-                return Redirect($"{options.BaseUrl}/{redirectUrl}?access_token={token}&expires_at={DefaultExpireTime}");
+                return Redirect($"{options.BaseUrl}{redirectUrl}?access_token={token}&expires_at={DefaultExpireTime}");
             }
 
             //Try to find user by email (if it exists in database but has no external login assigned)
@@ -112,7 +112,7 @@ namespace MyFinancesAPI.Controllers
             string name = info.Principal.FindFirstValue(ClaimTypes.Name) ?? string.Empty;
             string encodedName = Uri.EscapeDataString(name);
             string encodedEmail = Uri.EscapeDataString(email);
-            return Redirect($"{options.BaseUrl}complete-registration?email={encodedEmail}&name={encodedName}&provider=Google");
+            return Redirect($"{options.BaseUrl}complete-registration?email={encodedEmail}&name={encodedName}&provider=Google&providerKey={info.ProviderKey}");
         }
 
         [HttpPost("login")]
@@ -147,6 +147,15 @@ namespace MyFinancesAPI.Controllers
         {
             User user = mapper.Map<User>(registerDto);
             IdentityResult result = await userManager.CreateAsync(user, registerDto.Password!);
+            if (!string.IsNullOrEmpty(registerDto.Provider) && !string.IsNullOrEmpty(registerDto.ProviderKey))
+            {
+                var loginInfo = new UserLoginInfo(registerDto.Provider, registerDto.ProviderKey, registerDto.Provider);
+                IdentityResult loginResults = await userManager.AddLoginAsync(user, loginInfo);
+                if (!loginResults.Succeeded)
+                {
+                    return BadRequest(new { Errors = $"Could not add logging from: {registerDto.Provider}" });
+                }
+            }
             if (result.Succeeded)
             {
                 try

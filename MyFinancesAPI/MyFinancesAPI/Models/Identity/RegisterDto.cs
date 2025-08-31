@@ -22,5 +22,6 @@ namespace MyFinancesAPI.Models.Identity
         public string? FrontendBaseUrl { get; set; }
 
         public string? Provider { get; set; }
+        public string? ProviderKey { get; set; }
     }
 }

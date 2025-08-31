@@ -38,7 +38,7 @@ const alreadyCalledRef = useRef<boolean>(false);
   return (
     <PageContent>
       <div className="sm:w-xl sm:mx-auto">
-        <Box header="Validate Email">
+        <Box header="Confirm Email">
           <div className="p-5">
             {result ? (
               <div className="text-green-500 text-lg">

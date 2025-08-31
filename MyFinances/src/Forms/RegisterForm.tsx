@@ -6,9 +6,10 @@ type RegisterFormProps = {
   email: string | null;
   name: string | null;
   provider: string | null;
+  providerKey: string | null;
 }
 
-const RegisterForm = ({ email, name, provider }: RegisterFormProps) => {
+const RegisterForm = ({ email, name, provider, providerKey }: RegisterFormProps) => {
   const {
     register,
     handleSubmit,
@@ -17,11 +18,13 @@ const RegisterForm = ({ email, name, provider }: RegisterFormProps) => {
     formState: { errors },
   } = useForm<RegisterDto>({ 
     mode: "onSubmit", 
-  defaultValues: {
-    Email: email ?? "",
-    Name: name ?? "",
-    Provider: provider ?? ""
-  }});
+    defaultValues: {
+      Email: email ?? "",
+      Name: name ?? "",
+      Provider: provider ?? "",
+      ProviderKey: providerKey ?? "",
+    }
+  });
 
   const password = watch("Password");
 
@@ -105,6 +108,7 @@ const RegisterForm = ({ email, name, provider }: RegisterFormProps) => {
       </div>
 
       <input type="hidden" id="Provider" value={provider ?? ""} {...register("FrontendBaseUrl")} />
+      <input type="hidden" id="ProviderKey" value={providerKey ?? ""} {...register("FrontendBaseUrl")} />
     </form>
   );
 };

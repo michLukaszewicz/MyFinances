@@ -5,12 +5,12 @@ namespace MyFinancesAPI.Services.EmailServices
 {
     public class EmailService(ILogger<EmailService> logger, IEmailClient emailClient) : IEmailService
     {
-        private const string subject = "Reset Your Password - MyFinances";
         private readonly IEmailClient emailClient = emailClient;
         private readonly ILogger<EmailService> logger = logger;
 
         public async Task SendForgotPasswordAsync(string toEmail, string token, string userId, string frontendUrl)
         {
+            const string subject = "Reset Your Password - MyFinances";
             string safeUrl = PrepareUrl(token, userId, frontendUrl);
             string body = $@"<p>To reset your password, please click the link below:</p>
                              <a href='{safeUrl}'>Reset Password</a>
@@ -29,6 +29,7 @@ namespace MyFinancesAPI.Services.EmailServices
 
         public async Task SendValidateEmailAsync(string toEmail, string token, string userId, string frontendUrl)
         {
+            const string subject = "Confirm Your Email - MyFinances";
             string safeUrl = PrepareUrl(token, userId, frontendUrl);
             string body = $@"<p>To confirm your email address, please click the link below:</p>
                              <a href='{safeUrl}'>Confirm email address</a>
