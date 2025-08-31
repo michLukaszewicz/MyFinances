@@ -42,7 +42,6 @@ namespace MyFinancesAPI.Controllers
             {
                 return Ok();
             }
-
             try
             {
                 string token = await userManager.GeneratePasswordResetTokenAsync(user);
@@ -69,18 +68,19 @@ namespace MyFinancesAPI.Controllers
         [HttpGet("google-response")]
         public async Task<IActionResult> GoogleResponse(string redirectUrl = "/")
         {
+            //GetInfo for user
             ExternalLoginInfo? info = await signInManager.GetExternalLoginInfoAsync();
             if (info is null)
             {
                 return Redirect($"{options.BaseUrl}/login?error=external-login-info-not-found");
             }
-
             string? email = info.Principal.FindFirstValue(ClaimTypes.Email);
             if (email is null)
             {
                 return Redirect($"{options.BaseUrl}/login?error=email-not-found");
             }
 
+            //Try to log in (if user has external login added)
             SignInResult result = await signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
             if (result.Succeeded)
             {
@@ -94,6 +94,7 @@ namespace MyFinancesAPI.Controllers
                 return Redirect($"{options.BaseUrl}/{redirectUrl}?access_token={token}&expires_at={DefaultExpireTime}");
             }
 
+            //Try to find user by email (if it exists in database but has no external login assigned)
             User? existingUser = await userManager.FindByEmailAsync(email);
             if (existingUser is not null)
             {
@@ -107,35 +108,11 @@ namespace MyFinancesAPI.Controllers
                 return Redirect($"{options.BaseUrl}/login?error=external-login-failed");
             }
 
-            string name = info.Principal.FindFirstValue(ClaimTypes.Name) ?? "User";
-            string password = new Password().IncludeNumeric().IncludeSpecial().IncludeLowercase().IncludeUppercase().LengthRequired(12).Next();
-            var registerDto = new RegisterDto()
-            {
-                Name = name,
-                Email = email,
-                Password = password,
-                ConfirmPassword = password,
-            };
-
-            IActionResult registerResult = await Register(registerDto);
-            if (registerResult is OkResult || registerResult is ObjectResult { StatusCode: 200 })
-            {
-                User? newUser = await userManager.FindByEmailAsync(email);
-                if (newUser is null)
-                {
-                    return Redirect($"{options.BaseUrl}/login?error=external-login-failed");
-                }
-                IdentityResult linkResult = await userManager.AddLoginAsync(newUser, info);
-                if (!linkResult.Succeeded)
-                {
-                    string[] errorDescriptions = [.. linkResult.Errors.Select(error => error.Description)];
-                    return BadRequest(new { Errors = errorDescriptions });
-                }
-                string token = jwtProvider.GetJwtTokenForUser(DefaultExpireTime, newUser);
-                return Redirect($"{options.BaseUrl}/{redirectUrl}?access_token={token}&expires_at={DefaultExpireTime}");
-            }
-
-            return Redirect($"{options.BaseUrl}/login?error=external-login-failed");
+            //User has no account in the database, redirect to dedicated site
+            string name = info.Principal.FindFirstValue(ClaimTypes.Name) ?? string.Empty;
+            string encodedName = Uri.EscapeDataString(name);
+            string encodedEmail = Uri.EscapeDataString(email);
+            return Redirect($"{options.BaseUrl}complete-registration?email={encodedEmail}&name={encodedName}&provider=Google");
         }
 
         [HttpPost("login")]

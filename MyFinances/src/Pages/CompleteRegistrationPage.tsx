@@ -1,16 +1,23 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Box from "../Components/Box/Box";
 import PageContent from "../Components/PageContent/PageContent";
 import RegisterForm from "../Forms/RegisterForm";
 
-const RegisterPage = () => {
+const CompleteRegistrationPage = () => {
+const location = useLocation();
+const params = new URLSearchParams(location.search);
+
+const email = params.get("email");
+const name = params.get("name");
+const provider = params.get("provider");
+
   return (
     <PageContent>
       <div className="sm:w-xl sm:mx-auto">
         <Box header="Register">
-          <p className="text-gray-500 text-sm mb-3">Nice to see You! Tell us about Yourself</p>
+          <p className="text-gray-500 text-sm mb-3">Nice to see You! Please complete the registration</p>
           <div className="p-5">
-          <RegisterForm email="" name="" provider=""/>
+          <RegisterForm email={email} name={name} provider={provider} />
           <hr className="my-3 text-gray-200 font-bold" />
           <div className="flex items-center">
             <p className="py-2 ">Have an account?</p>
@@ -28,4 +35,4 @@ const RegisterPage = () => {
   );
 };
 
-export default RegisterPage;
+export default CompleteRegistrationPage;

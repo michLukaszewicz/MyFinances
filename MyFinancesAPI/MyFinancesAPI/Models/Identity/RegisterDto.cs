@@ -20,5 +20,7 @@ namespace MyFinancesAPI.Models.Identity
 
         [Required(ErrorMessage = "Frontend Base URL is required.")]
         public string? FrontendBaseUrl { get; set; }
+
+        public string? Provider { get; set; }
     }
 }

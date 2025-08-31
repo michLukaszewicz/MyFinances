@@ -1,15 +1,27 @@
 import { useForm } from "react-hook-form";
-import { Login, Register } from "../Services/ApiServices/AuthenticationService";
+import { Register } from "../Services/ApiServices/AuthenticationService";
 import type { RegisterDto } from "../Models/Dtos/RegisterDto";
 
-const RegisterForm = () => {
+type RegisterFormProps = {
+  email: string | null;
+  name: string | null;
+  provider: string | null;
+}
+
+const RegisterForm = ({ email, name, provider }: RegisterFormProps) => {
   const {
     register,
     handleSubmit,
     setError,
     watch,
     formState: { errors },
-  } = useForm<RegisterDto>({ mode: "onSubmit" });
+  } = useForm<RegisterDto>({ 
+    mode: "onSubmit", 
+  defaultValues: {
+    Email: email ?? "",
+    Name: name ?? "",
+    Provider: provider ?? ""
+  }});
 
   const password = watch("Password");
 
@@ -91,6 +103,8 @@ const RegisterForm = () => {
           Register
         </button>
       </div>
+
+      <input type="hidden" id="Provider" value={provider ?? ""} {...register("FrontendBaseUrl")} />
     </form>
   );
 };

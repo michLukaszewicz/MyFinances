@@ -8,6 +8,7 @@ import RequiredAuth from "../Components/Auth/RequiredAuth";
 import HomePage from "../Pages/HomePage";
 import ResetPasswordPage from "../Pages/ResetPasswordPage";
 import EmailConfirmationPage from "../Pages/EmailConfirmationPage";
+import CompleteRegistrationPage from "../Pages/CompleteRegistrationPage";
 
 export const router = createBrowserRouter([
   {
@@ -43,6 +44,14 @@ export const router = createBrowserRouter([
         element: (
           <RequiredAuth requireLoggedOut={true}>
             <RegisterPage />
+          </RequiredAuth>
+        ),
+      },
+      {
+        path: "complete-registration",
+        element: (
+          <RequiredAuth requireLoggedOut={true}>
+            <CompleteRegistrationPage />
           </RequiredAuth>
         ),
       },
