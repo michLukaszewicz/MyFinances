@@ -19,7 +19,7 @@ const providerKey = params.get("providerKey");
         <Box header="Register">
           <p className="text-gray-500 text-sm mb-3">Nice to see You! Please complete the registration</p>
           <div className="p-5">
-          <RegisterForm email={email} name={name} provider={provider} providerKey={providerKey} />
+          <RegisterForm email={email} name={name} providerName={provider} providerKey={providerKey} />
           <hr className="my-3 text-gray-200 font-bold" />
           <div className="flex items-center">
             <p className="py-2 ">Have an account?</p>

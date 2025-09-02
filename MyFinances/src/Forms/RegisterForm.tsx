@@ -5,11 +5,11 @@ import type { RegisterDto } from "../Models/Dtos/RegisterDto";
 type RegisterFormProps = {
   email: string | null;
   name: string | null;
-  provider: string | null;
+  providerName: string | null;
   providerKey: string | null;
 }
 
-const RegisterForm = ({ email, name, provider, providerKey }: RegisterFormProps) => {
+const RegisterForm = ({ email, name, providerName, providerKey }: RegisterFormProps) => {
   const {
     register,
     handleSubmit,
@@ -21,7 +21,7 @@ const RegisterForm = ({ email, name, provider, providerKey }: RegisterFormProps)
     defaultValues: {
       Email: email ?? "",
       Name: name ?? "",
-      Provider: provider ?? "",
+      ProviderName: providerName ?? "",
       ProviderKey: providerKey ?? "",
     }
   });
@@ -107,8 +107,8 @@ const RegisterForm = ({ email, name, provider, providerKey }: RegisterFormProps)
         </button>
       </div>
 
-      <input type="hidden" id="Provider" value={provider ?? ""} {...register("FrontendBaseUrl")} />
-      <input type="hidden" id="ProviderKey" value={providerKey ?? ""} {...register("FrontendBaseUrl")} />
+      <input type="hidden" id="ProviderName" value={providerName ?? ""} {...register("ProviderName")} />
+      <input type="hidden" id="ProviderKey" value={providerKey ?? ""} {...register("ProviderKey")} />
     </form>
   );
 };

@@ -4,6 +4,6 @@ export type RegisterDto = {
     Password: string;
     ConfirmPassword: string;
     FrontendBaseUrl: string;
-    Provider?: string;
+    ProviderName?: string;
     ProviderKey?: string;
 }

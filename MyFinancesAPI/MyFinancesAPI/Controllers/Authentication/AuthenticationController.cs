@@ -69,17 +69,13 @@ namespace MyFinancesAPI.Controllers.Authentication
             SignInResult results = await signInManager.CheckPasswordSignInAsync(user, credential.Password!, lockoutOnFailure: false);
             if (results.Succeeded)
             {
-                if (!string.IsNullOrEmpty(credential.ProviderName) && !string.IsNullOrEmpty(credential.ProviderKey))
+                if (HasExternalProvider(credential) && await HasUserProviderAssigned(credential, user))
                 {
-                    var userLoginInfo = new UserLoginInfo(credential.ProviderName, credential.ProviderKey, credential.ProviderName);
-                    IList<UserLoginInfo> existingLogins = await userManager.GetLoginsAsync(user);
-                    if (!existingLogins.Any(l => l.LoginProvider == credential.ProviderName && l.ProviderKey == credential.ProviderKey))
+                    var userLoginInfo = new UserLoginInfo(credential.ProviderName!, credential.ProviderKey!, credential.ProviderName);
+                    IdentityResult addLoginResult = await userManager.AddLoginAsync(user, userLoginInfo);
+                    if (!addLoginResult.Succeeded)
                     {
-                        IdentityResult addLoginResult = await userManager.AddLoginAsync(user, userLoginInfo);
-                        if (!addLoginResult.Succeeded)
-                        {
-                            return BadRequest("Failed to link external provider");
-                        }
+                        return BadRequest("Failed to link external provider");
                     }
                 }
                 string token = jwtProvider.GetJwtTokenForUser(DefaultExpireTime, user);
@@ -97,20 +93,19 @@ namespace MyFinancesAPI.Controllers.Authentication
         {
             User user = mapper.Map<User>(registerDto);
             IdentityResult result = await userManager.CreateAsync(user, registerDto.Password!);
-            if (!string.IsNullOrEmpty(registerDto.Provider) && !string.IsNullOrEmpty(registerDto.ProviderKey))
-            {
-                var loginInfo = new UserLoginInfo(registerDto.Provider, registerDto.ProviderKey, registerDto.Provider);
-                IdentityResult loginResults = await userManager.AddLoginAsync(user, loginInfo);
-                if (!loginResults.Succeeded)
-                {
-                    return BadRequest(new { Errors = $"Could not add logging from: {registerDto.Provider}" });
-                }
-            }
             if (result.Succeeded)
             {
                 try
                 {
-                    var validationEmailDto = mapper.Map<SendValidationEmailDto>(registerDto);
+                    if (HasExternalProvider(registerDto))
+                    {
+                        bool success = await AddExternalProvider(registerDto, user);
+                        if (!success)
+                        {
+                            return BadRequest("Failed to add external provider");
+                        }
+                    }
+                    SendValidationEmailDto validationEmailDto = mapper.Map<SendValidationEmailDto>(registerDto);
                     await SendValidationEmailAsync(validationEmailDto);
                 }
                 catch (Exception ex)
@@ -178,6 +173,24 @@ namespace MyFinancesAPI.Controllers.Authentication
             }
             string[] errorDescriptions = [.. result.Errors.Select(error => error.Description)];
             return BadRequest(new { Errors = errorDescriptions });
+        }
+
+        private static bool HasExternalProvider(IExternalProvider registerDto)
+        {
+            return !string.IsNullOrEmpty(registerDto.ProviderName) && !string.IsNullOrEmpty(registerDto.ProviderKey);
+        }
+
+        private async Task<bool> AddExternalProvider(RegisterDto registerDto, User user)
+        {
+            var loginInfo = new UserLoginInfo(registerDto.ProviderName!, registerDto.ProviderKey!, registerDto.ProviderName);
+            IdentityResult loginResults = await userManager.AddLoginAsync(user, loginInfo);
+            return loginResults.Succeeded;
+        }
+
+        private async Task<bool> HasUserProviderAssigned(LoginDto credential, User user)
+        {
+            IList<UserLoginInfo> existingLogins = await userManager.GetLoginsAsync(user);
+            return existingLogins.Any(l => l.LoginProvider == credential.ProviderName && l.ProviderKey == credential.ProviderKey);
         }
     }
 }

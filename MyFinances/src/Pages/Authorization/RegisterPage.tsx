@@ -11,7 +11,7 @@ const RegisterPage = () => {
         <Box header="Register">
           <p className="text-gray-500 text-sm mb-3">Nice to see You! Tell us about Yourself</p>
           <div className="p-5">
-          <RegisterForm email="" name="" provider="" providerKey="" />
+          <RegisterForm email="" name="" providerName="" providerKey="" />
           <hr className="my-3 text-gray-200 font-bold" />
           <div className="flex items-center">
             <p className="py-2 ">Have an account?</p>
