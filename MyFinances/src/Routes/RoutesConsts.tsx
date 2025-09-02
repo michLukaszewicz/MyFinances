@@ -12,6 +12,7 @@ export const ROUTES = {
         forgotPassword: "/auth/forgot-password",
         resetPassword: "/auth/reset-password",
         emailConfirmation: "/auth/email-confirmation",
-        completeRegistration: "/auth/complete-registration"
+        completeRegistration: "/auth/complete-registration",
+        externalLogin: "/auth/external-login"
     }
 }

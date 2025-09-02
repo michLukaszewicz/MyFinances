@@ -7,6 +7,7 @@ import CompleteRegistrationPage from "../Pages/Authorization/CompleteRegistratio
 import RequiredAuth from "../Components/Auth/RequiredAuth";
 import App from "../App";
 import { ROUTES } from "./RoutesConsts";
+import ExternalLoginPage from "../Pages/Authorization/ExternalLoginPage";
 
 export const authorizationRoutes = [
   {
@@ -20,6 +21,14 @@ export const authorizationRoutes = [
             <LoginPage />
           </RequiredAuth>
         ),
+      },
+      {
+        path: ROUTES.auth.externalLogin,
+        element: (
+          <RequiredAuth requireLoggedOut={true}>
+            <ExternalLoginPage />
+          </RequiredAuth>
+        )
       },
       {
         path: ROUTES.auth.register,
