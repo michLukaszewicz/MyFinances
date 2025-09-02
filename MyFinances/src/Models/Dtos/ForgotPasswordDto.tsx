@@ -1,4 +1,4 @@
 export type ForgotPasswordDto = {
     Email: string;
-    FrontedBaseUrl: string;
+    FrontendBaseUrl: string;
 }

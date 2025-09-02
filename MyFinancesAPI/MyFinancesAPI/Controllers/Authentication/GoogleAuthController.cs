@@ -11,7 +11,7 @@ namespace MyFinancesAPI.Controllers.Authentication
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public partial class AuthenticationController
+    public partial class AuthController
     {
         [HttpGet("google-login")]
         public IActionResult GoogleLogin(string redirectUrl = "")

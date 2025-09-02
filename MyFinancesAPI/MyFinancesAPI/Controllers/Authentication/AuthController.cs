@@ -15,7 +15,7 @@ namespace MyFinancesAPI.Controllers.Authentication
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public partial class AuthenticationController(
+    public partial class AuthController(
         IJwtProvider jwtProvider,
         UserManager<User> userManager,
         SignInManager<User> signInManager,
