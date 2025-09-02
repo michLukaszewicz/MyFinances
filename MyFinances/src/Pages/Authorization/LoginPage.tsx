@@ -1,6 +1,6 @@
-import Box from "../Components/Box/Box";
-import PageContent from "../Components/PageContent/PageContent";
-import LoginForm from "../Forms/LoginForm";
+import Box from "../../Components/Box/Box";
+import PageContent from "../../Components/PageContent/PageContent";
+import LoginForm from "../../Forms/LoginForm";
 
 const LoginPage = () => {
   return (
@@ -8,7 +8,7 @@ const LoginPage = () => {
       <div className="sm:w-xl sm:mx-auto">
         <Box header="Welcome Back">
           <p className="text-gray-500 text-sm mb-3">Please enter your details</p>
-          <LoginForm />
+          <LoginForm providerName="" providerKey="" />
         </Box>
       </div>
     </PageContent>

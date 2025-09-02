@@ -2,8 +2,14 @@ import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import type { LoginDto } from "../Models/Dtos/LoginDto";
 import { Login } from "../Services/ApiServices/AuthenticationService";
+import { ROUTES } from "../Routes/RoutesConsts";
 
-const LoginForm = () => {
+type LoginFormProps = {
+  providerName: string | null;
+  providerKey: string | null;
+}
+
+const LoginForm = ({providerName, providerKey}: LoginFormProps) => {
   const {
     register,
     handleSubmit,
@@ -47,7 +53,7 @@ const LoginForm = () => {
         {errors.Password && <span className="text-red-500 text-sm">{errors.Password.message}</span>}
       </div>
       <div className="flex items-center mb-5">
-        <Link to={"/forgot-password"} className="ml-auto text-blue-600 hover:text-blue-800">
+        <Link to={ROUTES.auth.forgotPassword} className="ml-auto text-blue-600 hover:text-blue-800">
           Forgot Password?{" "}
         </Link>
       </div>
@@ -61,14 +67,16 @@ const LoginForm = () => {
       <button
         onClick={() => window.location.href='https://localhost:7121/authentication/google-login?redirectUrl=dashboard'}
         className="w-full py-2 px-4 mt-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-        Zaloguj się przez Google
+        Login By Google
       </button>
       <hr className="my-6 text-gray-200 font-bold" />
-      <Link to={"/register"}>
+      <Link to={ROUTES.auth.register}>
         <button className="w-full py-2 px-4 bg-gray-300 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
           Register
         </button>
       </Link>
+        <input type="hidden" {...register("ProviderName")} value={providerName ?? ""}/>
+        <input type="hidden" {...register("ProviderKey")} value={providerKey ?? ""} />
     </form>
   );
 };

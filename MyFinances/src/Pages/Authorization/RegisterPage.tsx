@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import Box from "../Components/Box/Box";
-import PageContent from "../Components/PageContent/PageContent";
-import RegisterForm from "../Forms/RegisterForm";
+import Box from "../../Components/Box/Box";
+import PageContent from "../../Components/PageContent/PageContent";
+import RegisterForm from "../../Forms/RegisterForm";
+import { ROUTES } from "../../Routes/RoutesConsts";
 
 const RegisterPage = () => {
   return (
@@ -14,10 +15,10 @@ const RegisterPage = () => {
           <hr className="my-3 text-gray-200 font-bold" />
           <div className="flex items-center">
             <p className="py-2 ">Have an account?</p>
-            <Link to={"/login"}>
+            <Link to={ROUTES.auth.login}>
               <span className="text-blue-600 hover:text-blue-800 ml-1">Login Here</span>
             </Link>
-            <Link to={"/forgot-password"} className="ml-auto text-blue-600 hover:text-blue-800">
+            <Link to={ROUTES.auth.forgotPassword} className="ml-auto text-blue-600 hover:text-blue-800">
               Forgot Password?
             </Link>
           </div>

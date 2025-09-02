@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { ForgotPassword } from "../Services/ApiServices/AuthenticationService";
 import type { ForgotPasswordDto } from "../Models/Dtos/ForgotPasswordDto";
+import { ROUTES } from "../Routes/RoutesConsts";
 
 const ForgotPasswordForm = () => {
   const {
@@ -47,12 +48,12 @@ const ForgotPasswordForm = () => {
         </button>
       </div>
       <hr className="my-6 text-gray-200 font-bold" />
-      <Link to={"/login"}>
+      <Link to={ROUTES.auth.login}>
         <button className="w-full mb-4 py-2 px-4 bg-gray-300 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
           Login
         </button>
       </Link>
-      <Link to={"/register"}>
+      <Link to={ROUTES.auth.register}>
         <button className="w-full py-2 px-4 bg-gray-300 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
           Register
         </button>

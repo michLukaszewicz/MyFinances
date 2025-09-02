@@ -5,12 +5,13 @@ import { useState } from "react";
 import { RiCloseLargeFill } from "react-icons/ri";
 import { NavLink } from "react-router-dom";
 import { isAuthenticated, logout } from "../../Services/ApiServices/AuthenticationService";
+import { ROUTES } from "../../Routes/RoutesConsts";
 
 const links = [
-  { path: "/", label: "Home" },
-  { path: "/summary", label: "Summary" },
-  { path: "/finances", label: "Finances" },
-  { path: "/accounts", label: "Accounts" },
+  { path: ROUTES.home, label: "Home" },
+  { path: ROUTES.summary, label: "Summary" },
+  { path: ROUTES.finances, label: "Finances" },
+  { path: ROUTES.accounts, label: "Accounts" },
 ];
 
 const Navbar = () => {
@@ -47,12 +48,12 @@ const Navbar = () => {
         ) : (
           <>
             <li className="btn md:ml-auto">
-              <NavLink to="/login" className={({ isActive }) => (isActive ? "active" : "")}>
+              <NavLink to={ROUTES.auth.login} className={({ isActive }) => (isActive ? "active" : "")}>
                 Login
               </NavLink>
             </li>
             <li className="btn">
-              <NavLink to="/register" className={({ isActive }) => (isActive ? "active" : "")}>
+              <NavLink to={ROUTES.auth.register} className={({ isActive }) => (isActive ? "active" : "")}>
                 Register
               </NavLink>
             </li>

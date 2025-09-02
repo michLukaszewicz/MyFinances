@@ -7,7 +7,6 @@ using MyFinancesAPI.Models.Configurations;
 using MyFinancesAPI.Models.Identity;
 using MyFinancesAPI.Services.Abstractions;
 using MyFinancesAPI.Services.EmailServices.Abstractions;
-using PasswordGenerator;
 using System.Security.Claims;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
@@ -64,7 +63,6 @@ namespace MyFinancesAPI.Controllers
         }
 
         //TODO: Move google-methods to a separate controller.
-        //TODO: Add frontendURL in frontend to be able to send valid token in case where we register the new user
         [HttpGet("google-response")]
         public async Task<IActionResult> GoogleResponse(string redirectUrl = "/")
         {
@@ -102,10 +100,9 @@ namespace MyFinancesAPI.Controllers
                 bool hasGoogleLogin = loginProviders.Any(login => login.LoginProvider == info.LoginProvider && login.ProviderKey == info.ProviderKey);
                 if (hasGoogleLogin)
                 {
-                    return Redirect($"{options.BaseUrl}/login?error=external-login-not-linked");
+                    return Redirect($"{options.BaseUrl}/login?error=external-login-failed");
                 }
-
-                return Redirect($"{options.BaseUrl}/login?error=external-login-failed");
+                return Redirect($"{options.BaseUrl}/external-login?provider={info.ProviderDisplayName}&providerKey={info.ProviderKey}");
             }
 
             //User has no account in the database, redirect to dedicated site
@@ -132,6 +129,19 @@ namespace MyFinancesAPI.Controllers
             SignInResult results = await signInManager.CheckPasswordSignInAsync(user, credential.Password!, lockoutOnFailure: false);
             if (results.Succeeded)
             {
+                if (!string.IsNullOrEmpty(credential.ProviderName) && !string.IsNullOrEmpty(credential.ProviderKey))
+                {
+                    var userLoginInfo = new UserLoginInfo(credential.ProviderName, credential.ProviderKey, credential.ProviderName);
+                    IList<UserLoginInfo> existingLogins = await userManager.GetLoginsAsync(user);
+                    if (!existingLogins.Any(l => l.LoginProvider == credential.ProviderName && l.ProviderKey == credential.ProviderKey))
+                    {
+                        IdentityResult addLoginResult = await userManager.AddLoginAsync(user, userLoginInfo);
+                        if (!addLoginResult.Succeeded)
+                        {
+                            return BadRequest("Failed to link external provider");
+                        }
+                    }
+                }
                 string token = jwtProvider.GetJwtTokenForUser(DefaultExpireTime, user);
                 return Ok(new
                 {

@@ -1,9 +1,9 @@
-import Box from "../Components/Box/Box";
+import Box from "../../Components/Box/Box";
 import { useSearchParams } from "react-router-dom";
-import PageContent from "../Components/PageContent/PageContent";
-import { ValidateEmail } from "../Services/ApiServices/AuthenticationService";
+import PageContent from "../../Components/PageContent/PageContent";
+import { ValidateEmail } from "../../Services/ApiServices/AuthenticationService";
 import { useEffect, useRef, useState } from "react";
-import type { ValidateEmailDto } from "../Models/Dtos/ValidateEmailDto";
+import type { ValidateEmailDto } from "../../Models/Dtos/ValidateEmailDto";
 
 const EmailConfirmationPage = () => {
 const [searchParams] = useSearchParams();

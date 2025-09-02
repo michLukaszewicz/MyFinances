@@ -8,5 +8,7 @@ namespace MyFinancesAPI.Models.Identity
         public string? Email { get; set; }
         [Required(ErrorMessage = "Password is required.")]
         public string? Password { get; set; }
+        public string? ProviderName { get; set; }
+        public string? ProviderKey { get; set; }
     }
 }
