@@ -1,91 +1,70 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MyFinancesAPI.Models.Configurations;
 using MyFinancesAPI.Models.Identity;
-using MyFinancesAPI.Services.Abstractions;
-using MyFinancesAPI.Services.EmailServices.Abstractions;
+using MyFinancesAPI.Services.Auth;
+using System.Net.Mail;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace MyFinancesAPI.Controllers.Authentication
 {
-    [Route("auth")]
     [ApiController]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public partial class AuthController(
-        IJwtProvider jwtProvider,
-        UserManager<User> userManager,
-        SignInManager<User> signInManager,
-        IEmailService emailService,
-        IMapper mapper,
-        IOptions<FrontendSettings> options) : ControllerBase
+        IOptions<FrontendSettings> options,
+        AuthService authService,
+        ILogger<AuthController> logger) : ControllerBase
     {
-        private readonly IEmailService emailService = emailService;
-        private readonly IJwtProvider jwtProvider = jwtProvider;
-        private readonly IMapper mapper = mapper;
+        private readonly AuthService authService = authService;
+        private readonly ILogger<AuthController> logger = logger;
         private readonly FrontendSettings options = options.Value;
-        private readonly SignInManager<User> signInManager = signInManager;
-        private readonly UserManager<User> userManager = userManager;
-        private static DateTimeOffset DefaultExpireTime => DateTimeOffset.UtcNow.AddMinutes(3);
 
         [HttpPost("forgot-password")]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
+        public async Task<IActionResult> ForgotPasswordAsync([FromBody] ForgotPasswordDto dto)
         {
-            User? user = await userManager.FindByEmailAsync(forgotPasswordDto.Email);
-            if (user is null)
-            {
-                return Ok();
-            }
             try
             {
-                string token = await userManager.GeneratePasswordResetTokenAsync(user);
-                await emailService.SendForgotPasswordAsync(forgotPasswordDto.Email, token, user.Id, forgotPasswordDto.FrontedBaseUrl);
+                await authService.ForgotPasswordAsync(dto);
                 return Ok();
+            }
+            catch (SmtpException ex)
+            {
+                logger.LogError(ex, "SMTP failed for {Email}", dto.Email);
+                return StatusCode(500, "Could not send email");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error sending forgot password email: {ex.Message}");
-                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to send email");
+                logger.LogError(ex, "Unexpected error in ForgotPassword");
+                return StatusCode(500, "Internal server error");
             }
         }
 
         [HttpPost("login")]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> Login([FromBody] LoginDto credential)
+        public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            User? user = await userManager.FindByEmailAsync(credential.Email!);
-            if (user is null)
+            try
             {
-                return Unauthorized("Invalid credentials");
-            }
-            else if (!user.EmailConfirmed)
-            {
-                return Unauthorized("Email not confirmed");
-            }
-
-            SignInResult results = await signInManager.CheckPasswordSignInAsync(user, credential.Password!, lockoutOnFailure: false);
-            if (results.Succeeded)
-            {
-                if (HasExternalProvider(credential) && await HasUserProviderAssigned(credential, user))
+                var result = await authService.LoginAsync(dto);
+                if (!result.Succeeded)
                 {
-                    var userLoginInfo = new UserLoginInfo(credential.ProviderName!, credential.ProviderKey!, credential.ProviderName);
-                    IdentityResult addLoginResult = await userManager.AddLoginAsync(user, userLoginInfo);
-                    if (!addLoginResult.Succeeded)
-                    {
-                        return BadRequest("Failed to link external provider");
-                    }
+                    return result.Errors.Any(error =>
+                    error.Code == "UserNotFound" ||
+                    error.Code == "InvalidCredentials" ||
+                    error.Code == "EmailNotConfirmed") ?
+                    Unauthorized(new { Errors = result.Errors.Select(error => error.Description).ToArray() }) :
+                    BadRequest(new { Errors = result.Errors.Select(error => error.Description).ToArray() });
                 }
-                string token = jwtProvider.GetJwtTokenForUser(DefaultExpireTime, user);
-                return Ok(new
-                {
-                    access_token = token,
-                    expires_at = DefaultExpireTime,
-                });
+                return Ok(new { result.Token, result.ExpireAt });
             }
-            return Unauthorized("Invalid credentials");
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Unexpected error in Login");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
         [HttpPost("register")]
@@ -173,24 +152,6 @@ namespace MyFinancesAPI.Controllers.Authentication
             }
             string[] errorDescriptions = [.. result.Errors.Select(error => error.Description)];
             return BadRequest(new { Errors = errorDescriptions });
-        }
-
-        private static bool HasExternalProvider(IExternalProvider registerDto)
-        {
-            return !string.IsNullOrEmpty(registerDto.ProviderName) && !string.IsNullOrEmpty(registerDto.ProviderKey);
-        }
-
-        private async Task<bool> AddExternalProvider(RegisterDto registerDto, User user)
-        {
-            var loginInfo = new UserLoginInfo(registerDto.ProviderName!, registerDto.ProviderKey!, registerDto.ProviderName);
-            IdentityResult loginResults = await userManager.AddLoginAsync(user, loginInfo);
-            return loginResults.Succeeded;
-        }
-
-        private async Task<bool> HasUserProviderAssigned(LoginDto credential, User user)
-        {
-            IList<UserLoginInfo> existingLogins = await userManager.GetLoginsAsync(user);
-            return existingLogins.Any(l => l.LoginProvider == credential.ProviderName && l.ProviderKey == credential.ProviderKey);
         }
     }
 }

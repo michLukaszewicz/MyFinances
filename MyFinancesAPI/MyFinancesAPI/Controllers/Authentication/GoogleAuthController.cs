@@ -21,7 +21,6 @@ namespace MyFinancesAPI.Controllers.Authentication
             return Challenge(properties, GoogleDefaults.AuthenticationScheme);
         }
 
-        //TODO: Move google-methods to a separate controller.
         [HttpGet("google-response")]
         public async Task<IActionResult> GoogleResponse(string redirectUrl = "/")
         {
