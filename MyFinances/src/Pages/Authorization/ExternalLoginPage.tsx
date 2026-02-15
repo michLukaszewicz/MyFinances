@@ -1,7 +1,7 @@
 import { useLocation } from "react-router-dom";
 import Box from "../../Components/Box/Box";
 import PageContent from "../../Components/PageContent/PageContent";
-import LoginForm from "../../Forms/LoginForm";
+import LoginForm from "../../Forms/Auth/LoginForm";
 
 const ExternalLoginPage = () => {
 const {search} = useLocation();

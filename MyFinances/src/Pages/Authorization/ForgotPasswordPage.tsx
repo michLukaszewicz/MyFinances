@@ -1,6 +1,6 @@
 import Box from "../../Components/Box/Box";
 import PageContent from "../../Components/PageContent/PageContent";
-import ForgotPasswordForm from "../../Forms/ForgotPasswordForm";
+import ForgotPasswordForm from "../../Forms/Auth/ForgotPasswordForm";
 
 const ForgotPasswordPage = () => {
   return (

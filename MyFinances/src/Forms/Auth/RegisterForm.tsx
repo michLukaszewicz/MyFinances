@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
-import { Register } from "../Services/ApiServices/AuthenticationService";
-import type { RegisterDto } from "../Models/Dtos/RegisterDto";
+import { Register } from "../../Services/ApiServices/AuthenticationService";
+import type { RegisterDto } from "../../Models/Dtos/RegisterDto";
 
 type RegisterFormProps = {
   email: string | null;

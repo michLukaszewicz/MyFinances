@@ -1,8 +1,8 @@
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
-import type { LoginDto } from "../Models/Dtos/LoginDto";
-import { Login } from "../Services/ApiServices/AuthenticationService";
-import { ROUTES } from "../Routes/RoutesConsts";
+import type { LoginDto } from "../../Models/Dtos/LoginDto";
+import { Login } from "../../Services/ApiServices/AuthenticationService";
+import { ROUTES } from "../../Routes/RoutesConsts";
 
 type LoginFormProps = {
   providerName: string | null;

@@ -1,7 +1,7 @@
 import App from "../App";
 import RequiredAuth from "../Components/Auth/RequiredAuth";
 import DashboardPage from "../Pages/App/DashboardPage";
-import HomePage from "../Pages/App/DashboardPage";
+import HomePage from "../Pages/App/HomePage";
 import { ROUTES } from "./RoutesConsts";
 
 export const appRoutes = [
@@ -12,7 +12,7 @@ export const appRoutes = [
       {
         path: ROUTES.home,
         element: (
-          <RequiredAuth requireLoggedOut={true} redirectTo={ROUTES.home}>
+          <RequiredAuth requireLoggedOut={true} redirectTo={ROUTES.dashboard}>
             <HomePage />
           </RequiredAuth>
         ),

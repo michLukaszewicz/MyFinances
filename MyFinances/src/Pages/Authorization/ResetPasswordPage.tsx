@@ -1,6 +1,6 @@
 import Box from "../../Components/Box/Box";
 import PageContent from "../../Components/PageContent/PageContent";
-import ResetPasswordForm from "../../Forms/ResetPasswordForm";
+import ResetPasswordForm from "../../Forms/Auth/ResetPasswordForm";
 
 const ResetPasswordPage = () => {
   return (

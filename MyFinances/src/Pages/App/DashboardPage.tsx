@@ -4,9 +4,9 @@ import CategoryChart from '../../Components/Charts/CategoryChart/CategoryChart'
 import HistoryPanel from '../../Components/HistoryPanel/HistoryPanel'
 import PageContent from '../../Components/PageContent/PageContent'
 import type { Transaction } from '../../Models/Transaction'
-import TransactionService from "../../Services/ApiServices/transactionService";
+import TransactionService from "../../Services/ApiServices/TransactionService";
 
-const HomePage = () => {
+const DashboardPage = () => {
 const [history, setHistory] = useState<Transaction[]>([]);
 
 useEffect(() => {
@@ -31,4 +31,4 @@ useEffect(() => {
   )
 }
 
-export default HomePage
+export default DashboardPage

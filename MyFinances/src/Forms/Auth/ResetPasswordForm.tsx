@@ -1,8 +1,8 @@
 import { useForm } from "react-hook-form";
 import { Link, useSearchParams } from "react-router-dom";
-import type { ResetPasswordDto } from "../Models/Dtos/ResetPasswordDto";
-import { ResetPassword } from "../Services/ApiServices/AuthenticationService";
-import { ROUTES } from "../Routes/RoutesConsts";
+import type { ResetPasswordDto } from "../../Models/Dtos/ResetPasswordDto";
+import { ResetPassword } from "../../Services/ApiServices/AuthenticationService";
+import { ROUTES } from "../../Routes/RoutesConsts";
 
 const ResetPasswordForm = () => {
   const [searchParams] = useSearchParams();

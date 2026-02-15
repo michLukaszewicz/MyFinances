@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import Box from "../../Components/Box/Box";
 import PageContent from "../../Components/PageContent/PageContent";
-import RegisterForm from "../../Forms/RegisterForm";
+import RegisterForm from "../../Forms/Auth/RegisterForm";
 import { ROUTES } from "../../Routes/RoutesConsts";
 
 const CompleteRegistrationPage = () => {

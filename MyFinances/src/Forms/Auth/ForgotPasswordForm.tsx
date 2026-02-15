@@ -1,8 +1,8 @@
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
-import { ForgotPassword } from "../Services/ApiServices/AuthenticationService";
-import type { ForgotPasswordDto } from "../Models/Dtos/ForgotPasswordDto";
-import { ROUTES } from "../Routes/RoutesConsts";
+import { ForgotPassword } from "../../Services/ApiServices/AuthenticationService";
+import type { ForgotPasswordDto } from "../../Models/Dtos/ForgotPasswordDto";
+import { ROUTES } from "../../Routes/RoutesConsts";
 
 const ForgotPasswordForm = () => {
   const {

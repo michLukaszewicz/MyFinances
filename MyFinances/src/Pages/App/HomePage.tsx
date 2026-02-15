@@ -5,7 +5,8 @@ import HistoryPanel from "../../Components/HistoryPanel/HistoryPanel";
 import PageContent from "../../Components/PageContent/PageContent";
 import type { Transaction } from "../../Models/Transaction";
 import Box from "../../Components/Box/Box";
-import TransactionService from "../../Services/ApiServices/transactionService";
+import TransactionService from "../../Services/ApiServices/TransactionService";
+import AddTransaction from "../../Forms/Transactions/AddTransactionForm";
 
 const HomePage = () => {
   const [history, setHistory] = useState<Transaction[]>([]);
@@ -40,6 +41,7 @@ const HomePage = () => {
       </Box>
       <BalanceChart history={history} />
       <CategoryChart history={history} />
+      <AddTransaction />
       <HistoryPanel history={history} />
     </PageContent>
   );
