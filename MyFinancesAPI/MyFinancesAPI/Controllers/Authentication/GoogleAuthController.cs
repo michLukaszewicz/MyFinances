@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.Google;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MyFinancesAPI.Models.Identity;
@@ -13,11 +14,13 @@ namespace MyFinancesAPI.Controllers.Authentication
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public partial class AuthController
     {
+        private readonly DateTimeOffset DefaultExpireTime = DateTimeOffset.UtcNow.AddMinutes(15);
+
         [HttpGet("google-login")]
         public IActionResult GoogleLogin(string redirectUrl = "")
         {
             string? redirectUri = Url.Action(nameof(GoogleResponse), "Authentication", new { redirectUrl }, Request.Scheme);
-            Microsoft.AspNetCore.Authentication.AuthenticationProperties properties = signInManager.ConfigureExternalAuthenticationProperties(GoogleDefaults.AuthenticationScheme, redirectUri);
+            AuthenticationProperties properties = signInManager.ConfigureExternalAuthenticationProperties(GoogleDefaults.AuthenticationScheme, redirectUri);
             return Challenge(properties, GoogleDefaults.AuthenticationScheme);
         }
 

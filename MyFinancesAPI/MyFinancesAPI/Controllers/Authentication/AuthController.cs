@@ -1,11 +1,13 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MyFinancesAPI.Models.Configurations;
 using MyFinancesAPI.Models.Identity;
+using MyFinancesAPI.Services.Abstractions;
 using MyFinancesAPI.Services.Auth;
+using MyFinancesAPI.Services.EmailServices.Abstractions;
 using System.Net.Mail;
-using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace MyFinancesAPI.Controllers.Authentication
 {
@@ -16,11 +18,21 @@ namespace MyFinancesAPI.Controllers.Authentication
     public partial class AuthController(
         IOptions<FrontendSettings> options,
         AuthService authService,
-        ILogger<AuthController> logger) : ControllerBase
+        ILogger<AuthController> logger,
+        SignInManager<User> signInManager,
+        UserManager<User> userManager,
+        IMapper mapper,
+        IEmailService emailService,
+        IJwtProvider jwtProvider) : ControllerBase
     {
         private readonly AuthService authService = authService;
         private readonly ILogger<AuthController> logger = logger;
+        private readonly IMapper mapper = mapper;
+        private readonly IEmailService emailService = emailService;
+        private readonly IJwtProvider jwtProvider = jwtProvider;
         private readonly FrontendSettings options = options.Value;
+        private readonly SignInManager<User> signInManager = signInManager;
+        private readonly UserManager<User> userManager = userManager;
 
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPasswordAsync([FromBody] ForgotPasswordDto dto)
