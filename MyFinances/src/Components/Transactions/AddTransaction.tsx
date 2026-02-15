@@ -20,33 +20,23 @@ const AddTransaction = () => {
 
   return (
     <Box header="Add Transaction">
-      <form className="p-5 flex-row" onSubmit={onSubmit}>
-        <div className="flex flex-row gap-2 mb-3">
-          <label htmlFor="type" className="block text-xl font-medium text-gray-700">
-            Type
-          </label>
-          <div className="flex flex-row space-x-2">
-            <input
-              type="radio"
-              id="income"
-              name="type"
-              checked={!form.isExpense}
-              onChange={() => setForm({...form, isExpense: false})}
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:outline-none focus:border-blue-500 block w-full p-2.5"></input>
-            <label htmlFor="income">Income</label>
-            <input
-              type="radio"
-              id="expense"
-              name="type"
-              checked={form.isExpense}
-              onChange={() => setForm({...form, isExpense: true})}
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:outline-none focus:border-blue-500 block w-full p-2.5"></input>
-            <label htmlFor="expense">Expense</label>
+      <form className="p-3 grid grid-cols-8 items-center place-items-center gap-3" onSubmit={onSubmit}>
+        <div className="flex flex-col gap-1 mb-3 text-l font-medium text-gray-700">
+          <label htmlFor="type">Type</label>
+          <div className="text-xs">
+            <div className="flex flex-row gap-1.5">
+              <input type="radio" id="income" name="type" checked={!form.isExpense} onChange={() => setForm({ ...form, isExpense: false })}></input>
+              <label htmlFor="income">Income</label>
+            </div>
+            <div className="flex flex-row gap-1.5">
+              <input type="radio" id="expense" name="type" checked={form.isExpense} onChange={() => setForm({ ...form, isExpense: true })}></input>
+              <label htmlFor="expense">Expense</label>
+            </div>
           </div>
         </div>
-        <div className="flex flex-row gap-2 mb-3">
-          <label htmlFor="email" className="block text-xl font-medium text-gray-700">
-            Transaction to
+        <div className="flex flex-col gap-2 mb-3">
+          <label htmlFor="otherSideOfTransaction">
+            {form.isExpense ? "to" : "from"}
           </label>
           <input
             autoFocus
@@ -54,11 +44,11 @@ const AddTransaction = () => {
             id="otherSideOfTransaction"
             placeholder="Company S.A."
             value={form.otherSideOfTransaction}
-            onChange={(e) => setForm({...form, otherSideOfTransaction: e.target.value})}
+            onChange={(e) => setForm({ ...form, otherSideOfTransaction: e.target.value })}
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:outline-none focus:border-blue-500 block w-full p-2.5"></input>
         </div>
         <div className="mb-2 flex flex-col gap-2">
-          <label htmlFor="description" className="block text-xl font-medium text-gray-700">
+          <label htmlFor="description">
             Description
           </label>
           <input
@@ -66,11 +56,11 @@ const AddTransaction = () => {
             id="description"
             placeholder="electricity bill"
             value={form.description}
-            onChange={(e) => setForm({...form, description: e.target.value})}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:outline-none focus:border-blue-500 block w-full p-2.5"></input>
         </div>
-        <div className="mb-2 flex flex-col gap-2">
-          <label htmlFor="date" className="block text-xl font-medium text-gray-700">
+        <div>
+          <label htmlFor="date">
             Date
           </label>
           <input
@@ -78,11 +68,11 @@ const AddTransaction = () => {
             id="date"
             defaultValue={new Date().toISOString().split("T")[0]}
             value={form.date}
-            onChange={(e) => setForm({...form, date: e.target.value})}
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:border-blue-500 block w-full p-2.5"></input>
+            onChange={(e) => setForm({ ...form, date: e.target.value })}
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:border-blue-500 block p-2.5"></input>
         </div>
         <div className="mb-2 flex flex-col gap-2">
-          <label htmlFor="amount" className="block text-xl font-medium text-gray-700">
+          <label htmlFor="amount" >
             Amount
           </label>
           <input
@@ -91,18 +81,18 @@ const AddTransaction = () => {
             id="amount"
             placeholder="123.45 PLN"
             value={form.amount}
-            onChange={(e) => setForm({...form, amount: parseFloat(e.target.value)})}
+            onChange={(e) => setForm({ ...form, amount: parseFloat(e.target.value) })}
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:border-blue-500 block w-full p-2.5"></input>
         </div>
         <div className="mb-2 flex flex-col gap-2">
-          <label htmlFor="category" className="block text-xl font-medium text-gray-700">
+          <label htmlFor="category">
             Category
           </label>
           <select
             id="category"
             name="category"
             value={form.category}
-            onChange={(e) => setForm({...form, category: e.target.value})}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:border-blue-500 block w-full p-2.5">
             <option value={"groceries"}>Groceries</option>
             <option value={"rent"}>Rent</option>
@@ -113,7 +103,7 @@ const AddTransaction = () => {
           </select>
         </div>
         <div className="mb-2 flex flex-col gap-2">
-          <label htmlFor="bankAccount" className="block text-xl font-medium text-gray-700">
+          <label htmlFor="bankAccount">
             Bank Account
           </label>
           <select
@@ -126,7 +116,7 @@ const AddTransaction = () => {
             <option value={"Account2"}>Account 2</option>
           </select>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="w-20 mt-6">
           <button
             type="submit"
             className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">

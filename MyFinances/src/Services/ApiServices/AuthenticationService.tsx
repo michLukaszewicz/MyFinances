@@ -30,7 +30,7 @@ export async function ValidateEmail(validateEmailDto: ValidateEmailDto): Promise
 
 export async function Register(registerDto: RegisterDto): Promise<string[] | null> {
   try {
-    registerDto.FrontendBaseUrl = `${window.location.origin}${ROUTES.auth.emailConfirmation}`;
+    registerDto.FrontendBaseUrl = `${window.location.origin}/auth/${ROUTES.auth.emailConfirmation}`;
     await axios.post(`${API_ROUTES.base}${API_ROUTES.auth.register}`, registerDto);
     return null;
   } catch (error: any) {
