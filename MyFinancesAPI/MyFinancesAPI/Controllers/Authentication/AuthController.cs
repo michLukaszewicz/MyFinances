@@ -26,10 +26,10 @@ namespace MyFinancesAPI.Controllers.Authentication
         IJwtProvider jwtProvider) : ControllerBase
     {
         private readonly AuthService authService = authService;
-        private readonly ILogger<AuthController> logger = logger;
-        private readonly IMapper mapper = mapper;
         private readonly IEmailService emailService = emailService;
         private readonly IJwtProvider jwtProvider = jwtProvider;
+        private readonly ILogger<AuthController> logger = logger;
+        private readonly IMapper mapper = mapper;
         private readonly FrontendSettings options = options.Value;
         private readonly SignInManager<User> signInManager = signInManager;
         private readonly UserManager<User> userManager = userManager;
@@ -164,6 +164,16 @@ namespace MyFinancesAPI.Controllers.Authentication
             }
             string[] errorDescriptions = [.. result.Errors.Select(error => error.Description)];
             return BadRequest(new { Errors = errorDescriptions });
+        }
+
+        private static bool HasExternalProvider(RegisterDto registerDto) => 
+            !string.IsNullOrEmpty(registerDto.ProviderName) && !string.IsNullOrEmpty(registerDto.ProviderKey);
+
+        private async Task<bool> AddExternalProvider(RegisterDto registerDto, User user)
+        {
+            var loginInfo = new UserLoginInfo(registerDto.ProviderName!, registerDto.ProviderKey!, registerDto.ProviderName);
+            IdentityResult loginResults = await userManager.AddLoginAsync(user, loginInfo);
+            return loginResults.Succeeded;
         }
     }
 }
