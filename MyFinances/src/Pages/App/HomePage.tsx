@@ -6,7 +6,7 @@ import PageContent from "../../Components/PageContent/PageContent";
 import type { Transaction } from "../../Models/Transaction";
 import Box from "../../Components/Box/Box";
 import TransactionService from "../../Services/ApiServices/TransactionService";
-import AddTransaction from "../../Forms/Transactions/AddTransactionForm";
+import AddTransaction from "../../Components/Transactions/AddTransaction";
 
 const HomePage = () => {
   const [history, setHistory] = useState<Transaction[]>([]);
