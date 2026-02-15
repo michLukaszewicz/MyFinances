@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import BalanceChart from "../Components/Charts/BalanceChart/BalanceChart";
-import CategoryChart from "../Components/Charts/CategoryChart/CategoryChart";
-import HistoryPanel from "../Components/HistoryPanel/HistoryPanel";
-import PageContent from "../Components/PageContent/PageContent";
-import type { Transaction } from "../Models/Transaction";
-import Box from "../Components/Box/Box";
-import TransactionService from "../Services/ApiServices/TransactionService";
+import BalanceChart from "../../Components/Charts/BalanceChart/BalanceChart";
+import CategoryChart from "../../Components/Charts/CategoryChart/CategoryChart";
+import HistoryPanel from "../../Components/HistoryPanel/HistoryPanel";
+import PageContent from "../../Components/PageContent/PageContent";
+import type { Transaction } from "../../Models/Transaction";
+import Box from "../../Components/Box/Box";
+import TransactionService from "../../Services/ApiServices/transactionService";
 
 const HomePage = () => {
   const [history, setHistory] = useState<Transaction[]>([]);

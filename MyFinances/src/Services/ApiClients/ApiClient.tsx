@@ -1,13 +1,19 @@
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../Routes/RoutesConsts';
 
-const navigate = useNavigate();
+let navigate: ((path: string) => void) | null = null;
+
+export const setNavigate = (navFunction: (path: string) => void) => {
+    navigate = navFunction;
+};
+
 axios.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.status === 401){
-            navigate(ROUTES.auth.login);
+            if (navigate) {
+                navigate(ROUTES.auth.login);
+            }
         }
         return Promise.reject(error);
     }

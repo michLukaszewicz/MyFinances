@@ -1,20 +1,21 @@
-using Microsoft.Extensions.Options;
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MyFinancesAPI.Data;
+using MyFinancesAPI.Maps;
 using MyFinancesAPI.Models;
+using MyFinancesAPI.Models.Configurations;
 using MyFinancesAPI.Models.Identity;
 using MyFinancesAPI.Services;
 using MyFinancesAPI.Services.Abstractions;
+using MyFinancesAPI.Services.Auth;
 using MyFinancesAPI.Services.EmailServices;
 using MyFinancesAPI.Services.EmailServices.Abstractions;
 using MyFinancesAPI.Services.MailClient;
 using System.Text;
-using AutoMapper;
-using MyFinancesAPI.Maps;
-using MyFinancesAPI.Models.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -103,6 +104,9 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IEmailClient, EmailClient>();
+builder.Services.AddScoped<IJwtProvider, JwtProvider>();
+builder.Services.AddScoped<ExternalAuthService>();
+builder.Services.AddScoped<AuthService>();
 builder.Services.Configure<FrontendSettings>(builder.Configuration.GetSection("Frontend"));
 builder.Services.AddAutoMapper(cfg =>
 {

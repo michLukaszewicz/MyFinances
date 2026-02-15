@@ -12,7 +12,7 @@ export const appRoutes = [
       {
         path: ROUTES.home,
         element: (
-          <RequiredAuth requireLoggedOut={true} redirectTo={ROUTES.dashboard}>
+          <RequiredAuth requireLoggedOut={true} redirectTo={ROUTES.home}>
             <HomePage />
           </RequiredAuth>
         ),
