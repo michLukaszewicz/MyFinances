@@ -9,13 +9,14 @@ namespace MyFinancesAPI.Controllers
     public class TestDataController : ControllerBase
     {
         private const string TEST_DATA_PATH = "TestData/TransactionHistory.json";
+        private const string NOT_FOUNT_MESSAGE = "Could not find the test data file.";
 
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
             if (!System.IO.File.Exists(TEST_DATA_PATH))
             {
-                return NotFound("Could not find the test data file");
+                return NotFound(NOT_FOUNT_MESSAGE);
             }
 
             string json = System.IO.File.ReadAllText(TEST_DATA_PATH);
@@ -46,7 +47,7 @@ namespace MyFinancesAPI.Controllers
         {
             if (!System.IO.File.Exists(TEST_DATA_PATH))
             {
-                return NotFound("Could not find the test data file");
+                return NotFound(NOT_FOUNT_MESSAGE);
             }
 
             string testData = System.IO.File.ReadAllText(TEST_DATA_PATH);
@@ -65,7 +66,7 @@ namespace MyFinancesAPI.Controllers
         {
             if (!System.IO.File.Exists(TEST_DATA_PATH))
             {
-                return NotFound("Could not find the test data file");
+                return NotFound(NOT_FOUNT_MESSAGE);
             }
             string json = System.IO.File.ReadAllText(TEST_DATA_PATH);
             var transactions = JsonSerializer.Deserialize<IEnumerable<Transaction>>(json, new JsonSerializerOptions()
@@ -80,13 +81,12 @@ namespace MyFinancesAPI.Controllers
             return Ok(transaction);
         }
 
-        // PUT api/<TestDataController>/5
-        [HttpPut("{id}")]
+        [HttpPut]
         public IActionResult Put([FromBody] Transaction updatedTransaction)
         {
             if (!System.IO.File.Exists(TEST_DATA_PATH))
             {
-                return NotFound("Could not find the test data file");
+                return NotFound(NOT_FOUNT_MESSAGE);
             }
             string json = System.IO.File.ReadAllText(TEST_DATA_PATH);
             var transactions = JsonSerializer.Deserialize<IEnumerable<Transaction>>(json, new JsonSerializerOptions()
@@ -111,6 +111,32 @@ namespace MyFinancesAPI.Controllers
             });
             System.IO.File.WriteAllText(TEST_DATA_PATH, updatedJson);
             return NoContent();
+        }
+
+        [HttpPost]
+        public IActionResult Post([FromBody] Transaction newTransaction)
+        {
+            if (!System.IO.File.Exists(TEST_DATA_PATH))
+            {
+                return NotFound(NOT_FOUNT_MESSAGE);
+            }
+
+            string json = System.IO.File.ReadAllText(TEST_DATA_PATH);
+            var transactions = JsonSerializer.Deserialize<List<Transaction>>(json, new JsonSerializerOptions()
+            {
+                PropertyNameCaseInsensitive = true
+            }) ?? new List<Transaction>();
+
+            int nextId = transactions.Any() ? transactions.Max(t => t.Id) + 1 : 1;
+            newTransaction.Id = nextId;
+            transactions.Add(newTransaction);
+
+            var updatedJson = JsonSerializer.Serialize(transactions, new JsonSerializerOptions()
+            {
+                WriteIndented = true
+            });
+            System.IO.File.WriteAllText(TEST_DATA_PATH, updatedJson);
+            return CreatedAtAction(nameof(Post), new { id = newTransaction.Id }, new { id = newTransaction.Id });
         }
     }
 }

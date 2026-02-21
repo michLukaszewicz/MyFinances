@@ -1,5 +1,4 @@
 import { useState } from "react";
-import type { Transaction } from "../../Models/Transaction";
 import Box from "../Box/Box";
 
 const AddTransaction = () => {
@@ -20,7 +19,7 @@ const AddTransaction = () => {
 
   return (
     <Box header="Add Transaction">
-      <form className="p-3 grid grid-cols-8 items-center place-items-center gap-3" onSubmit={onSubmit}>
+      <form className="p-3 grid grid-cols-8 items-center gap-3" onSubmit={onSubmit}>
         <div className="flex flex-col gap-1 mb-3 text-l font-medium text-gray-700">
           <label htmlFor="type">Type</label>
           <div className="text-xs">
@@ -36,7 +35,7 @@ const AddTransaction = () => {
         </div>
         <div className="flex flex-col gap-2 mb-3">
           <label htmlFor="otherSideOfTransaction">
-            {form.isExpense ? "to" : "from"}
+            {form.isExpense ? "To" : "From"}
           </label>
           <input
             autoFocus
@@ -59,7 +58,7 @@ const AddTransaction = () => {
             onChange={(e) => setForm({ ...form, description: e.target.value })}
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:outline-none focus:border-blue-500 block w-full p-2.5"></input>
         </div>
-        <div>
+        <div className="mb-2 flex flex-col gap-2">
           <label htmlFor="date">
             Date
           </label>
@@ -116,7 +115,7 @@ const AddTransaction = () => {
             <option value={"Account2"}>Account 2</option>
           </select>
         </div>
-        <div className="w-20 mt-6">
+        <div className="mt-6">
           <button
             type="submit"
             className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">

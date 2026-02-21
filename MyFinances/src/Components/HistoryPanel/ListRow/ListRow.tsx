@@ -6,7 +6,7 @@ type Props = {
 };
 
 const ListRow = ({ transaction }: Props) => {
-  return (
+  return (    
     <div className="grid [grid-template-columns:2.5fr_1fr_1fr] gap-4 mx-2 my-2 items-center border-b border-gray-200 pb-2">
       <div>
         <p className="text-blue-700 text-md flex-row flex items-center">
