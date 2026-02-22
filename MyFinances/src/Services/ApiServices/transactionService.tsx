@@ -1,9 +1,10 @@
 import axios from "axios";
 import type { Transaction } from "../../Models/Transaction";
+import { API_ROUTES } from "../../Routes/RoutesConsts";
 
 const TransactionService = {
   async getTestData(): Promise<Transaction[]> {
-    const response = await axios.get<Transaction[]>(`https://localhost:7121/TestData`);
+    const response = await axios.get<Transaction[]>(`${API_ROUTES.base}/TestData`);
     return response.data.map((t) => ({
       ...t,
       date: new Date(t.date),
@@ -12,7 +13,7 @@ const TransactionService = {
 
   async postTransactionHistory(newTransaction: Transaction): Promise<number> {
     console.log(newTransaction.bankAccount);
-    const response = await axios.post<number>(`https://localhost:7121/TestData`, {
+    const response = await axios.post<number>(`${API_ROUTES.base}/TestData`, {
       id: 1,
       date: new Date(newTransaction.date).toISOString(),
       description: newTransaction.description,
@@ -29,7 +30,7 @@ const TransactionService = {
     if (!token) {
       throw new Error("No access token found. Please log in.");
     }
-    const response = await axios.get<Transaction[]>(`https://localhost:7121/Transactions`, {
+    const response = await axios.get<Transaction[]>(`${API_ROUTES.base}/Transactions`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

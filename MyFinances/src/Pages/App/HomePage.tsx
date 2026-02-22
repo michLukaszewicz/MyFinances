@@ -6,8 +6,8 @@ import PageContent from "../../Components/PageContent/PageContent";
 import type { Transaction } from "../../Models/Transaction";
 import Box from "../../Components/Box/Box";
 import TransactionService from "../../Services/ApiServices/TransactionService";
+import type { ClientTransaction } from "../../Models/Dtos/TransactionClientDto";
 
-export type ClientTransaction = Transaction & { clientId: string };
 
 const HomePage = () => {
   const [history, setHistory] = useState<Transaction[]>([]);
