@@ -9,7 +9,7 @@ interface Props {
   onAddTransaction: (transaction: Transaction) => void;
 }
 
-const HistoryPanel = ({ history, onAddTransaction }: Props) => {
+const TransactionsPanel = ({ history, onAddTransaction }: Props) => {
   return (
     <>
       <AddTransaction onAddTransaction={onAddTransaction} />
@@ -29,4 +29,4 @@ const HistoryPanel = ({ history, onAddTransaction }: Props) => {
   );
 };
 
-export default HistoryPanel;
+export default TransactionsPanel;

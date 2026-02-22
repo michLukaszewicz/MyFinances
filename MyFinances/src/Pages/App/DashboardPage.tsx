@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import BalanceChart from '../../Components/Charts/BalanceChart/BalanceChart'
 import CategoryChart from '../../Components/Charts/CategoryChart/CategoryChart'
-import HistoryPanel from '../../Components/HistoryPanel/HistoryPanel'
+import TransactionsPanel from '../../Components/HistoryPanel/TransactionsPanel'
 import PageContent from '../../Components/PageContent/PageContent'
 import type { Transaction } from '../../Models/Transaction'
 import TransactionService from "../../Services/ApiServices/TransactionService";
@@ -26,7 +26,7 @@ useEffect(() => {
     <PageContent>
         <BalanceChart history={history} />
         <CategoryChart history={history}/>
-        <HistoryPanel history={history} />
+        <TransactionsPanel history={history} />
     </PageContent>
   )
 }
