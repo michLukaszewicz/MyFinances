@@ -11,7 +11,7 @@ const AddTransaction = ({ onAddTransaction }: Props) => {
     date: new Date().toISOString().split("T")[0],
     description: "",
     amount: "0.0",
-    category: "groceries",
+    category: "Groceries",
     bankAccount: "account1",
     otherSideOfTransaction: "",
   });
@@ -19,11 +19,12 @@ const AddTransaction = ({ onAddTransaction }: Props) => {
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     onAddTransaction({ ...form, id: -1, date: new Date(form.date), amount: parseFloat(form.amount) });
+    setForm({...form, date: new Date().toISOString().split("T")[0], description: "", amount: "0.0", category: "Groceries", otherSideOfTransaction: ""})
   };
 
   return (
     <Box header="Add Transaction">
-      <form onSubmit={onSubmit} className="grid grid-cols-[2.4fr_0.9fr_0.5fr_1.5fr] px-2 items-center">
+      <form onSubmit={onSubmit} className="grid grid-cols-[2.4fr_0.9fr_0.5fr_1fr_0.5fr] px-2 items-center">
         <div className="min-w-0 flex flex-col gap-1">
           <input
             autoFocus
@@ -47,11 +48,11 @@ const AddTransaction = ({ onAddTransaction }: Props) => {
           value={form.category}
           onChange={(e) => setForm({ ...form, category: e.target.value })}
           className="bg-transparent focus:outline-none text-gray-500 w-23">
-          <option value="groceries">Groceries</option>
-          <option value="rent">Rent</option>
-          <option value="bills">Bills</option>
-          <option value="salary">Salary</option>
-          <option value="entertainment">Entertainment</option>
+          <option value="Groceries">Groceries</option>
+          <option value="Rent">Rent</option>
+          <option value="Bills">Bills</option>
+          <option value="Salary">Salary</option>
+          <option value="Entertainment">Entertainment</option>
         </select>
         <div className="flex flex-col gap-2 text-xs text-gray-600 ">
           <input
@@ -77,17 +78,17 @@ const AddTransaction = ({ onAddTransaction }: Props) => {
             placeholder="0.00"
             value={form.amount}
             onChange={(e) => setForm({ ...form, amount: e.target.value })}
-            className={`w-full text-[1.2rem] font-semibold text-right bg-transparent focus:outline-none
-      ${parseFloat(form.amount) < 0 ? "text-red-600" : "text-green-600"}`}
+            className={`w-full text-[1.1rem] font-semibold text-right bg-transparent focus:outline-none
+              ${parseFloat(form.amount) < 0 ? "text-red-600" : "text-green-600"}`}
           />
           <span className="text-xs text-gray-400">PLN</span>
         </div>
-        <div className="col-span-4 flex justify-center mt-5">
-          <button
-            type="submit"
-            className="py-2 px-20 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-            Add
-          </button>
+        <div className="justify-end ml-5">
+              <button
+                type="submit"
+                className="py-2 px-5 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                Add
+              </button>
         </div>
       </form>
     </Box>
