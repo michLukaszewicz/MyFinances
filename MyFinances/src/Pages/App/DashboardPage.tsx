@@ -26,7 +26,7 @@ useEffect(() => {
     <PageContent>
         <BalanceChart history={history} />
         <CategoryChart history={history}/>
-        <TransactionsPanel history={history} />
+        <TransactionsPanel transactionHistory={history} />
     </PageContent>
   )
 }

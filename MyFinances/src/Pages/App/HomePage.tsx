@@ -67,7 +67,7 @@ const HomePage = () => {
       </Box>
       <BalanceChart history={optimisticHistory} />
       <CategoryChart history={optimisticHistory} />
-      <TransactionsPanel history={optimisticHistory} onAddTransaction={onAddTransaction} />
+      <TransactionsPanel transactionHistory={optimisticHistory} onAddTransaction={onAddTransaction} />
     </PageContent>
   );
 };
