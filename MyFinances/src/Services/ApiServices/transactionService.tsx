@@ -11,8 +11,7 @@ const TransactionService = {
     }));
   },
 
-  async postTransactionHistory(newTransaction: Transaction): Promise<number> {
-    console.log(newTransaction.bankAccount);
+  async postTransaction(newTransaction: Transaction): Promise<number> {
     const response = await axios.post<number>(`${API_ROUTES.base}/TestData`, {
       id: 1,
       date: new Date(newTransaction.date).toISOString(),
@@ -23,6 +22,10 @@ const TransactionService = {
       otherSideOfTransaction: newTransaction.otherSideOfTransaction,
     });
     return response.data;
+  },
+
+  async deleteTransaction(id: number): Promise<void> {
+    await axios.delete<void>(`${API_ROUTES.base}/TestData/${id}`);
   },
 
   async getTransactionHistory(): Promise<Transaction[]> {

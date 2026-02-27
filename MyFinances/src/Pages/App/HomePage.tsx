@@ -8,7 +8,6 @@ import Box from "../../Components/Box/Box";
 import TransactionService from "../../Services/ApiServices/TransactionService";
 import type { ClientTransaction } from "../../Models/Dtos/TransactionClientDto";
 
-
 const HomePage = () => {
   const [history, setHistory] = useState<Transaction[]>([]);
 
@@ -38,10 +37,21 @@ const HomePage = () => {
     startTransition(async () => {
       updateOptimisticHistory(optimisticTransaction);
       try {
-        const realId = await TransactionService.postTransactionHistory(optimisticTransaction);
+        const realId = await TransactionService.postTransaction(optimisticTransaction);
         setHistory((prev) => [...prev, { ...optimisticTransaction, id: realId }]);
       } catch {
         updateOptimisticHistory({ ...optimisticTransaction, id: -1 });
+      }
+    });
+  };
+
+  const onDeleteTransaction = async (id: number) => {
+    startTransition(async () => {
+      try {
+        await TransactionService.deleteTransaction(id);
+        setHistory((prev) => prev.filter((transaction) => transaction.id != id));
+      } catch {
+        //add warning display
       }
     });
   };
@@ -67,7 +77,7 @@ const HomePage = () => {
       </Box>
       <BalanceChart history={optimisticHistory} />
       <CategoryChart history={optimisticHistory} />
-      <TransactionsPanel transactionHistory={optimisticHistory} onAddTransaction={onAddTransaction} />
+      <TransactionsPanel transactionHistory={optimisticHistory} onAddTransaction={onAddTransaction} onDeleteTransaction={onDeleteTransaction} />
     </PageContent>
   );
 };

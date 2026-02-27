@@ -6,13 +6,14 @@ import TransactionHistory from "../Transactions/TransactionsHistory";
 interface Props {
   transactionHistory: ClientTransaction[];
   onAddTransaction: (transaction: Transaction) => void;
+  onDeleteTransaction: (id: number) => void;
 }
 
-const TransactionsPanel = ({ transactionHistory, onAddTransaction }: Props) => {
+const TransactionsPanel = ({ transactionHistory, onAddTransaction, onDeleteTransaction }: Props) => {
   return (
     <>
       <AddTransaction onAddTransaction={onAddTransaction} />
-      <TransactionHistory transactionHistory={transactionHistory} />
+      <TransactionHistory transactionHistory={transactionHistory} onDeleteTransaction={onDeleteTransaction} />
     </>
   );
 };

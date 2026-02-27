@@ -3,10 +3,11 @@ import Box from "../Box/Box";
 import ListRow from "../HistoryPanel/ListRow/ListRow";
 
 interface Props {
-    transactionHistory: ClientTransaction[];
+  transactionHistory: ClientTransaction[];
+  onDeleteTransaction: (id: number) => void;
 }
 
-const TransactionHistory = ({transactionHistory} : Props) => 
+const TransactionHistory = ({ transactionHistory, onDeleteTransaction }: Props) => (
   <Box header="History Panel">
     <div className="flex justify-between mb-3">
       <a href="#" className="text-gray-500">
@@ -15,9 +16,10 @@ const TransactionHistory = ({transactionHistory} : Props) =>
     </div>
     <div className="flex flex-col justify-between">
       {transactionHistory.map((transaction) => (
-        <ListRow key={transaction.clientId} transaction={transaction} />
+        <ListRow key={transaction.clientId} transaction={transaction} onDeleteTransaction={onDeleteTransaction} />
       ))}
     </div>
-  </Box>;
+  </Box>
+);
 
 export default TransactionHistory;
