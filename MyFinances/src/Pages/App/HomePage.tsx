@@ -46,14 +46,16 @@ const HomePage = () => {
   };
 
   const onDeleteTransaction = async (id: number) => {
-    startTransition(async () => {
-      try {
-        await TransactionService.deleteTransaction(id);
-        setHistory((prev) => prev.filter((transaction) => transaction.id != id));
-      } catch {
-        //add warning display
-      }
-    });
+    if (confirm("Please confirm to delete the transaction.")) {
+      startTransition(async () => {
+        try {
+          await TransactionService.deleteTransaction(id);
+          setHistory((prev) => prev.filter((transaction) => transaction.id !== id));
+        } catch {
+          //add warning display
+        }
+      });
+    }
   };
 
   return (
