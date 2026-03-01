@@ -6,11 +6,12 @@ import { KebabMenu, type MenuItem } from "../../../Controls/KebabMenu";
 type Props = {
   transaction: Transaction;
   onDeleteTransaction: (id: number) => void;
+  onEditStart: (id: number) => void;
 };
 
-const ListRow = ({ transaction, onDeleteTransaction }: Props) => {
+const ListRow = ({ transaction, onDeleteTransaction, onEditStart }: Props) => {
   const menuItems: MenuItem[] = [
-    { label: "Edit", icon: <CiEdit className="text-blue-700 text-2xl" />, onClick: () => console.log("Edit Clicked") },
+    { label: "Edit", icon: <CiEdit className="text-blue-700 text-2xl" />, onClick: () => onEditStart(transaction.id) },
     { label: "Delete", icon: <CiEraser className="text-blue-700 text-2xl" />, onClick: () => onDeleteTransaction(transaction.id) },
   ];
 
