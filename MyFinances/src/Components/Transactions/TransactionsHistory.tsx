@@ -28,7 +28,11 @@ const TransactionHistory = ({ transactionHistory, onDeleteTransaction, onEditTra
       <div className="flex flex-col justify-between">
         {transactionEdit.map((transaction) =>
           transaction.isEditing ? (
-            <EditListRow key={transaction.clientId} transaction={transaction} onEditTransaction={onEditTransaction} />
+            <>
+              <br />
+              <EditListRow key={transaction.clientId} transaction={transaction} onEditTransaction={onEditTransaction} />
+              <br />
+            </>
           ) : (
             <ListRow
               key={transaction.clientId}

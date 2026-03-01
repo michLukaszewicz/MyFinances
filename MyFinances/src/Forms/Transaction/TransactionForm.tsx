@@ -51,12 +51,11 @@ const TransactionForm = ({ onAddTransaction, children, basedOnTransaction }: Pro
     <form onSubmit={onSubmit} className="grid grid-cols-[2.4fr_0.9fr_0.5fr_1fr_0.5fr] px-2 items-center">
       <div className="min-w-0 flex flex-col gap-1">
         <input
-          autoFocus
           type="text"
           placeholder={parseFloat(form.amount) < 0 ? "Transaction To" : "Transaction From"}
           value={form.otherSideOfTransaction}
           onChange={(e) => setForm({ ...form, otherSideOfTransaction: e.target.value })}
-          className="text-blue-700 font-medium text-xl bg-transparent focus:outline-none"
+          className="text-blue-700 font-medium text-xl focus:outline-none border-b border-blue-100 focus:border-blue-400 transition-colors w-80"
         />
 
         <input
@@ -64,7 +63,7 @@ const TransactionForm = ({ onAddTransaction, children, basedOnTransaction }: Pro
           placeholder="Description"
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
-          className="text-s text-gray-500 bg-transparent focus:outline-none"
+          className="text-s text-gray-500 bg-transparent focus:outline-none border-b border-blue-100 focus:border-blue-400 transition-colors w-80"
         />
       </div>
       <select
@@ -102,7 +101,7 @@ const TransactionForm = ({ onAddTransaction, children, basedOnTransaction }: Pro
           placeholder="0.00"
           value={form.amount}
           onChange={(e) => setForm({ ...form, amount: e.target.value })}
-          className={`w-full text-[1.1rem] font-semibold text-right bg-transparent focus:outline-none
+          className={`w-30 text-[1.1rem] font-semibold text-right bg-transparent focus:outline-none border-1 border-blue-100 rounded-md focus:border-blue-400
               ${parseFloat(form.amount) < 0 ? "text-red-600" : "text-green-600"}`}
         />
         <span className="text-xs text-gray-400">PLN</span>

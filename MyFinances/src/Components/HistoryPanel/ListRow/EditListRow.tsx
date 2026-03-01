@@ -8,17 +8,17 @@ interface Props {
 
 export const EditListRow = ({ transaction, onEditTransaction }: Props) => {
   return (
-    <TransactionForm onAddTransaction={onEditTransaction} basedOnTransaction={transaction}>
-      <button
-        type="submit"
-        className="py-2 px-5 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-        Edit
-      </button>
-      <button
-        type="button"
-        className="py-2 px-5 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-        Cancel
-      </button>
-    </TransactionForm>
+      <TransactionForm onAddTransaction={onEditTransaction} basedOnTransaction={transaction}>
+        <button
+          type="submit"
+          className="mb-1 py-1 w-20 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+          Edit
+        </button>
+        <button
+          type="button"
+          className="py-1 w-20 bg-red-500 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+          Cancel
+        </button>
+      </TransactionForm>
   );
 };
