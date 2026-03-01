@@ -2,12 +2,13 @@ import { useState } from "react";
 import type { Transaction } from "../../Models/Transaction";
 
 interface Props {
-  onAddTransaction: (transaction: Transaction) => void;
+  onSubmitAction: (transaction: Transaction) => void;
   children: React.ReactNode;
   basedOnTransaction?: Transaction;
 }
 
 type TransactionDto = {
+  id: number;
   date: string;
   description: string;
   amount: string;
@@ -17,6 +18,7 @@ type TransactionDto = {
 };
 
 const defaultState: TransactionDto = {
+  id: -1,
   date: new Date().toISOString().split("T")[0],
   description: "",
   amount: "0.0",
@@ -29,14 +31,15 @@ const mapTransaction = (transaction: Transaction): TransactionDto => ({
   ...transaction,
   date: transaction.date.toISOString().split("T")[0],
   amount: transaction.amount.toString(),
+  id: transaction.id
 });
 
-const TransactionForm = ({ onAddTransaction, basedOnTransaction, children }: Props) => {
+const TransactionForm = ({ onSubmitAction, basedOnTransaction, children }: Props) => {
   const [form, setForm] = useState(basedOnTransaction ? mapTransaction(basedOnTransaction) : defaultState);
 
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onAddTransaction({ ...form, id: -1, date: new Date(form.date), amount: parseFloat(form.amount) });
+    onSubmitAction({ ...form, date: new Date(form.date), amount: parseFloat(form.amount) });
     setForm({
       ...form,
       date: new Date().toISOString().split("T")[0],

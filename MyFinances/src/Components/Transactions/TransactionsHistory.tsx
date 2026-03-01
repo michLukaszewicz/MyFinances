@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { ClientTransaction } from "../../Models/Dtos/TransactionClientDto";
 import type { Transaction } from "../../Models/Transaction";
 import Box from "../Box/Box";
-import { EditListRow } from "../HistoryPanel/ListRow/EditListRow";
+import { EditTransaction } from "../HistoryPanel/ListRow/EditTransaction";
 import ListRow from "../HistoryPanel/ListRow/ListRow";
 
 interface Props {
@@ -18,6 +18,13 @@ const TransactionHistory = ({ transactionHistory, onDeleteTransaction, onEditTra
     setTransactionEdit(transactionHistory.map((transaction) => ({ ...transaction, isEditing: false })));
   }, [transactionHistory]);
 
+  const onCancelEdit = (id: number) => setTransactionEdit(transactionEdit.map((t) => (t.id === id ? { ...t, isEditing: false } : t)));
+
+  const editTransaction = (transaction: Transaction) => {
+    onCancelEdit(transaction.id);
+    onEditTransaction(transaction);
+  };
+
   return (
     <Box header="History Panel">
       <div className="flex justify-between mb-3">
@@ -30,12 +37,7 @@ const TransactionHistory = ({ transactionHistory, onDeleteTransaction, onEditTra
           transaction.isEditing ? (
             <>
               <br />
-              <EditListRow
-                key={transaction.clientId}
-                transaction={transaction}
-                onEditTransaction={onEditTransaction}
-                onEditCancel={(id: number): void => setTransactionEdit(transactionEdit.map((t) => (t.id === id ? { ...t, isEditing: false } : t)))}
-              />
+              <EditTransaction key={transaction.clientId} transaction={transaction} onEditTransaction={editTransaction} onEditCancel={onCancelEdit} />
               <br />
             </>
           ) : (
