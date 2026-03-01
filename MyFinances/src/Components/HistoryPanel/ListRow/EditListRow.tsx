@@ -1,0 +1,24 @@
+import TransactionForm from "../../../Forms/Transaction/TransactionForm";
+import type { Transaction } from "../../../Models/Transaction";
+
+interface Props {
+  transaction: Transaction;
+  onEditTransaction: (transaction: Transaction) => void;
+}
+
+export const EditListRow = ({ transaction, onEditTransaction }: Props) => {
+  return (
+    <TransactionForm onAddTransaction={onEditTransaction} basedOnTransaction={transaction}>
+      <button
+        type="submit"
+        className="py-2 px-5 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+        Edit
+      </button>
+      <button
+        type="button"
+        className="py-2 px-5 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+        Cancel
+      </button>
+    </TransactionForm>
+  );
+};

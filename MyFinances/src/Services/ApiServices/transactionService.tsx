@@ -4,7 +4,7 @@ import { API_ROUTES } from "../../Routes/RoutesConsts";
 
 const TransactionService = {
   async getTestData(): Promise<Transaction[]> {
-    const response = await axios.get<Transaction[]>(`${API_ROUTES.base}/TestData`);
+    const response = await axios.get<Transaction[]>(`${API_ROUTES.base}/${API_ROUTES.testData}`);
     return response.data.map((t) => ({
       ...t,
       date: new Date(t.date),
@@ -12,7 +12,7 @@ const TransactionService = {
   },
 
   async postTransaction(newTransaction: Transaction): Promise<number> {
-    const response = await axios.post<number>(`${API_ROUTES.base}/TestData`, {
+    const response = await axios.post<number>(`${API_ROUTES.base}/${API_ROUTES.testData}`, {
       id: 1,
       date: new Date(newTransaction.date).toISOString(),
       description: newTransaction.description,
@@ -24,8 +24,12 @@ const TransactionService = {
     return response.data;
   },
 
+async editTransaction(transaction: Transaction): Promise<void> {
+  await axios.put(`${API_ROUTES.base}/TestData`, transaction);
+},
+
   async deleteTransaction(id: number): Promise<void> {
-    await axios.delete<void>(`${API_ROUTES.base}/TestData/${id}`);
+    await axios.delete<void>(`${API_ROUTES.base}/${API_ROUTES.testData}/${id}`);
   },
 
   async getTransactionHistory(): Promise<Transaction[]> {
@@ -33,7 +37,7 @@ const TransactionService = {
     if (!token) {
       throw new Error("No access token found. Please log in.");
     }
-    const response = await axios.get<Transaction[]>(`${API_ROUTES.base}/Transactions`, {
+    const response = await axios.get<Transaction[]>(`${API_ROUTES.base}/${API_ROUTES.transactions}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

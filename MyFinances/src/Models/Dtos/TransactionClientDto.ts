@@ -1,3 +1,7 @@
 import type { Transaction } from "../Transaction";
 
-export type ClientTransaction = Transaction & { clientId: string };
+export type ClientTransaction = Transaction & 
+{ 
+    clientId: string,
+    isEditing: boolean
+};

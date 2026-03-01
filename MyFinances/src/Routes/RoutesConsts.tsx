@@ -28,5 +28,7 @@ export const API_ROUTES = {
         completeRegistration: "/auth/complete-registration",
         externalLogin: "/auth/external-login",
         validateEmail: "/auth/validate-email"
-    }
+    },
+    testData: "TestData",
+    transactions: "Transactions"
 };

@@ -33,14 +33,14 @@ const HomePage = () => {
   }, []);
 
   const onAddTransaction = async (form: Transaction) => {
-    const optimisticTransaction = { ...form, id: -1, clientId: crypto.randomUUID(), date: new Date(form.date) };
+    const optimisticTransaction: ClientTransaction = { ...form, id: -1, clientId: crypto.randomUUID(), date: new Date(form.date), isEditing: false };
     startTransition(async () => {
       updateOptimisticHistory(optimisticTransaction);
       try {
         const realId = await TransactionService.postTransaction(optimisticTransaction);
         setHistory((prev) => [...prev, { ...optimisticTransaction, id: realId }]);
       } catch {
-        updateOptimisticHistory({ ...optimisticTransaction, id: -1 });
+        updateOptimisticHistory({ ...optimisticTransaction, id: -1, isEditing: false });
       }
     });
   };
@@ -57,6 +57,18 @@ const HomePage = () => {
       });
     }
   };
+
+  const onEditTransaction = async (transaction: Transaction) => {
+    startTransition(async () => {
+      try {
+        //add optimistic edit
+        await TransactionService.editTransaction(transaction);
+        setHistory((prev) => prev.map(t => t.id === transaction.id ? transaction : t))
+      } catch {
+        //add warning display
+      }
+    })
+  }
 
   return (
     <PageContent>
@@ -79,7 +91,12 @@ const HomePage = () => {
       </Box>
       <BalanceChart history={optimisticHistory} />
       <CategoryChart history={optimisticHistory} />
-      <TransactionsPanel transactionHistory={optimisticHistory} onAddTransaction={onAddTransaction} onDeleteTransaction={onDeleteTransaction} />
+      <TransactionsPanel
+        transactionHistory={optimisticHistory}
+        onAddTransaction={onAddTransaction}
+        onDeleteTransaction={onDeleteTransaction}
+        onEditTransaction={onEditTransaction}
+      />
     </PageContent>
   );
 };
