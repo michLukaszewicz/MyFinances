@@ -30,7 +30,12 @@ const TransactionHistory = ({ transactionHistory, onDeleteTransaction, onEditTra
           transaction.isEditing ? (
             <>
               <br />
-              <EditListRow key={transaction.clientId} transaction={transaction} onEditTransaction={onEditTransaction} />
+              <EditListRow
+                key={transaction.clientId}
+                transaction={transaction}
+                onEditTransaction={onEditTransaction}
+                onEditCancel={(id: number): void => setTransactionEdit(transactionEdit.map((t) => (t.id === id ? { ...t, isEditing: false } : t)))}
+              />
               <br />
             </>
           ) : (
@@ -38,9 +43,7 @@ const TransactionHistory = ({ transactionHistory, onDeleteTransaction, onEditTra
               key={transaction.clientId}
               transaction={transaction}
               onDeleteTransaction={onDeleteTransaction}
-              onEditStart={(id: number): void =>
-                setTransactionEdit(transactionEdit.map((transaction) => (transaction.id === id ? { ...transaction, isEditing: true } : transaction)))
-              }
+              onEditStart={(id: number): void => setTransactionEdit(transactionEdit.map((t) => (t.id === id ? { ...t, isEditing: true } : t)))}
             />
           ),
         )}

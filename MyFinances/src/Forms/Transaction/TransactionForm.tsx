@@ -31,7 +31,7 @@ const mapTransaction = (transaction: Transaction): TransactionDto => ({
   amount: transaction.amount.toString(),
 });
 
-const TransactionForm = ({ onAddTransaction, children, basedOnTransaction }: Props) => {
+const TransactionForm = ({ onAddTransaction, basedOnTransaction, children }: Props) => {
   const [form, setForm] = useState(basedOnTransaction ? mapTransaction(basedOnTransaction) : defaultState);
 
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {

@@ -4,9 +4,10 @@ import type { Transaction } from "../../../Models/Transaction";
 interface Props {
   transaction: Transaction;
   onEditTransaction: (transaction: Transaction) => void;
+  onEditCancel: (id: number) => void;
 }
 
-export const EditListRow = ({ transaction, onEditTransaction }: Props) => {
+export const EditListRow = ({ transaction, onEditTransaction, onEditCancel }: Props) => {
   return (
       <TransactionForm onAddTransaction={onEditTransaction} basedOnTransaction={transaction}>
         <button
@@ -16,7 +17,8 @@ export const EditListRow = ({ transaction, onEditTransaction }: Props) => {
         </button>
         <button
           type="button"
-          className="py-1 w-20 bg-red-500 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+          className="py-1 w-20 bg-red-500 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          onClick={() => onEditCancel(transaction.id)}>
           Cancel
         </button>
       </TransactionForm>
