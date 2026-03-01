@@ -104,7 +104,7 @@ const TransactionForm = ({ onSubmitAction, basedOnTransaction, children }: Props
           placeholder="0.00"
           value={form.amount}
           onChange={(e) => setForm({ ...form, amount: e.target.value })}
-          className={`w-30 text-[1.1rem] font-semibold text-right bg-transparent focus:outline-none border-1 border-blue-100 rounded-md focus:border-blue-400
+          className={`w-30 text-[1.1rem] font-semibold text-right bg-transparent focus:outline-none border-b-1 border-blue-100 focus:border-blue-400
               ${parseFloat(form.amount) < 0 ? "text-red-600" : "text-green-600"}`}
         />
         <span className="text-xs text-gray-400">PLN</span>
