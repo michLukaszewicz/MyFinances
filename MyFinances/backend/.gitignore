@@ -1,0 +1,6 @@
+bin/
+obj/
+.vs/
+
+# Generated at publish time from ../frontend (see the csproj's BuildFrontend/CopyFrontendToWwwroot targets)
+wwwroot/
