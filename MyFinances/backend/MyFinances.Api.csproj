@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>MyFinances.Api</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+  </ItemGroup>
+
+  <!--
+    Builds the React frontend (../frontend) and copies its static output into the
+    published app's wwwroot, so this app can serve it alongside the API from a single
+    origin in production. See Program.cs for the UseStaticFiles/MapFallbackToFile wiring.
+
+    Runs AFTER Publish (not before) and writes straight into $(PublishDir): the SDK's
+    static-web-assets pipeline decides what to include in the publish output during the
+    Publish target itself, so anything dropped into the source-tree wwwroot beforehand
+    is too late to be picked up. Writing into the already-finished $(PublishDir) sidesteps
+    that entirely — this is publish-only; `dotnet run`/`dotnet build` never touch it, and
+    local dev keeps using the separate Vite dev server + proxy instead (see
+    MyFinances/frontend/vite.config.ts).
+  -->
+  <PropertyGroup>
+    <FrontendDir>$(MSBuildProjectDirectory)\..\frontend</FrontendDir>
+  </PropertyGroup>
+
+  <Target Name="BuildAndCopyFrontend" AfterTargets="Publish">
+    <Exec Command="npm ci" WorkingDirectory="$(FrontendDir)" />
+    <Exec Command="npm run build" WorkingDirectory="$(FrontendDir)" />
+    <ItemGroup>
+      <FrontendBuildOutput Include="$(FrontendDir)\build\client\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(FrontendBuildOutput)" DestinationFolder="$(PublishDir)wwwroot\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>
