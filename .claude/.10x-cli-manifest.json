@@ -2,8 +2,8 @@
   "package": "@przeprogramowani/10x-cli",
   "version": "1.22.1",
   "manifestVersion": 3,
-  "lastApplied": "2026-09-18T11:18:42.841Z",
-  "lessonId": "m1l3",
+  "lastApplied": "2026-09-21T09:27:09.908Z",
+  "lessonId": "m1l5",
   "course": "10xdevs4",
   "tool": "claude-code",
   "files": {
@@ -158,11 +158,19 @@
       }
     },
     "prompts": [
-      "skill-explainer.md"
+      "skill-explainer.md",
+      "m1l5-1-plan-integration.md",
+      "m1l5-2-constrain-approach.md",
+      "m1l5-3-extend-prerequisites.md",
+      "m1l5-4-store-plan.md"
     ],
     "configs": [],
     "promptHashes": {
-      "skill-explainer.md": "6ee36d65134a8f6ecc8062b15362bde673c702e1b71c09ac7455bc84e29b2848"
+      "skill-explainer.md": "6ee36d65134a8f6ecc8062b15362bde673c702e1b71c09ac7455bc84e29b2848",
+      "m1l5-1-plan-integration.md": "153e2dbc3d03c07e0e03776e3295fdeafc2b395e57454029f9403ff6ea29f606",
+      "m1l5-2-constrain-approach.md": "1d2477cdc3c2a867a4bf79d3d1ba1151f0468875237f2322126b26e5d506c505",
+      "m1l5-3-extend-prerequisites.md": "3418ae7c2ffc10f9cce9ad23b48b845033b57793fc2816df66c6deb8b6eae867",
+      "m1l5-4-store-plan.md": "0f72fd90618f05bd8f6784825d217e128fa3148def28024995f1ad1026b34f48"
     },
     "configHashes": {}
   },
@@ -314,7 +322,7 @@
       "installedManifestHash": "1ec3800cfa5c5d37754debba7e9172f32e71330ee1a29531d6ec8fff1c4bfaaa"
     },
     "m1l5": {
-      "appliedAt": "2026-09-21T09:25:59.005Z",
+      "appliedAt": "2026-09-21T09:27:09.908Z",
       "skills": {
         "10x-idea-check": {
           "files": [
@@ -403,14 +411,28 @@
           ]
         }
       },
-      "prompts": [],
-      "configs": []
+      "prompts": [
+        "skill-explainer.md",
+        "m1l5-1-plan-integration.md",
+        "m1l5-2-constrain-approach.md",
+        "m1l5-3-extend-prerequisites.md",
+        "m1l5-4-store-plan.md"
+      ],
+      "configs": [],
+      "representation": {
+        "lang": "en",
+        "tool": "claude-code",
+        "courseRules": true,
+        "rules": true
+      },
+      "installedReleaseId": "r-dd5c2b4bc3f63fee918d09330c676f31479453b6f6754ca1c13902646d33baca",
+      "installedManifestHash": "f22f7bf334f0e79bf8b7f095943940825d772c1c39d3613ae7d8531f4803c37f"
     }
   },
   "managedRules": {
     "path": "CLAUDE.md",
     "begin": "<!-- BEGIN @przeprogramowani/10x-cli -->",
     "end": "<!-- END @przeprogramowani/10x-cli -->",
-    "upstreamHash": "f80b35907ac751c9d8583470fddcc85be00388af8dc3e3d0735f75528a030975"
+    "upstreamHash": "8164ee1e2bc5cc5591f6d69f606bca86597fc166ac2b2a0274839ce6c0630c84"
   }
 }
