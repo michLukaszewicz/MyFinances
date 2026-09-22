@@ -17,7 +17,17 @@
       "Write",
       "Bash(dotnet publish *)",
       "Bash(nohup ./MyFinances.Api.exe --urls http://localhost:5099)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(render --version)",
+      "Bash(docker --version)",
+      "Bash(dotnet add *)",
+      "Bash(dotnet build *)",
+      "Bash(docker build *)",
+      "Bash(taskkill //F //IM dotnet.exe)",
+      "Bash(pkill -f \"react-router dev\")",
+      "Bash(pkill -f \"vite\")",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(/c/Users/michal.lukaszewicz/AppData/Local/Microsoft/WinGet/Links/render.exe deploys *)"
     ],
     "deny": [
       "Bash(rm -rf *)"
