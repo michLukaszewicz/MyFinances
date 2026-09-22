@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: myfinances-api
+    runtime: docker
+    dockerfilePath: MyFinances/backend/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: ConnectionStrings__Default
+        sync: false
