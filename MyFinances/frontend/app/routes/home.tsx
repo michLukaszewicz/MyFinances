@@ -17,7 +17,7 @@ interface WeatherForecast {
   temperatureF: number;
 }
 
-function ApiStatus() {
+function WeatherForecastTable() {
   const [forecast, setForecast] = useState<WeatherForecast[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,21 +36,37 @@ function ApiStatus() {
   }
 
   if (!forecast) {
-    return <p className="text-center text-sm text-gray-500">Calling API…</p>;
+    return <p className="text-center text-sm text-gray-500">Loading forecast…</p>;
   }
 
   return (
-    <p className="text-center text-sm text-green-600">
-      API reachable — first forecast: {forecast[0].summary} (
-      {forecast[0].temperatureC}°C)
-    </p>
+    <table className="mx-auto text-sm">
+      <thead>
+        <tr className="text-left text-gray-500">
+          <th className="px-3 py-1">Date</th>
+          <th className="px-3 py-1">°C</th>
+          <th className="px-3 py-1">°F</th>
+          <th className="px-3 py-1">Summary</th>
+        </tr>
+      </thead>
+      <tbody>
+        {forecast.map((day) => (
+          <tr key={day.date}>
+            <td className="px-3 py-1">{day.date}</td>
+            <td className="px-3 py-1">{day.temperatureC}</td>
+            <td className="px-3 py-1">{day.temperatureF}</td>
+            <td className="px-3 py-1">{day.summary}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
 export default function Home() {
   return (
     <>
-      <ApiStatus />
+      <WeatherForecastTable />
       <Welcome />
     </>
   );
