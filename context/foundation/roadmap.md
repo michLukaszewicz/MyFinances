@@ -40,7 +40,7 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 
 | ID    | Change ID                       | Outcome (user can …)                                                              | Prerequisites | PRD refs                    | Status   |
 | ----- | -------------------------------- | ----------------------------------------------------------------------------------- | -------------- | ---------------------------- | -------- |
-| F-01  | minimal-auth-scaffold            | (foundation) register, log in, and stay logged in via a persistent session          | —              | FR-001, Access Control        | ready    |
+| F-01  | minimal-auth-scaffold            | (foundation) register, log in, and stay logged in via a persistent session          | —              | FR-001, Access Control        | planning |
 | S-01  | mbank-import-with-dedup          | import an mBank CSV, resolve flagged duplicates, and see an import summary          | F-01           | FR-002, FR-004, US-01, Guardrail (dedup) | proposed |
 | S-02  | manual-transaction-entry         | manually add, edit, and delete transactions without creating import duplicates      | S-01           | FR-010                        | proposed |
 | S-03  | categorization-queue             | categorize queued transactions, with internal transfers auto-flagged (overridable)  | S-01           | FR-007, FR-009, FR-015, US-01 | proposed |
@@ -85,7 +85,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Sequenced first because retrofitting user-scoping onto transactions/categories built without it would mean redoing data-access code across every later slice.
-- **Status:** ready
+- **Status:** planning
 
 ## Slices
 
