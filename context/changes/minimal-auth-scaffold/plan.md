@@ -343,10 +343,10 @@ This is a net-new schema addition (Identity's user tables); there's no existing 
 - [x] 3.6 Login success/failure behaves correctly — f31e125
 - [x] 3.7 Weatherforecast table renders once logged in — f31e125
 - [x] 3.8 Logout returns to `/login` and invalidates the session — f31e125
-- [x] 3.9 Session survives a full browser restart within 30 days
+- [x] 3.9 Session survives a full browser restart within 30 days — 3792735
 
 ### Phase 4: Backend auth tests
 
 #### Automated
 
-- [x] 4.1 `dotnet test` passes with all seven auth scenarios covered
+- [x] 4.1 `dotnet test` passes with all seven auth scenarios covered — 3792735
