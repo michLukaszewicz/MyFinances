@@ -1,9 +1,9 @@
 ---
 change_id: minimal-auth-scaffold
 title: Minimal auth scaffold - register, login, persistent session
-status: planned
+status: implementing
 created: 2026-09-22
-updated: 2026-09-22
+updated: 2026-09-23
 archived_at: null
 ---
 

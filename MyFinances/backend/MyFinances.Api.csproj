@@ -8,7 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
   </ItemGroup>
@@ -28,6 +33,7 @@
   -->
   <PropertyGroup>
     <FrontendDir>$(MSBuildProjectDirectory)\..\frontend</FrontendDir>
+    <UserSecretsId>34cd40c6-0bea-4f56-a579-d1e4f32ba58f</UserSecretsId>
   </PropertyGroup>
 
   <Target Name="BuildAndCopyFrontend" AfterTargets="Publish">
