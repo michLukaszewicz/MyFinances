@@ -226,16 +226,16 @@ Not applicable — no persisted data or schema changes.
 
 #### Automated
 
-- [x] 1.1 Backend builds: `dotnet build`
-- [x] 1.2 Backend tests pass: `dotnet test`
-- [x] 1.3 No remaining references to weatherforecast in the backend
+- [x] 1.1 Backend builds: `dotnet build` — 1cddd31
+- [x] 1.2 Backend tests pass: `dotnet test` — 1cddd31
+- [x] 1.3 No remaining references to weatherforecast in the backend — 1cddd31
 
 ### Phase 2: Frontend — extract shared AppHeader
 
 #### Automated
 
-- [ ] 2.1 Frontend typecheck passes
-- [ ] 2.2 Frontend build succeeds
+- [x] 2.1 Frontend typecheck passes
+- [x] 2.2 Frontend build succeeds
 
 ### Phase 3: Frontend — dual public/authenticated home route
 
