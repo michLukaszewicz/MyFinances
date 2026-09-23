@@ -304,13 +304,13 @@ This is a net-new schema addition (Identity's user tables); there's no existing 
 
 #### Automated
 
-- [ ] 1.1 `dotnet build` succeeds from `MyFinances/backend`
-- [ ] 1.2 `dotnet ef migrations add InitialIdentitySchema` generates a migration touching only Identity user tables
-- [ ] 1.3 `dotnet ef database update` applies cleanly against the configured Postgres connection
+- [x] 1.1 `dotnet build` succeeds from `MyFinances/backend`
+- [x] 1.2 `dotnet ef migrations add InitialIdentitySchema` generates a migration touching only Identity user tables
+- [x] 1.3 `dotnet ef database update` applies cleanly against the configured Postgres connection
 
 #### Manual
 
-- [ ] 1.4 Inspect the generated migration file to confirm no unexpected tables/columns
+- [x] 1.4 Inspect the generated migration file to confirm no unexpected tables/columns
 
 ### Phase 2: Auth endpoints & global enforcement
 
