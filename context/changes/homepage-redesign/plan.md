@@ -234,23 +234,23 @@ Not applicable — no persisted data or schema changes.
 
 #### Automated
 
-- [x] 2.1 Frontend typecheck passes
-- [x] 2.2 Frontend build succeeds
+- [x] 2.1 Frontend typecheck passes — 7711baf
+- [x] 2.2 Frontend build succeeds — 7711baf
 
 ### Phase 3: Frontend — dual public/authenticated home route
 
 #### Automated
 
-- [ ] 3.1 Frontend typecheck passes
-- [ ] 3.2 Frontend build succeeds
-- [ ] 3.3 No remaining reference to WeatherForecastTable/weatherforecast in the frontend
+- [x] 3.1 Frontend typecheck passes
+- [x] 3.2 Frontend build succeeds
+- [x] 3.3 No remaining reference to WeatherForecastTable/weatherforecast in the frontend
 
 #### Manual
 
-- [ ] 3.4 Logged out `/` shows public landing page with working Login/Register links
-- [ ] 3.5 Logged in `/` shows authenticated dashboard view with correct email and working Log out
-- [ ] 3.6 Both views render correctly at mobile viewport width and in dark mode
-- [ ] 3.7 Refreshing the page preserves the correct view per auth state
+- [x] 3.4 Logged out `/` shows public landing page with working Login/Register links
+- [x] 3.5 Logged in `/` shows authenticated dashboard view with correct email and working Log out
+- [x] 3.6 Both views render correctly at mobile viewport width and in dark mode
+- [x] 3.7 Refreshing the page preserves the correct view per auth state
 
 ### Phase 4: Cleanup — remove dead welcome scaffold
 
