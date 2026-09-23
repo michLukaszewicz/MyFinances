@@ -1,96 +1,70 @@
-import { useEffect, useState } from "react";
-import { redirect, useNavigate } from "react-router";
+import { useLoaderData } from "react-router";
 import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
-import { apiFetch } from "../lib/api";
+import { AppHeader } from "../components/AppHeader";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "MyFinances" },
+    {
+      name: "description",
+      content:
+        "Categorize your own spend and compare it to your own history — no budget required up front.",
+    },
   ];
 }
 
 export async function clientLoader() {
   const res = await fetch("/api/auth/me");
-  if (!res.ok) throw redirect("/login");
+  if (!res.ok) return null;
   return res.json();
 }
 
-interface WeatherForecast {
-  date: string;
-  temperatureC: number;
-  summary: string | null;
-  temperatureF: number;
-}
-
-function WeatherForecastTable() {
-  const [forecast, setForecast] = useState<WeatherForecast[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    apiFetch<WeatherForecast[]>("/weatherforecast")
-      .then(setForecast)
-      .catch((err: Error) => setError(err.message));
-  }, []);
-
-  if (error) {
-    return (
-      <p className="text-center text-sm text-red-600">
-        API call failed: {error}
-      </p>
-    );
-  }
-
-  if (!forecast) {
-    return <p className="text-center text-sm text-gray-500">Loading forecast…</p>;
-  }
-
-  return (
-    <table className="mx-auto text-sm">
-      <thead>
-        <tr className="text-left text-gray-500">
-          <th className="px-3 py-1">Date</th>
-          <th className="px-3 py-1">°C</th>
-          <th className="px-3 py-1">°F</th>
-          <th className="px-3 py-1">Summary</th>
-        </tr>
-      </thead>
-      <tbody>
-        {forecast.map((day) => (
-          <tr key={day.date}>
-            <td className="px-3 py-1">{day.date}</td>
-            <td className="px-3 py-1">{day.temperatureC}</td>
-            <td className="px-3 py-1">{day.temperatureF}</td>
-            <td className="px-3 py-1">{day.summary}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
 export default function Home() {
-  const navigate = useNavigate();
+  const user = useLoaderData<typeof clientLoader>();
 
-  async function handleLogout() {
-    await apiFetch("/auth/logout", { method: "POST" });
-    navigate("/login");
+  if (!user) {
+    return (
+      <main className="flex items-center justify-center pt-16 pb-4">
+        <div className="max-w-[300px] w-full space-y-6 px-4 text-center">
+          <h1 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+            MyFinances
+          </h1>
+          <p className="text-sm text-gray-500">
+            Categorize your own spend and compare it to your own history — no
+            budget required up front.
+          </p>
+          <div className="flex justify-center gap-4 text-sm">
+            <a
+              href="/login"
+              className="text-blue-700 hover:underline dark:text-blue-500"
+            >
+              Log in
+            </a>
+            <a
+              href="/register"
+              className="text-blue-700 hover:underline dark:text-blue-500"
+            >
+              Register
+            </a>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
     <>
-      <div className="flex justify-end p-4">
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="text-sm text-blue-700 hover:underline dark:text-blue-500"
-        >
-          Log out
-        </button>
-      </div>
-      <WeatherForecastTable />
-      <Welcome />
+      <AppHeader showLogout />
+      <main className="flex items-center justify-center pt-16 pb-4">
+        <div className="max-w-[300px] w-full space-y-6 px-4 text-center">
+          <h1 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+            Welcome back, {user.email}
+          </h1>
+          <p className="text-sm text-gray-500">
+            Once bank import lands, you'll see your categorized spend here.
+          </p>
+        </div>
+      </main>
     </>
   );
 }
