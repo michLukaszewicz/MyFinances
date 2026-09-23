@@ -256,10 +256,10 @@ Not applicable — no persisted data or schema changes.
 
 #### Automated
 
-- [x] 4.1 No remaining references to the welcome directory
-- [x] 4.2 Frontend typecheck passes
-- [x] 4.3 Frontend build succeeds
+- [x] 4.1 No remaining references to the welcome directory — 11b5cef
+- [x] 4.2 Frontend typecheck passes — 11b5cef
+- [x] 4.3 Frontend build succeeds — 11b5cef
 
 #### Manual
 
-- [x] 4.4 App still loads correctly in both auth states after deletion
+- [x] 4.4 App still loads correctly in both auth states after deletion — 11b5cef
