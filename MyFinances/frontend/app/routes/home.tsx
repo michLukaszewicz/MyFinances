@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { redirect, useNavigate } from "react-router";
 import type { Route } from "./+types/home";
 import { Welcome } from "../welcome/welcome";
 import { apiFetch } from "../lib/api";
@@ -8,6 +9,12 @@ export function meta({}: Route.MetaArgs) {
     { title: "New React Router App" },
     { name: "description", content: "Welcome to React Router!" },
   ];
+}
+
+export async function clientLoader() {
+  const res = await fetch("/api/auth/me");
+  if (!res.ok) throw redirect("/login");
+  return res.json();
 }
 
 interface WeatherForecast {
@@ -64,8 +71,24 @@ function WeatherForecastTable() {
 }
 
 export default function Home() {
+  const navigate = useNavigate();
+
+  async function handleLogout() {
+    await apiFetch("/auth/logout", { method: "POST" });
+    navigate("/login");
+  }
+
   return (
     <>
+      <div className="flex justify-end p-4">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="text-sm text-blue-700 hover:underline dark:text-blue-500"
+        >
+          Log out
+        </button>
+      </div>
       <WeatherForecastTable />
       <Welcome />
     </>

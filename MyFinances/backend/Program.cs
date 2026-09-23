@@ -62,15 +62,7 @@ builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme).AddCooki
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddAntiforgery(options =>
-{
-    options.HeaderName = "X-XSRF-TOKEN";
-    // The frontend reads this cookie in JS to echo its value back as the
-    // X-XSRF-TOKEN header (double-submit pattern), so it must NOT be HttpOnly
-    // — ASP.NET Core's antiforgery cookie defaults to HttpOnly=true otherwise.
-    options.Cookie.Name = "XSRF-TOKEN";
-    options.Cookie.HttpOnly = false;
-});
+builder.Services.AddAntiforgery(options => { options.HeaderName = "X-XSRF-TOKEN"; });
 
 var app = builder.Build();
 

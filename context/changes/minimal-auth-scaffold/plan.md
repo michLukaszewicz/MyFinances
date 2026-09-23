@@ -316,33 +316,33 @@ This is a net-new schema addition (Identity's user tables); there's no existing 
 
 #### Automated
 
-- [x] 2.1 `dotnet build` succeeds
-- [x] 2.2 `/api/weatherforecast` with no cookie returns 401
-- [x] 2.3 `/api/auth/register` with a non-allow-listed email returns 400
-- [x] 2.4 `/api/auth/register` with the allow-listed email and valid password returns 200 and sets a cookie
-- [x] 2.5 `/api/weatherforecast` with the resulting cookie returns 200
-- [x] 2.6 `/api/auth/login` returns 401 on wrong credentials, 200 + cookie on correct ones
-- [x] 2.7 `/api/auth/logout` requires the antiforgery header and invalidates the session
+- [x] 2.1 `dotnet build` succeeds — 1da5bb4
+- [x] 2.2 `/api/weatherforecast` with no cookie returns 401 — 1da5bb4
+- [x] 2.3 `/api/auth/register` with a non-allow-listed email returns 400 — 1da5bb4
+- [x] 2.4 `/api/auth/register` with the allow-listed email and valid password returns 200 and sets a cookie — 1da5bb4
+- [x] 2.5 `/api/weatherforecast` with the resulting cookie returns 200 — 1da5bb4
+- [x] 2.6 `/api/auth/login` returns 401 on wrong credentials, 200 + cookie on correct ones — 1da5bb4
+- [x] 2.7 `/api/auth/logout` requires the antiforgery header and invalidates the session — 1da5bb4
 
 #### Manual
 
-- [x] 2.8 Exercise the four endpoints via Swagger/curl against the real dev database
+- [x] 2.8 Exercise the four endpoints via Swagger/curl against the real dev database — 1da5bb4
 
 ### Phase 3: Frontend auth UI & route guarding
 
 #### Automated
 
-- [ ] 3.1 `npm run typecheck` passes
-- [ ] 3.2 `npm run build` succeeds
+- [x] 3.1 `npm run typecheck` passes
+- [x] 3.2 `npm run build` succeeds
 
 #### Manual
 
-- [ ] 3.3 Visiting `/` while logged out redirects to `/login`
-- [ ] 3.4 Register with the allow-listed email succeeds; other emails are rejected
-- [ ] 3.5 Duplicate registration shows an error
-- [ ] 3.6 Login success/failure behaves correctly
-- [ ] 3.7 Weatherforecast table renders once logged in
-- [ ] 3.8 Logout returns to `/login` and invalidates the session
+- [x] 3.3 Visiting `/` while logged out redirects to `/login`
+- [x] 3.4 Register with the allow-listed email succeeds; other emails are rejected
+- [x] 3.5 Duplicate registration shows an error
+- [x] 3.6 Login success/failure behaves correctly
+- [x] 3.7 Weatherforecast table renders once logged in
+- [x] 3.8 Logout returns to `/login` and invalidates the session
 - [ ] 3.9 Session survives a full browser restart within 30 days
 
 ### Phase 4: Backend auth tests
