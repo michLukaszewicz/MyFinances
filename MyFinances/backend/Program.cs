@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MyFinances.Api;
+using MyFinances.Api.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,7 +62,15 @@ builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme).AddCooki
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddAntiforgery(options => { options.HeaderName = "X-XSRF-TOKEN"; });
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-XSRF-TOKEN";
+    // The frontend reads this cookie in JS to echo its value back as the
+    // X-XSRF-TOKEN header (double-submit pattern), so it must NOT be HttpOnly
+    // — ASP.NET Core's antiforgery cookie defaults to HttpOnly=true otherwise.
+    options.Cookie.Name = "XSRF-TOKEN";
+    options.Cookie.HttpOnly = false;
+});
 
 var app = builder.Build();
 
@@ -76,12 +85,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
-var api = app.MapGroup("/api");
+var api = app.MapGroup("/api").RequireAuthorization();
 
 api.MapGet("/weatherforecast", () =>
 {
@@ -96,6 +108,8 @@ api.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+api.MapAuthEndpoints();
 
 // The React SPA is built (see MyFinances/frontend, `npm run build`) and its static
 // output copied into wwwroot at publish time (see the csproj's Publish target below).

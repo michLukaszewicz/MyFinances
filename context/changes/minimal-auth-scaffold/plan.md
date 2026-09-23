@@ -304,29 +304,29 @@ This is a net-new schema addition (Identity's user tables); there's no existing 
 
 #### Automated
 
-- [x] 1.1 `dotnet build` succeeds from `MyFinances/backend`
-- [x] 1.2 `dotnet ef migrations add InitialIdentitySchema` generates a migration touching only Identity user tables
-- [x] 1.3 `dotnet ef database update` applies cleanly against the configured Postgres connection
+- [x] 1.1 `dotnet build` succeeds from `MyFinances/backend` — 2ddda5c
+- [x] 1.2 `dotnet ef migrations add InitialIdentitySchema` generates a migration touching only Identity user tables — 2ddda5c
+- [x] 1.3 `dotnet ef database update` applies cleanly against the configured Postgres connection — 2ddda5c
 
 #### Manual
 
-- [x] 1.4 Inspect the generated migration file to confirm no unexpected tables/columns
+- [x] 1.4 Inspect the generated migration file to confirm no unexpected tables/columns — 2ddda5c
 
 ### Phase 2: Auth endpoints & global enforcement
 
 #### Automated
 
-- [ ] 2.1 `dotnet build` succeeds
-- [ ] 2.2 `/api/weatherforecast` with no cookie returns 401
-- [ ] 2.3 `/api/auth/register` with a non-allow-listed email returns 400
-- [ ] 2.4 `/api/auth/register` with the allow-listed email and valid password returns 200 and sets a cookie
-- [ ] 2.5 `/api/weatherforecast` with the resulting cookie returns 200
-- [ ] 2.6 `/api/auth/login` returns 401 on wrong credentials, 200 + cookie on correct ones
-- [ ] 2.7 `/api/auth/logout` requires the antiforgery header and invalidates the session
+- [x] 2.1 `dotnet build` succeeds
+- [x] 2.2 `/api/weatherforecast` with no cookie returns 401
+- [x] 2.3 `/api/auth/register` with a non-allow-listed email returns 400
+- [x] 2.4 `/api/auth/register` with the allow-listed email and valid password returns 200 and sets a cookie
+- [x] 2.5 `/api/weatherforecast` with the resulting cookie returns 200
+- [x] 2.6 `/api/auth/login` returns 401 on wrong credentials, 200 + cookie on correct ones
+- [x] 2.7 `/api/auth/logout` requires the antiforgery header and invalidates the session
 
 #### Manual
 
-- [ ] 2.8 Exercise the four endpoints via Swagger/curl against the real dev database
+- [x] 2.8 Exercise the four endpoints via Swagger/curl against the real dev database
 
 ### Phase 3: Frontend auth UI & route guarding
 
