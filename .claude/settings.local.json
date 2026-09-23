@@ -27,7 +27,17 @@
       "Bash(pkill -f \"react-router dev\")",
       "Bash(pkill -f \"vite\")",
       "Bash(taskkill //F //IM node.exe)",
-      "Bash(/c/Users/michal.lukaszewicz/AppData/Local/Microsoft/WinGet/Links/render.exe deploys *)"
+      "Bash(/c/Users/michal.lukaszewicz/AppData/Local/Microsoft/WinGet/Links/render.exe deploys *)",
+      "Bash(dotnet ef *)",
+      "Bash(dotnet user-secrets *)",
+      "Bash(pkill -f \"dotnet.*MyFinances.Api.dll\")",
+      "Bash(taskkill //F //PID 33996)",
+      "Bash(tasklist)",
+      "Bash(command -v psql)",
+      "Bash(cd /tmp)",
+      "Bash(tail -60 /tmp/backend.log)",
+      "Bash(dotnet --version)",
+      "Bash(dotnet --list-sdks)"
     ],
     "deny": [
       "Bash(rm -rf *)"
