@@ -153,12 +153,12 @@ public class AuthEndpointsTests
     }
 
     [Fact]
-    public async Task WeatherForecast_RequiresAuthCookie()
+    public async Task AuthMe_RequiresAuthCookie()
     {
         using var factory = new AuthApiFactory();
 
         using var anonymousClient = factory.CreateClient();
-        var unauthorized = await anonymousClient.GetAsync("/api/weatherforecast");
+        var unauthorized = await anonymousClient.GetAsync("/api/auth/me");
         Assert.Equal(HttpStatusCode.Unauthorized, unauthorized.StatusCode);
 
         using var authedClient = factory.CreateClient();
@@ -166,7 +166,7 @@ public class AuthEndpointsTests
             new RegisterRequest(AuthApiFactory.AllowedEmail, "correct-horse-battery"));
         Assert.Equal(HttpStatusCode.OK, registerResponse.StatusCode);
 
-        var authorized = await authedClient.GetAsync("/api/weatherforecast");
+        var authorized = await authedClient.GetAsync("/api/auth/me");
         Assert.Equal(HttpStatusCode.OK, authorized.StatusCode);
     }
 
@@ -185,7 +185,7 @@ public class AuthEndpointsTests
         Assert.Equal(HttpStatusCode.BadRequest, logoutWithoutToken.StatusCode);
 
         // The session should still be usable, since the logout above did not succeed.
-        var stillAuthorized = await client.GetAsync("/api/weatherforecast");
+        var stillAuthorized = await client.GetAsync("/api/auth/me");
         Assert.Equal(HttpStatusCode.OK, stillAuthorized.StatusCode);
 
         var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
@@ -195,7 +195,7 @@ public class AuthEndpointsTests
         Assert.Equal(HttpStatusCode.OK, logoutWithToken.StatusCode);
 
         // The now-stale session cookie must no longer grant access.
-        var afterLogout = await client.GetAsync("/api/weatherforecast");
+        var afterLogout = await client.GetAsync("/api/auth/me");
         Assert.Equal(HttpStatusCode.Unauthorized, afterLogout.StatusCode);
     }
 }
