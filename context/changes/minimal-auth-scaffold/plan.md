@@ -332,21 +332,21 @@ This is a net-new schema addition (Identity's user tables); there's no existing 
 
 #### Automated
 
-- [x] 3.1 `npm run typecheck` passes
-- [x] 3.2 `npm run build` succeeds
+- [x] 3.1 `npm run typecheck` passes — f31e125
+- [x] 3.2 `npm run build` succeeds — f31e125
 
 #### Manual
 
-- [x] 3.3 Visiting `/` while logged out redirects to `/login`
-- [x] 3.4 Register with the allow-listed email succeeds; other emails are rejected
-- [x] 3.5 Duplicate registration shows an error
-- [x] 3.6 Login success/failure behaves correctly
-- [x] 3.7 Weatherforecast table renders once logged in
-- [x] 3.8 Logout returns to `/login` and invalidates the session
-- [ ] 3.9 Session survives a full browser restart within 30 days
+- [x] 3.3 Visiting `/` while logged out redirects to `/login` — f31e125
+- [x] 3.4 Register with the allow-listed email succeeds; other emails are rejected — f31e125
+- [x] 3.5 Duplicate registration shows an error — f31e125
+- [x] 3.6 Login success/failure behaves correctly — f31e125
+- [x] 3.7 Weatherforecast table renders once logged in — f31e125
+- [x] 3.8 Logout returns to `/login` and invalidates the session — f31e125
+- [x] 3.9 Session survives a full browser restart within 30 days
 
 ### Phase 4: Backend auth tests
 
 #### Automated
 
-- [ ] 4.1 `dotnet test` passes with all seven auth scenarios covered
+- [x] 4.1 `dotnet test` passes with all seven auth scenarios covered
