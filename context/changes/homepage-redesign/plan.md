@@ -241,25 +241,25 @@ Not applicable — no persisted data or schema changes.
 
 #### Automated
 
-- [x] 3.1 Frontend typecheck passes
-- [x] 3.2 Frontend build succeeds
-- [x] 3.3 No remaining reference to WeatherForecastTable/weatherforecast in the frontend
+- [x] 3.1 Frontend typecheck passes — 90e3622
+- [x] 3.2 Frontend build succeeds — 90e3622
+- [x] 3.3 No remaining reference to WeatherForecastTable/weatherforecast in the frontend — 90e3622
 
 #### Manual
 
-- [x] 3.4 Logged out `/` shows public landing page with working Login/Register links
-- [x] 3.5 Logged in `/` shows authenticated dashboard view with correct email and working Log out
-- [x] 3.6 Both views render correctly at mobile viewport width and in dark mode
-- [x] 3.7 Refreshing the page preserves the correct view per auth state
+- [x] 3.4 Logged out `/` shows public landing page with working Login/Register links — 90e3622
+- [x] 3.5 Logged in `/` shows authenticated dashboard view with correct email and working Log out — 90e3622
+- [x] 3.6 Both views render correctly at mobile viewport width and in dark mode — 90e3622
+- [x] 3.7 Refreshing the page preserves the correct view per auth state — 90e3622
 
 ### Phase 4: Cleanup — remove dead welcome scaffold
 
 #### Automated
 
-- [ ] 4.1 No remaining references to the welcome directory
-- [ ] 4.2 Frontend typecheck passes
-- [ ] 4.3 Frontend build succeeds
+- [x] 4.1 No remaining references to the welcome directory
+- [x] 4.2 Frontend typecheck passes
+- [x] 4.3 Frontend build succeeds
 
 #### Manual
 
-- [ ] 4.4 App still loads correctly in both auth states after deletion
+- [x] 4.4 App still loads correctly in both auth states after deletion
