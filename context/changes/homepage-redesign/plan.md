@@ -226,9 +226,9 @@ Not applicable — no persisted data or schema changes.
 
 #### Automated
 
-- [ ] 1.1 Backend builds: `dotnet build`
-- [ ] 1.2 Backend tests pass: `dotnet test`
-- [ ] 1.3 No remaining references to weatherforecast in the backend
+- [x] 1.1 Backend builds: `dotnet build`
+- [x] 1.2 Backend tests pass: `dotnet test`
+- [x] 1.3 No remaining references to weatherforecast in the backend
 
 ### Phase 2: Frontend — extract shared AppHeader
 
