@@ -21,7 +21,7 @@ export function AppHeader({ authenticated }: AppHeaderProps) {
         <button
           type="button"
           onClick={handleLogout}
-          className="rounded-md px-3 py-1.5 text-sm font-medium text-gray-300 transition-colors hover:bg-white/5 hover:text-white"
+          className="rounded-md px-3 py-1.5 text-sm font-medium text-brand-400 transition-colors hover:bg-white/5 hover:text-brand-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
         >
           Log out
         </button>
@@ -29,13 +29,13 @@ export function AppHeader({ authenticated }: AppHeaderProps) {
         <nav className="flex items-center gap-2 text-sm">
           <a
             href="/login"
-            className="rounded-md px-3 py-1.5 font-medium text-gray-300 transition-colors hover:bg-white/5 hover:text-white"
+            className="rounded-md px-3 py-1.5 font-medium text-brand-400 transition-colors hover:bg-white/5 hover:text-brand-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
           >
             Log in
           </a>
           <a
             href="/register"
-            className="rounded-md bg-brand-500 px-3 py-1.5 font-medium text-white shadow-sm shadow-brand-900/40 transition-all duration-200 hover:bg-brand-600 hover:shadow-md hover:shadow-brand-600/30 active:scale-95"
+            className="rounded-md bg-brand-500 px-3 py-1.5 font-medium text-white shadow-sm shadow-brand-900/40 transition-all duration-200 hover:bg-brand-600 hover:shadow-md hover:shadow-brand-600/30 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
           >
             Register
           </a>
