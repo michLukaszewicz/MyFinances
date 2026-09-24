@@ -1,0 +1,221 @@
+# Homepage Visual Refresh Implementation Plan
+
+## Overview
+
+Give MyFinances a brand identity built on the user-supplied logo: extend the Tailwind theme with the logo's blue as an accent color, rebuild the public homepage into an animated hero with a short value-prop section, and extend the branding plus a lighter animation treatment to the shared header and the authenticated "welcome back" homepage state.
+
+## Current State Analysis
+
+The homepage ([home.tsx](../../../MyFinances/frontend/app/routes/home.tsx)) currently renders as plain centered text in both its logged-out and logged-in states — a small `text-lg font-semibold` heading, one paragraph of gray text, and (logged-out) two underlined blue links. [AppHeader.tsx](../../../MyFinances/frontend/app/components/AppHeader.tsx) shows "MyFinances" as unstyled text with a logout link. There is no logo anywhere in the UI, no color beyond default Tailwind `gray-*`/`blue-700`, and no motion. Tailwind v4 is configured via a single `@theme` block in [app.css](../../../MyFinances/frontend/app/app.css) (only `--font-sans` is currently overridden); there is no animation library in `package.json` — any motion must be CSS-only (Tailwind's built-in transition utilities plus custom `@keyframes`).
+
+### Key Discoveries:
+
+- Tailwind v4's `@theme` directive in `app.css` is the single place color tokens are defined ([app.css:3-6](../../../MyFinances/frontend/app/app.css)) — extending it with a `--color-brand-*` scale makes the color available as `bg-brand-600`, `text-brand-600`, etc. everywhere, matching how `--font-sans` is already wired.
+- `home.tsx` branches into two fully separate JSX blocks for `!user` vs `user` ([home.tsx:25-53](../../../MyFinances/frontend/app/routes/home.tsx) vs [home.tsx:55-69](../../../MyFinances/frontend/app/routes/home.tsx)) — the plan's Phase 2/Phase 3 split follows this existing branch rather than introducing a new one.
+- `AppHeader` is already shared between the authenticated homepage and (per the login/register `clientLoader` redirect-if-authenticated pattern) implicitly excluded from login/register, so header branding changes have exactly one call site today ([home.tsx:57](../../../MyFinances/frontend/app/routes/home.tsx)).
+- The supplied logo ([myfinances-logo.png](../../../MyFinances/frontend/app/assets/myfinances-logo.png)) is a solid saturated blue (~`#2E2BEA`-range) mark on a transparent background — visually inspected to have strong contrast against both `bg-white` and `dark:bg-gray-950`, confirming the "same logo in both modes" decision needs no second asset.
+- No animation library is installed ([package.json](../../../MyFinances/frontend/package.json)) — entrance/ambient motion must be implemented as Tailwind utility classes plus custom `@keyframes` declared in `app.css`.
+
+## Desired End State
+
+The public (logged-out) homepage shows the logo, a staggered fade/slide-in entrance animation, a subtle ambient glow behind the mark, brand-colored CTA buttons, and a 3-item value-prop section explaining what the app does. The shared header and the authenticated "welcome back" homepage carry the same logo/brand-color treatment and a lighter entrance animation, without the marketing copy. All Tailwind color/link usages that previously hardcoded `blue-700`/`blue-500` on these surfaces now reference the new brand token.
+
+**Verification**: manually load `/` logged out and logged in (via dev server), confirm logo renders, animations play once on load without looping distractingly, and dark mode (OS-level `prefers-color-scheme: dark`) still reads cleanly.
+
+## What We're NOT Doing
+
+- Not touching `login.tsx` or `register.tsx` (scope confirmed as homepage + header only).
+- Not adding an animation library (Framer Motion or similar) — CSS-only per the confirmed decision.
+- Not recreating the logo as SVG — using the supplied PNG as-is.
+- Not producing a second (dark-mode-specific) logo asset.
+- Not changing the backend, auth flow, or any non-visual behavior.
+- Not building a full design system or additional pages beyond home + header.
+
+## Implementation Approach
+
+Add the brand color and animation keyframes to the shared theme layer first (Phase 1), so both the homepage and header phases consume the same tokens instead of duplicating hex values. Then rebuild the public hero (Phase 2), which is the highest-value surface since it's what unauthenticated visitors see. Finish with the header and authenticated home state (Phase 3), reusing the keyframes/tokens from Phase 1 so the two logged-in surfaces feel consistent with the public one without re-deriving color/animation decisions.
+
+## Phase 1: Brand theme & asset wiring
+
+### Overview
+
+Add the logo's blue as a reusable Tailwind theme color, add the logo image as an importable module asset, and declare the shared CSS `@keyframes` (entrance fade/slide, ambient glow pulse) that later phases will apply via utility classes.
+
+### Changes Required:
+
+#### 1. Brand color token
+
+**File**: `MyFinances/frontend/app/app.css`
+
+**Intent**: Make the logo's blue available as a semantic Tailwind color scale so buttons/links/accents across the homepage and header can reference `brand-*` instead of the generic `blue-*` palette, and so a future page can reuse the same token.
+
+**Contract**: Add `--color-brand-{50,100,...,900}` entries to the existing `@theme` block, anchored on the logo's sampled blue (~`#2E2BEA`) as `brand-600`, with lighter/darker steps generated around it. Also declare two custom `@keyframes` blocks in the stylesheet body (outside `@theme`): `fade-slide-in` (opacity 0→1, translateY 8px→0) and `ambient-glow` (a slow opacity/scale pulse, ~4-6s ease-in-out infinite) for use via arbitrary Tailwind `animate-[...]` utilities or a small set of custom utility classes.
+
+#### 2. Logo asset import
+
+**File**: `MyFinances/frontend/app/assets/myfinances-logo.png` (already saved), consumed via `import` in Phase 2/3 components.
+
+**Intent**: Confirm the asset is importable as a Vite-processed module (`import logo from "../assets/myfinances-logo.png"`) so it gets fingerprinting/caching like other Vite-built assets, rather than being referenced via a raw `/public` path.
+
+**Contract**: No code change here beyond the existing file — this is a checkpoint that Vite's default asset handling picks up `.png` imports under `app/assets/` (react-router's Vite preset supports this out of the box; verified during Phase 2 implementation, not a separate config change).
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- Type checking passes: `npm run typecheck` (run from `MyFinances/frontend`)
+- Frontend builds cleanly: `npm run build` (run from `MyFinances/frontend`)
+
+#### Manual Verification:
+
+- `bg-brand-600`, `text-brand-600` etc. resolve to the intended blue when used in a scratch element (spot-checked in browser devtools before moving to Phase 2)
+
+---
+
+## Phase 2: Public homepage hero
+
+### Overview
+
+Rebuild the logged-out branch of `home.tsx` into an animated hero: logo with ambient glow, staggered entrance animation for heading/tagline/CTAs, brand-colored buttons, and a 3-item value-prop section.
+
+### Changes Required:
+
+#### 1. Logged-out hero layout
+
+**File**: `MyFinances/frontend/app/routes/home.tsx`
+
+**Intent**: Replace the current plain-text logged-out block (`home.tsx:26-51`) with a hero section: the imported logo image (sized responsively, e.g. capped width with `h-auto`), the existing tagline copy, brand-colored `Log in`/`Register` CTAs (buttons or styled links using `brand-*`), and a new value-prop section with 3 short items (e.g. "Import your statements", "Categorize in minutes", "See spend vs. your own history") — content should reflect the PRD's actual feature set (import, categorize, compare-to-history), not generic marketing filler.
+
+**Contract**: The `clientLoader`/`meta` exports and the `!user` branch's role as the public-visitor view are unchanged. The value-prop items are static local data (no new loader dependency). Entrance animation is applied via `animate-[fade-slide-in_...]` utility classes (or a small local class using the Phase 1 keyframe) with staggered `animation-delay` per element (logo → heading → tagline → CTAs → value props). Ambient glow is a pseudo-element or wrapping `div` behind the logo using the `ambient-glow` keyframe from Phase 1.
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- Type checking passes: `npm run typecheck`
+- Frontend builds cleanly: `npm run build`
+
+#### Manual Verification:
+
+- Logged-out `/` shows the logo, entrance animation plays once on load (not looping in a distracting way), ambient glow is subtle rather than flashy
+- Value-prop section is legible and accurately describes the app in both light and dark mode
+- CTA buttons/links use the new brand color and remain keyboard-accessible (visible focus state)
+- No layout shift/flash before the logo image loads
+
+**Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase.
+
+---
+
+## Phase 3: Header branding & authenticated home
+
+### Overview
+
+Add the logo to the shared `AppHeader`, and give the authenticated "Welcome back" homepage state a lighter version of the same refresh: branding via the header, brand-colored accents, and an entrance animation — without the value-prop marketing copy (not relevant to an already-registered user).
+
+### Changes Required:
+
+#### 1. Header branding
+
+**File**: `MyFinances/frontend/app/components/AppHeader.tsx`
+
+**Intent**: Replace the plain-text "MyFinances" span with the logo image (small, header-appropriate size), so branding is consistent on every authenticated screen that renders `AppHeader`.
+
+**Contract**: `AppHeaderProps` (`{ showLogout: boolean }`) is unchanged. The log-out button's brand color reference updates from `text-blue-700`/`dark:text-blue-500` to the new `brand-*` token for consistency with Phase 2's CTAs.
+
+#### 2. Authenticated homepage refresh
+
+**File**: `MyFinances/frontend/app/routes/home.tsx`
+
+**Intent**: Apply the same entrance animation treatment (fade/slide-in on the "Welcome back" heading and tagline) to the `user` branch (`home.tsx:55-69`), keeping the copy as-is — no value-prop section here since the visitor is already a user.
+
+**Contract**: The `user` branch's structure (`AppHeader` + centered text block) is unchanged; only animation utility classes and any `blue-*` → `brand-*` color reference updates are added.
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- Type checking passes: `npm run typecheck`
+- Frontend builds cleanly: `npm run build`
+
+#### Manual Verification:
+
+- Logged-in `/` shows the logo in the header on every load, log-out link still works
+- "Welcome back" text has a subtle entrance animation matching the homepage's feel, without the value-prop section
+- Both light and dark mode look intentional (no contrast regressions on the header logo or accent color)
+
+**Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase.
+
+---
+
+## Testing Strategy
+
+### Unit Tests:
+
+- None — this project has no test suite yet (per `CLAUDE.md`: "No test suite exists yet in either project"); verification is via `typecheck`, `build`, and manual browser checks.
+
+### Integration Tests:
+
+- None (see above).
+
+### Manual Testing Steps:
+
+1. Start both dev servers (`npm run dev` in `MyFinances/frontend`, `dotnet run` in `MyFinances/backend`), load `http://localhost:5173/` logged out.
+2. Confirm the hero renders: logo, animated entrance, ambient glow, value props, brand-colored CTAs.
+3. Register/log in, confirm redirect to `/` shows the authenticated "Welcome back" view with header branding and entrance animation.
+4. Toggle OS dark mode (or emulate via devtools `prefers-color-scheme`) and re-check both states for contrast/legibility.
+5. Resize to a narrow (mobile) viewport and confirm the logo and layout stay usable, not overflowing.
+
+## Performance Considerations
+
+Entrance/ambient animations are CSS-only (`transform`/`opacity`), which stay on the compositor thread and avoid layout thrashing. The logo PNG is a single ~100KB asset reused via one Vite-processed import — no additional image processing pipeline is introduced.
+
+## Migration Notes
+
+Not applicable — purely additive frontend/visual change, no data model or API changes.
+
+## References
+
+- Prior related work: `context/changes/homepage-redesign/` (closed; established the public/authenticated dual-view split this plan builds on)
+- Project conventions: `CLAUDE.md`
+
+## Progress
+
+> Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
+
+### Phase 1: Brand theme & asset wiring
+
+#### Automated
+
+- [x] 1.1 Type checking passes: `npm run typecheck`
+- [x] 1.2 Frontend builds cleanly: `npm run build`
+
+#### Manual
+
+- [x] 1.3 `bg-brand-600`/`text-brand-600` resolve to the intended blue in a scratch element
+
+### Phase 2: Public homepage hero
+
+#### Automated
+
+- [ ] 2.1 Type checking passes: `npm run typecheck`
+- [ ] 2.2 Frontend builds cleanly: `npm run build`
+
+#### Manual
+
+- [ ] 2.3 Logged-out `/` shows logo, one-shot entrance animation, subtle ambient glow
+- [ ] 2.4 Value-prop section legible and accurate in light and dark mode
+- [ ] 2.5 CTA buttons/links use brand color and remain keyboard-accessible
+- [ ] 2.6 No layout shift/flash before logo image loads
+
+### Phase 3: Header branding & authenticated home
+
+#### Automated
+
+- [ ] 3.1 Type checking passes: `npm run typecheck`
+- [ ] 3.2 Frontend builds cleanly: `npm run build`
+
+#### Manual
+
+- [ ] 3.3 Logged-in `/` shows logo in header on every load, log-out still works
+- [ ] 3.4 "Welcome back" entrance animation matches homepage feel, no value-prop section
+- [ ] 3.5 Light and dark mode both look intentional, no contrast regressions

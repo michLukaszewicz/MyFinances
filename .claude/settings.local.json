@@ -37,7 +37,9 @@
       "Bash(cd /tmp)",
       "Bash(tail -60 /tmp/backend.log)",
       "Bash(dotnet --version)",
-      "Bash(dotnet --list-sdks)"
+      "Bash(dotnet --list-sdks)",
+      "Skill(10x-new)",
+      "Bash(mkdir -p \"D:/repos/michLukaszewicz/Kurs 10xDev/MyFinances/frontend/app/assets\" *)"
     ],
     "deny": [
       "Bash(rm -rf *)"
