@@ -10,8 +10,11 @@ export function AppHeader({ authenticated }: AppHeaderProps) {
   const navigate = useNavigate();
 
   async function handleLogout() {
-    await apiFetch("/auth/logout", { method: "POST" });
-    navigate("/login");
+    try {
+      await apiFetch("/auth/logout", { method: "POST" });
+    } finally {
+      navigate("/login");
+    }
   }
 
   return (
