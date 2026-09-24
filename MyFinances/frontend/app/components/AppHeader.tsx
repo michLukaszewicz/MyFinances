@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router";
 import { apiFetch } from "../lib/api";
+import logo from "../assets/myfinances-logo.png";
 
 interface AppHeaderProps {
   showLogout: boolean;
@@ -15,14 +16,12 @@ export function AppHeader({ showLogout }: AppHeaderProps) {
 
   return (
     <header className="flex items-center justify-between p-4">
-      <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-        MyFinances
-      </span>
+      <img src={logo} alt="MyFinances" className="h-7 w-auto" />
       {showLogout && (
         <button
           type="button"
           onClick={handleLogout}
-          className="text-sm text-blue-700 hover:underline dark:text-blue-500"
+          className="text-sm text-brand-400 hover:text-brand-300 hover:underline"
         >
           Log out
         </button>
