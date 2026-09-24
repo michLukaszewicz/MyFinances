@@ -34,9 +34,10 @@ Logged-out visitors see an animated hero: logo with ambient glow, staggered fade
 - Shared `AppHeader` logo branding
 - Authenticated "welcome back" homepage lighter refresh
 - New `brand-*` Tailwind color token and shared CSS keyframes
+- Dark mode forced app-wide as the default (added after Phase 2, per user feedback)
+- `login.tsx` / `register.tsx` restyling to match (added as Phase 4, per user feedback)
 
 **Out of scope:**
-- `login.tsx` / `register.tsx` restyling
 - Any animation library (Framer Motion, etc.)
 - Recreating the logo as SVG or producing a dark-mode-specific variant
 - Backend or auth-flow changes
@@ -52,9 +53,10 @@ Add the brand color token and shared `@keyframes` to `app.css` first (Phase 1), 
 | 1. Brand theme & asset wiring | `brand-*` Tailwind color scale + shared entrance/ambient `@keyframes` | Picking a scale that doesn't match the logo's actual sampled blue |
 | 2. Public homepage hero | Animated logged-out hero with logo, value props, brand CTAs | Ambient animation reads as distracting instead of subtle |
 | 3. Header branding & authenticated home | Logo in header everywhere; lighter refresh on "welcome back" | Logo too small/cramped in the compact header bar |
+| 4. Login & register visual refresh | Logo + brand-colored inputs/buttons on both auth pages | Regression in the auth form submit flow while restyling |
 
 **Prerequisites:** None — logo asset already saved, no new dependencies to install.
-**Estimated effort:** ~1 session across 3 phases (small, single-app, CSS-only change).
+**Estimated effort:** ~1 session across 4 phases (small, single-app, CSS-only change).
 
 ## Open Risks & Assumptions
 

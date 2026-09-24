@@ -121,12 +121,22 @@ export default function Home() {
   return (
     <>
       <AppHeader showLogout />
-      <main className="flex items-center justify-center pt-16 pb-4">
+      <main className="relative flex items-center justify-center overflow-hidden pt-16 pb-4">
+        <div
+          className="pointer-events-none absolute left-1/2 top-16 -z-10 h-56 w-56 -translate-x-1/2 rounded-full bg-brand-600 opacity-20 blur-3xl animate-[ambient-glow_6s_ease-in-out_infinite]"
+          aria-hidden="true"
+        />
         <div className="max-w-[300px] w-full space-y-6 px-4 text-center">
-          <h1 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+          <h1
+            className="text-lg font-semibold text-gray-200 animate-[fade-slide-in_600ms_ease-out_both]"
+            style={{ animationDelay: "0ms" }}
+          >
             Welcome back, {user.email}
           </h1>
-          <p className="text-sm text-gray-500">
+          <p
+            className="text-sm text-gray-500 animate-[fade-slide-in_600ms_ease-out_both]"
+            style={{ animationDelay: "100ms" }}
+          >
             Once bank import lands, you'll see your categorized spend here.
           </p>
         </div>
