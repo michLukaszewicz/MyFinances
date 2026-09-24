@@ -131,6 +131,8 @@ Add the logo to the shared `AppHeader`, and give the authenticated "Welcome back
 
 **Contract**: The `user` branch's structure (`AppHeader` + centered text block) is unchanged; only animation utility classes and any `blue-*` → `brand-*` color reference updates are added.
 
+> **Implementation note**: a single small, restrained `ambient-glow` accent was added behind the "Welcome back" block during implementation (not in the original wording above) — disclosed and confirmed by the user during Phase 3's manual verification.
+
 ### Success Criteria:
 
 #### Automated Verification:
