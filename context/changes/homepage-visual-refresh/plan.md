@@ -190,6 +190,56 @@ Extend the brand treatment established in Phases 1-3 to `login.tsx` and `registe
 
 ---
 
+## Phase 5: Shared top navbar on every page
+
+### Overview
+
+Generalize `AppHeader` into a top navbar that appears on every page — public homepage, login, register, and authenticated home — instead of only the authenticated homepage. Logged-out visitors see the logo plus `Log in`/`Register` links in the navbar; authenticated users keep today's logo + `Log out`. This phase was added after Phase 4 shipped, per direct user feedback wanting consistent top-of-page navigation everywhere.
+
+### Changes Required:
+
+#### 1. Generalize `AppHeader` for guest and authenticated states
+
+**File**: `MyFinances/frontend/app/components/AppHeader.tsx`
+
+**Intent**: Replace the `showLogout: boolean` prop with a mode that also covers the logged-out case, so the same component renders `Log in` / `Register` links (brand-colored, matching the homepage hero's CTA styling) when the visitor isn't authenticated, and today's `Log out` button when they are.
+
+**Contract**: New prop shape `{ authenticated: boolean }` (replaces `showLogout`). `authenticated: true` renders exactly what today's `showLogout` path renders (no visual change for existing authenticated call site). `authenticated: false` renders `Log in` and `Register` links instead. The existing call site in `home.tsx` (`<AppHeader showLogout />`) updates to `<AppHeader authenticated />`.
+
+#### 2. Mount the navbar on the public homepage
+
+**File**: `MyFinances/frontend/app/routes/home.tsx`
+
+**Intent**: Add `<AppHeader authenticated={false} />` above the `!user` branch's hero content. Since the logo now lives in the persistent navbar, remove the hero's large centered logo image + its dedicated ambient-glow wrapper (the duplication the user flagged) — the hero keeps its tagline, CTAs, value-prop cards, and the layered drifting background blobs for atmosphere. Adjust top spacing/padding now that a navbar occupies the top of the page.
+
+**Contract**: `clientLoader`/`meta` unchanged. The `user` (authenticated) branch already renders `<AppHeader authenticated />` (renamed from `showLogout` per item 1) — no structural change there beyond the prop rename.
+
+#### 3. Mount the navbar on login/register
+
+**File**: `MyFinances/frontend/app/routes/login.tsx`, `MyFinances/frontend/app/routes/register.tsx`
+
+**Intent**: Add `<AppHeader authenticated={false} />` above each page's form card, and remove the small inline logo + glow that Phase 4 added directly above the "Log in"/"Register" heading (now redundant with the navbar logo).
+
+**Contract**: `clientLoader`/`handleSubmit` logic unchanged — styling/structure only. Both pages keep the same `fade-slide-in` entrance treatment on the remaining elements (heading, form, footer link), just without the now-removed inline logo block.
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- Type checking passes: `npm run typecheck`
+- Frontend builds cleanly: `npm run build`
+
+#### Manual Verification:
+
+- Every page (public home, login, register, authenticated home) shows the same top navbar with the logo
+- Logged-out navbar shows working `Log in`/`Register` links; authenticated navbar still shows a working `Log out` button
+- No duplicate logo anywhere (hero and login/register no longer show their own separate logo now that the navbar has one)
+- Layout doesn't feel cramped now that a navbar occupies the top of every page
+
+**Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase.
+
+---
+
 ## Testing Strategy
 
 ### Unit Tests:
@@ -254,25 +304,39 @@ Not applicable — purely additive frontend/visual change, no data model or API 
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npm run typecheck`
-- [x] 3.2 Frontend builds cleanly: `npm run build`
+- [x] 3.1 Type checking passes: `npm run typecheck` — 587a5d9
+- [x] 3.2 Frontend builds cleanly: `npm run build` — 587a5d9
 
 #### Manual
 
-- [x] 3.3 Logged-in `/` shows logo in header on every load, log-out still works
-- [x] 3.4 "Welcome back" entrance animation matches homepage feel, no value-prop section
-- [x] 3.5 Light and dark mode both look intentional, no contrast regressions (dark-only app-wide per Phase 2 revision)
+- [x] 3.3 Logged-in `/` shows logo in header on every load, log-out still works — 587a5d9
+- [x] 3.4 "Welcome back" entrance animation matches homepage feel, no value-prop section — 587a5d9
+- [x] 3.5 Light and dark mode both look intentional, no contrast regressions (dark-only app-wide per Phase 2 revision) — 587a5d9
 
 ### Phase 4: Login & register visual refresh
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `npm run typecheck`
-- [ ] 4.2 Frontend builds cleanly: `npm run build`
+- [x] 4.1 Type checking passes: `npm run typecheck`
+- [x] 4.2 Frontend builds cleanly: `npm run build`
 
 #### Manual
 
-- [ ] 4.3 `/login` and `/register` show the logo and brand-colored inputs/button, matching the homepage's dark visual language
-- [ ] 4.4 Form submission still works end-to-end (login with a valid account, register a new account)
-- [ ] 4.5 Entrance animation is subtle and doesn't delay the form becoming usable/focusable
-- [ ] 4.6 Keyboard navigation (tab order, focus rings) still works correctly on both forms
+- [x] 4.3 `/login` and `/register` show the logo and brand-colored inputs/button, matching the homepage's dark visual language
+- [x] 4.4 Form submission still works end-to-end (login with a valid account, register a new account)
+- [x] 4.5 Entrance animation is subtle and doesn't delay the form becoming usable/focusable
+- [x] 4.6 Keyboard navigation (tab order, focus rings) still works correctly on both forms
+
+### Phase 5: Shared top navbar on every page
+
+#### Automated
+
+- [x] 5.1 Type checking passes: `npm run typecheck`
+- [x] 5.2 Frontend builds cleanly: `npm run build`
+
+#### Manual
+
+- [x] 5.3 Every page shows the same top navbar with the logo
+- [x] 5.4 Logged-out navbar shows working Log in/Register links; authenticated navbar still shows working Log out
+- [x] 5.5 No duplicate logo anywhere
+- [x] 5.6 Layout doesn't feel cramped with the navbar occupying the top of every page (sticky glass navbar, pill CTAs)
