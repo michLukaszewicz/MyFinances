@@ -24,12 +24,13 @@ The public (logged-out) homepage shows the logo, a staggered fade/slide-in entra
 
 ## What We're NOT Doing
 
-- Not touching `login.tsx` or `register.tsx` (scope confirmed as homepage + header only).
 - Not adding an animation library (Framer Motion or similar) — CSS-only per the confirmed decision.
 - Not recreating the logo as SVG — using the supplied PNG as-is.
 - Not producing a second (dark-mode-specific) logo asset.
 - Not changing the backend, auth flow, or any non-visual behavior.
-- Not building a full design system or additional pages beyond home + header.
+- Not building a full design system or additional pages beyond home + header + (as of Phase 4) login/register.
+
+> **Scope revision (after Phase 2 shipped)**: the plan originally excluded `login.tsx`/`register.tsx`. Based on direct user feedback after seeing Phase 2 live, that exclusion is lifted — see Phase 4, added below the original three phases.
 
 ## Implementation Approach
 
@@ -147,6 +148,48 @@ Add the logo to the shared `AppHeader`, and give the authenticated "Welcome back
 
 ---
 
+## Phase 4: Login & register visual refresh
+
+### Overview
+
+Extend the brand treatment established in Phases 1-3 to `login.tsx` and `register.tsx`: the logo, brand-colored inputs/buttons, and a lightweight entrance animation, consistent with the homepage's now-forced dark theme. This phase was added after Phase 2 shipped, per direct user feedback wanting these pages to "look similar" to the refreshed homepage.
+
+### Changes Required:
+
+#### 1. Login page branding
+
+**File**: `MyFinances/frontend/app/routes/login.tsx`
+
+**Intent**: Add the logo above the "Log in" heading (small, consistent with the header's sizing from Phase 3), replace the plain gray input borders and `blue-700`/`blue-500` submit-button/link colors with the `brand-*` scale, and apply a `fade-slide-in` entrance animation to the form container so the page doesn't feel like a jarring drop from the animated homepage.
+
+**Contract**: `clientLoader` (redirect-if-authenticated) and the form's `handleSubmit`/fetch logic to `/api/auth/login` are unchanged — this is styling only. Inputs keep their existing `border`/`rounded-lg` structure; only the border/focus color references move to `brand-*` (e.g. `focus:border-brand-500` or `focus:ring-brand-500` if a focus ring is added). The submit button adopts the same `bg-brand-500 hover:bg-brand-600` treatment as the homepage's "Log in" CTA for visual consistency.
+
+#### 2. Register page branding
+
+**File**: `MyFinances/frontend/app/routes/register.tsx`
+
+**Intent**: Apply the identical treatment as login.tsx — logo, brand-colored inputs/button, entrance animation — to keep the two auth pages visually identical in structure (they already share near-identical JSX shape today).
+
+**Contract**: `clientLoader` and the `/api/auth/register` submit logic are unchanged. Reuse the exact color/animation classes from login.tsx rather than inventing new values, since the two pages are meant to look like a matched pair.
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- Type checking passes: `npm run typecheck`
+- Frontend builds cleanly: `npm run build`
+
+#### Manual Verification:
+
+- `/login` and `/register` show the logo and brand-colored inputs/button, matching the homepage's dark visual language
+- Form submission still works end-to-end (login with a valid account, register a new account) — no regression in the auth flow itself
+- Entrance animation is subtle and doesn't delay the form becoming usable/focusable
+- Keyboard navigation (tab order, focus rings) still works correctly on both forms
+
+**Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase.
+
+---
+
 ## Testing Strategy
 
 ### Unit Tests:
@@ -197,25 +240,39 @@ Not applicable — purely additive frontend/visual change, no data model or API 
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npm run typecheck`
-- [x] 2.2 Frontend builds cleanly: `npm run build`
+- [x] 2.1 Type checking passes: `npm run typecheck` — 667e084
+- [x] 2.2 Frontend builds cleanly: `npm run build` — 667e084
 
 #### Manual
 
-- [x] 2.3 Logged-out `/` shows logo, one-shot entrance animation, ambient glow (expanded per user feedback to layered drifting blobs + panning gradient backdrop)
-- [x] 2.4 Value-prop section legible and accurate (dark mode is now the app-wide default per user feedback; light mode no longer applies)
-- [x] 2.5 CTA buttons/links use brand color and remain keyboard-accessible
-- [x] 2.6 No layout shift/flash before logo image loads
+- [x] 2.3 Logged-out `/` shows logo, one-shot entrance animation, ambient glow (expanded per user feedback to layered drifting blobs + panning gradient backdrop) — 667e084
+- [x] 2.4 Value-prop section legible and accurate (dark mode is now the app-wide default per user feedback; light mode no longer applies) — 667e084
+- [x] 2.5 CTA buttons/links use brand color and remain keyboard-accessible — 667e084
+- [x] 2.6 No layout shift/flash before logo image loads — 667e084
 
 ### Phase 3: Header branding & authenticated home
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npm run typecheck`
-- [ ] 3.2 Frontend builds cleanly: `npm run build`
+- [x] 3.1 Type checking passes: `npm run typecheck`
+- [x] 3.2 Frontend builds cleanly: `npm run build`
 
 #### Manual
 
-- [ ] 3.3 Logged-in `/` shows logo in header on every load, log-out still works
-- [ ] 3.4 "Welcome back" entrance animation matches homepage feel, no value-prop section
-- [ ] 3.5 Light and dark mode both look intentional, no contrast regressions
+- [x] 3.3 Logged-in `/` shows logo in header on every load, log-out still works
+- [x] 3.4 "Welcome back" entrance animation matches homepage feel, no value-prop section
+- [x] 3.5 Light and dark mode both look intentional, no contrast regressions (dark-only app-wide per Phase 2 revision)
+
+### Phase 4: Login & register visual refresh
+
+#### Automated
+
+- [ ] 4.1 Type checking passes: `npm run typecheck`
+- [ ] 4.2 Frontend builds cleanly: `npm run build`
+
+#### Manual
+
+- [ ] 4.3 `/login` and `/register` show the logo and brand-colored inputs/button, matching the homepage's dark visual language
+- [ ] 4.4 Form submission still works end-to-end (login with a valid account, register a new account)
+- [ ] 4.5 Entrance animation is subtle and doesn't delay the form becoming usable/focusable
+- [ ] 4.6 Keyboard navigation (tab order, focus rings) still works correctly on both forms
