@@ -2,6 +2,19 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
+// Thrown by apiFetch on a non-OK response. Carries the raw Response so callers
+// that need a server-provided error message (e.g. a validation title) can
+// still read the body, instead of only getting a generic status-code message.
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly response: Response,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 // ASP.NET Core's antiforgery double-submit pattern pairs a server-set cookie
 // (sent automatically by the browser) with a distinct "request token" value
 // that must be echoed back as a header — the two values are NOT the same
@@ -10,7 +23,10 @@ const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 // go stale by the time it's used after sign-in, so instead fetch a fresh
 // token immediately before every mutating request rather than caching one.
 async function fetchXsrfToken(): Promise<string> {
-  const res = await fetch(`${API_BASE_URL}/auth/antiforgery-token`);
+  const res = await fetch(`${API_BASE_URL}/auth/antiforgery-token`, { credentials: "include" });
+  if (!res.ok) {
+    throw new ApiError(`Failed to fetch antiforgery token, status ${res.status}`, res);
+  }
   const { token } = (await res.json()) as { token: string };
   return token;
 }
@@ -23,9 +39,9 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
     headers.set("X-XSRF-TOKEN", await fetchXsrfToken());
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers });
+  const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers, credentials: "include" });
   if (!response.ok) {
-    throw new Error(`API request to ${path} failed with status ${response.status}`);
+    throw new ApiError(`API request to ${path} failed with status ${response.status}`, response);
   }
   // Some endpoints (e.g. logout) return 200 with an empty body — response.json()
   // throws a SyntaxError on empty input, so only parse when there's content.
