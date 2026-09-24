@@ -186,26 +186,26 @@ Not applicable — purely additive frontend/visual change, no data model or API 
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `npm run typecheck`
-- [x] 1.2 Frontend builds cleanly: `npm run build`
+- [x] 1.1 Type checking passes: `npm run typecheck` — 4d7b57d
+- [x] 1.2 Frontend builds cleanly: `npm run build` — 4d7b57d
 
 #### Manual
 
-- [x] 1.3 `bg-brand-600`/`text-brand-600` resolve to the intended blue in a scratch element
+- [x] 1.3 `bg-brand-600`/`text-brand-600` resolve to the intended blue in a scratch element — 4d7b57d
 
 ### Phase 2: Public homepage hero
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npm run typecheck`
-- [ ] 2.2 Frontend builds cleanly: `npm run build`
+- [x] 2.1 Type checking passes: `npm run typecheck`
+- [x] 2.2 Frontend builds cleanly: `npm run build`
 
 #### Manual
 
-- [ ] 2.3 Logged-out `/` shows logo, one-shot entrance animation, subtle ambient glow
-- [ ] 2.4 Value-prop section legible and accurate in light and dark mode
-- [ ] 2.5 CTA buttons/links use brand color and remain keyboard-accessible
-- [ ] 2.6 No layout shift/flash before logo image loads
+- [x] 2.3 Logged-out `/` shows logo, one-shot entrance animation, ambient glow (expanded per user feedback to layered drifting blobs + panning gradient backdrop)
+- [x] 2.4 Value-prop section legible and accurate (dark mode is now the app-wide default per user feedback; light mode no longer applies)
+- [x] 2.5 CTA buttons/links use brand color and remain keyboard-accessible
+- [x] 2.6 No layout shift/flash before logo image loads
 
 ### Phase 3: Header branding & authenticated home
 
