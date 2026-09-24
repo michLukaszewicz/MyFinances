@@ -8,3 +8,5 @@ services:
     envVars:
       - key: ConnectionStrings__Default
         sync: false
+      - key: Auth__AllowedEmail
+        sync: false
