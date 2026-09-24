@@ -317,26 +317,26 @@ Not applicable — purely additive frontend/visual change, no data model or API 
 
 #### Automated
 
-- [x] 4.1 Type checking passes: `npm run typecheck`
-- [x] 4.2 Frontend builds cleanly: `npm run build`
+- [x] 4.1 Type checking passes: `npm run typecheck` — af5eb42
+- [x] 4.2 Frontend builds cleanly: `npm run build` — af5eb42
 
 #### Manual
 
-- [x] 4.3 `/login` and `/register` show the logo and brand-colored inputs/button, matching the homepage's dark visual language
-- [x] 4.4 Form submission still works end-to-end (login with a valid account, register a new account)
-- [x] 4.5 Entrance animation is subtle and doesn't delay the form becoming usable/focusable
-- [x] 4.6 Keyboard navigation (tab order, focus rings) still works correctly on both forms
+- [x] 4.3 `/login` and `/register` show the logo and brand-colored inputs/button, matching the homepage's dark visual language — af5eb42
+- [x] 4.4 Form submission still works end-to-end (login with a valid account, register a new account) — af5eb42
+- [x] 4.5 Entrance animation is subtle and doesn't delay the form becoming usable/focusable — af5eb42
+- [x] 4.6 Keyboard navigation (tab order, focus rings) still works correctly on both forms — af5eb42
 
 ### Phase 5: Shared top navbar on every page
 
 #### Automated
 
-- [x] 5.1 Type checking passes: `npm run typecheck`
-- [x] 5.2 Frontend builds cleanly: `npm run build`
+- [x] 5.1 Type checking passes: `npm run typecheck` — af5eb42
+- [x] 5.2 Frontend builds cleanly: `npm run build` — af5eb42
 
 #### Manual
 
-- [x] 5.3 Every page shows the same top navbar with the logo
-- [x] 5.4 Logged-out navbar shows working Log in/Register links; authenticated navbar still shows working Log out
-- [x] 5.5 No duplicate logo anywhere
-- [x] 5.6 Layout doesn't feel cramped with the navbar occupying the top of every page (sticky glass navbar, pill CTAs)
+- [x] 5.3 Every page shows the same top navbar with the logo — af5eb42
+- [x] 5.4 Logged-out navbar shows working Log in/Register links; authenticated navbar still shows working Log out — af5eb42
+- [x] 5.5 No duplicate logo anywhere — af5eb42
+- [x] 5.6 Layout doesn't feel cramped with the navbar occupying the top of every page (sticky glass navbar, pill CTAs) — af5eb42
