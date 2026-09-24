@@ -1,22 +1,24 @@
 import { useState } from "react";
 import { redirect, useNavigate } from "react-router";
-import { apiFetch } from "../lib/api";
+import { apiFetch, ApiError } from "../lib/api";
 import { AppHeader } from "../components/AppHeader";
 
 export async function clientLoader() {
-  const res = await fetch("/api/auth/me");
+  const res = await fetch("/api/auth/me", { credentials: "include" });
   if (res.ok) throw redirect("/");
   return null;
 }
 
-async function extractErrorMessage(response: Response): Promise<string> {
-  try {
-    const body = await response.json();
-    if (typeof body?.title === "string") {
-      return body.title;
+async function extractErrorMessage(error: unknown): Promise<string> {
+  if (error instanceof ApiError) {
+    try {
+      const body = await error.response.json();
+      if (typeof body?.title === "string") {
+        return body.title;
+      }
+    } catch {
+      // fall through to generic message
     }
-  } catch {
-    // fall through to generic message
   }
   return "Something went wrong. Please try again.";
 }
@@ -33,16 +35,14 @@ export default function Login() {
     setError(null);
     setSubmitting(true);
     try {
-      const response = await fetch("/api/auth/login", {
+      await apiFetch("/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      if (!response.ok) {
-        setError(await extractErrorMessage(response));
-        return;
-      }
       navigate("/");
+    } catch (err) {
+      setError(await extractErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
