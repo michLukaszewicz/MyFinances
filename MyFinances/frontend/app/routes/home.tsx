@@ -29,9 +29,13 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function clientLoader() {
-  const res = await fetch("/api/auth/me");
-  if (!res.ok) return null;
-  return res.json();
+  try {
+    const res = await fetch("/api/auth/me", { credentials: "include" });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
 }
 
 export default function Home() {
