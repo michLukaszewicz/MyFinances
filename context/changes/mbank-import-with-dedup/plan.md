@@ -417,19 +417,19 @@ New EF Core migration adds `Transactions` and `ImportBatches` tables; no existin
 
 #### Automated
 
-- [x] 5.1 `npm run typecheck` passes
+- [x] 5.1 `npm run typecheck` passes — 335f5f1
 
 #### Manual
 
-- [x] 5.2 Both known colliding BLIK rows shown side-by-side with the pre-existing transaction; commit blocked until both have a decision
-- [x] 5.3 Non-colliding rows are visible without needing a decision
+- [x] 5.2 Both known colliding BLIK rows shown side-by-side with the pre-existing transaction; commit blocked until both have a decision — 335f5f1
+- [x] 5.3 Non-colliding rows are visible without needing a decision — 335f5f1
 
 ### Phase 6: Frontend Commit & Import Summary
 
 #### Automated
 
-- [ ] 6.1 `npm run typecheck` passes
-- [ ] 6.2 `npm run build` succeeds
+- [x] 6.1 `npm run typecheck` passes
+- [x] 6.2 `npm run build` succeeds
 
 #### Manual
 
