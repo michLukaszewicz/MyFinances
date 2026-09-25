@@ -383,23 +383,23 @@ New EF Core migration adds `Transactions` and `ImportBatches` tables; no existin
 
 #### Automated
 
-- [x] 2.1 Unit tests pass: `dotnet test --filter MBankCsvParserTests`
-- [x] 2.2 Parser correctly extracts all rows from the redacted real-format fixture, including both colliding BLIK rows
-- [x] 2.3 Parser skips a malformed row without aborting the rest of the file
-- [x] 2.4 Dedup hash is identical for equivalent inputs regardless of call site
+- [x] 2.1 Unit tests pass: `dotnet test --filter MBankCsvParserTests` — 53a139c
+- [x] 2.2 Parser correctly extracts all rows from the redacted real-format fixture, including both colliding BLIK rows — 53a139c
+- [x] 2.3 Parser skips a malformed row without aborting the rest of the file — 53a139c
+- [x] 2.4 Dedup hash is identical for equivalent inputs regardless of call site — 53a139c
 
 ### Phase 3: Import API Endpoints
 
 #### Automated
 
-- [ ] 3.1 `dotnet build` succeeds
-- [ ] 3.2 Parse endpoint returns 400 for unrecognized file with no `bank` fallback; 200 with correct duplicate flags otherwise
-- [ ] 3.3 Commit endpoint persists exactly the expected `Transaction`/`ImportBatch` rows for a fixture payload with one "keep" and one "skip" collision
+- [x] 3.1 `dotnet build` succeeds
+- [x] 3.2 Parse endpoint returns 400 for unrecognized file with no `bank` fallback; 200 with correct duplicate flags otherwise
+- [x] 3.3 Commit endpoint persists exactly the expected `Transaction`/`ImportBatch` rows for a fixture payload with one "keep" and one "skip" collision
 
 #### Manual
 
-- [ ] 3.4 Manual HTTP client upload of the redacted sample returns expected parsed rows with both BLIK collisions flagged
-- [ ] 3.5 Committing that payload persists the expected transaction count and summary
+- [x] 3.4 Manual HTTP client upload of the redacted sample returns expected parsed rows with both BLIK collisions flagged
+- [x] 3.5 Committing that payload persists the expected transaction count and summary
 
 ### Phase 4: Frontend Upload Page
 
