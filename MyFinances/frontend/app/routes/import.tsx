@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { redirect } from "react-router";
 import { apiFetch, ApiError } from "../lib/api";
 import { AppHeader } from "../components/AppHeader";
@@ -7,6 +7,13 @@ export async function clientLoader() {
   const res = await fetch("/api/auth/me", { credentials: "include" });
   if (!res.ok) throw redirect("/login");
   return null;
+}
+
+// Mirrors the backend's AccountContracts.cs AccountDto (see settings.tsx).
+interface AccountDto {
+  id: string;
+  bankName: string;
+  accountNumber: string;
 }
 
 // Mirrors the backend's ImportContracts.cs (ImportParseResponse / ImportParseRow /
@@ -25,15 +32,18 @@ interface ImportParseRow {
   existingTransaction: ExistingTransactionDto | null;
 }
 
+// bankMismatch: true when the detected/selected parser's bank differs from the chosen
+// account's bank — non-blocking, the caller decides whether to proceed anyway.
 interface ImportParseResponse {
   bank: string;
+  bankMismatch: boolean;
   rows: ImportParseRow[];
   skippedErrorCount: number;
 }
 
 interface ImportSummaryDto {
   importBatchId: string;
-  bank: string;
+  accountId: string;
   importedAtUtc: string;
   importedCount: number;
   skippedDuplicateCount: number;
@@ -66,12 +76,19 @@ async function extractErrorMessage(error: unknown): Promise<string> {
 }
 
 export default function Import() {
+  const [accounts, setAccounts] = useState<AccountDto[]>([]);
+  const [accountsLoading, setAccountsLoading] = useState(true);
+  const [accountId, setAccountId] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [bank, setBank] = useState("");
   const [showBankPicker, setShowBankPicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<ImportParseResponse | null>(null);
+  // Captured at submit time (not derivable from `result`, which only carries the
+  // detected bank name) so the bank-mismatch banner can name the account that was
+  // actually selected.
+  const [selectedAccountBankName, setSelectedAccountBankName] = useState("");
   // Keyed by row index into result.rows — only duplicate rows ever get an entry;
   // non-duplicate rows are implicitly "keep" and never need a decision.
   const [decisions, setDecisions] = useState<Map<number, RowDecisionValue>>(new Map());
@@ -79,15 +96,25 @@ export default function Import() {
   const [commitError, setCommitError] = useState<string | null>(null);
   const [summary, setSummary] = useState<ImportSummaryDto | null>(null);
 
+  useEffect(() => {
+    async function loadAccounts() {
+      const list = await apiFetch<AccountDto[]>("/accounts/");
+      setAccounts(list);
+      setAccountsLoading(false);
+    }
+    void loadAccounts();
+  }, []);
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!file) return;
+    if (!file || !accountId) return;
 
     setError(null);
     setSubmitting(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("accountId", accountId);
       if (showBankPicker && bank) {
         formData.append("bank", bank);
       }
@@ -98,6 +125,7 @@ export default function Import() {
         method: "POST",
         body: formData,
       });
+      setSelectedAccountBankName(accounts.find((a) => a.id === accountId)?.bankName ?? "");
       setResult(response);
       setDecisions(new Map());
     } catch (err) {
@@ -147,7 +175,7 @@ export default function Import() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          Bank: result.bank,
+          AccountId: accountId,
           SkippedErrorCount: result.skippedErrorCount,
           Rows: rows,
         }),
@@ -194,8 +222,12 @@ export default function Import() {
             >
               <div className="space-y-1 rounded-lg border border-gray-800 p-3 text-sm text-gray-200">
                 <p>
-                  Imported <strong>{summary.importedCount}</strong> row(s) from{" "}
-                  <strong>{summary.bank}</strong>.
+                  Imported <strong>{summary.importedCount}</strong> row(s) into{" "}
+                  <strong>
+                    {accounts.find((a) => a.id === summary.accountId)?.bankName ??
+                      selectedAccountBankName}
+                  </strong>
+                  .
                 </p>
                 {summary.skippedDuplicateCount > 0 && (
                   <p className="text-gray-400">
@@ -214,6 +246,16 @@ export default function Import() {
               className="space-y-4 animate-[fade-slide-in_600ms_ease-out_both]"
               style={{ animationDelay: "50ms" }}
             >
+              {result.bankMismatch && (
+                <div className="space-y-2 rounded-lg border border-amber-700/60 bg-amber-950/20 p-3 text-sm text-amber-400">
+                  <p>
+                    This file looks like a <strong>{result.bank}</strong> export, but the selected
+                    account is <strong>{selectedAccountBankName}</strong>. You can still continue
+                    if this is correct.
+                  </p>
+                </div>
+              )}
+
               {allRowsAreDuplicates && (
                 <div className="space-y-2 rounded-lg border border-amber-700/60 bg-amber-950/20 p-3 text-sm text-amber-400">
                   <p>
@@ -324,12 +366,51 @@ export default function Import() {
                 {committing ? "Importing…" : "Continue"}
               </button>
             </div>
+          ) : accountsLoading ? (
+            <p className="text-center text-sm text-gray-400 animate-[fade-slide-in_600ms_ease-out_both]">
+              Loading…
+            </p>
+          ) : accounts.length === 0 ? (
+            <div
+              className="space-y-3 rounded-lg border border-gray-800 p-3 text-center text-sm text-gray-400 animate-[fade-slide-in_600ms_ease-out_both]"
+              style={{ animationDelay: "50ms" }}
+            >
+              <p>You need to add an account before you can import a statement.</p>
+              <a
+                href="/settings"
+                className="inline-block rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+              >
+                Go to Settings
+              </a>
+            </div>
           ) : (
             <form
               onSubmit={handleSubmit}
               className="space-y-4 animate-[fade-slide-in_600ms_ease-out_both]"
               style={{ animationDelay: "50ms" }}
             >
+              <div className="space-y-1">
+                <label htmlFor="accountId" className="text-sm text-gray-200">
+                  Account
+                </label>
+                <select
+                  id="accountId"
+                  required
+                  value={accountId}
+                  onChange={(e) => setAccountId(e.target.value)}
+                  className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                >
+                  <option value="" disabled>
+                    Select an account…
+                  </option>
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id} className="bg-gray-900">
+                      {account.bankName} — {account.accountNumber}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="space-y-1">
                 <label htmlFor="file" className="text-sm text-gray-200">
                   Bank statement CSV
@@ -372,7 +453,7 @@ export default function Import() {
 
               <button
                 type="submit"
-                disabled={submitting || !file}
+                disabled={submitting || !file || !accountId}
                 className="w-full rounded-lg bg-brand-500 p-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
               >
                 {submitting ? "Uploading…" : "Upload"}

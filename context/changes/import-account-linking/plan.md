@@ -287,22 +287,22 @@ The Phase 1 migration wipes all existing `transactions` and `import_batches` row
 
 #### Automated
 
-- [x] 2.1 `dotnet build` succeeds
-- [x] 2.2 `dotnet test` passes for the updated `ImportEndpointsTests` and `DedupHashTests`
+- [x] 2.1 `dotnet build` succeeds — 8dbd9b6
+- [x] 2.2 `dotnet test` passes for the updated `ImportEndpointsTests` and `DedupHashTests` — 8dbd9b6
 
 ### Phase 3: Frontend Import Page
 
 #### Automated
 
-- [ ] 3.1 `npm run typecheck` passes in `MyFinances/frontend`
-- [ ] 3.2 `npm run build` succeeds
+- [x] 3.1 `npm run typecheck` passes in `MyFinances/frontend`
+- [x] 3.2 `npm run build` succeeds
 
 #### Manual
 
-- [ ] 3.3 Zero-accounts empty-state blocks the form and links to Settings
-- [ ] 3.4 Account dropdown is required; upload + parse succeeds against a chosen account
-- [ ] 3.5 Bank-mismatch warning shows but doesn't block Continue
-- [ ] 3.6 Same file imported against two different accounts is not flagged as a cross-account duplicate
+- [x] 3.3 Zero-accounts empty-state blocks the form and links to Settings
+- [x] 3.4 Account dropdown is required; upload + parse succeeds against a chosen account
+- [x] 3.5 Bank-mismatch warning shows but doesn't block Continue
+- [x] 3.6 Same file imported against two different accounts is not flagged as a cross-account duplicate
 
 ### Phase 4: Tests
 
