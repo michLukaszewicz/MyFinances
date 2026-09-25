@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using MyFinances.Api.Categorization;
 
 namespace MyFinances.Api.Transactions;
 
@@ -37,7 +38,13 @@ public static class TransactionEndpoints
                 .ThenByDescending(t => t.Id)
                 .Skip(effectiveSkip)
                 .Take(effectiveTake)
-                .Select(t => new TransactionListItemDto(t.Id, t.Date, t.Description, t.Amount, t.CategoryId))
+                .Select(t => new TransactionListItemDto(
+                    t.Id,
+                    t.Date,
+                    t.Description,
+                    t.Amount,
+                    t.CategoryId,
+                    db.Categories.Where(c => c.Id == t.CategoryId).Select(c => c.Name).FirstOrDefault()))
                 .ToListAsync();
 
             var totalCount = await query.CountAsync();
