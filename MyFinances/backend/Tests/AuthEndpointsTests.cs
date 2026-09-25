@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using MyFinances.Api;
 using MyFinances.Api.Auth;
 using Xunit;
@@ -59,6 +60,20 @@ public class AuthApiFactory : WebApplicationFactory<Program>
 
             services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase(_dbName));
         });
+    }
+
+    // EF Core's InMemory provider only applies OnModelCreating's HasData seed (see Category's
+    // seeded list, AppDbContext.cs) once the database is explicitly created — unlike a
+    // relational provider, implicit first-use creation alone does not seed it.
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+        var host = base.CreateHost(builder);
+
+        using var scope = host.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Database.EnsureCreated();
+
+        return host;
     }
 }
 
