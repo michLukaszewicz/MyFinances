@@ -405,24 +405,24 @@ New EF Core migration adds `Transactions` and `ImportBatches` tables; no existin
 
 #### Automated
 
-- [x] 4.1 `npm run typecheck` passes
-- [x] 4.2 N/A — no frontend test framework yet; covered by Manual below
+- [x] 4.1 `npm run typecheck` passes — e099558
+- [x] 4.2 N/A — no frontend test framework yet; covered by Manual below — e099558
 
 #### Manual
 
-- [x] 4.3 Uploading the redacted sample succeeds and hands off to the review screen
-- [x] 4.4 Uploading a garbage CSV shows the recognition error and bank-selection fallback; retrying with mBank selected succeeds
+- [x] 4.3 Uploading the redacted sample succeeds and hands off to the review screen — e099558
+- [x] 4.4 Uploading a garbage CSV shows the recognition error and bank-selection fallback; retrying with mBank selected succeeds — e099558
 
 ### Phase 5: Frontend Duplicate Review Screen
 
 #### Automated
 
-- [ ] 5.1 `npm run typecheck` passes
+- [x] 5.1 `npm run typecheck` passes
 
 #### Manual
 
-- [ ] 5.2 Both known colliding BLIK rows shown side-by-side with the pre-existing transaction; commit blocked until both have a decision
-- [ ] 5.3 Non-colliding rows are visible without needing a decision
+- [x] 5.2 Both known colliding BLIK rows shown side-by-side with the pre-existing transaction; commit blocked until both have a decision
+- [x] 5.3 Non-colliding rows are visible without needing a decision
 
 ### Phase 6: Frontend Commit & Import Summary
 
