@@ -203,7 +203,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Low risk — read-only listing over data S-01 already persists; no new write paths or dedup logic involved.
-- **Status:** proposed
+- **Status:** planning
 
 ### S-10: Account management
 
