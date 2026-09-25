@@ -208,13 +208,13 @@ None — no schema changes; this phase is purely additive (new endpoint, new fro
 
 #### Automated
 
-- [x] 2.1 Frontend type checks pass: `npm run typecheck`
-- [x] 2.2 Frontend builds: `npm run build`
+- [x] 2.1 Frontend type checks pass: `npm run typecheck` — 60e7e58
+- [x] 2.2 Frontend builds: `npm run build` — 60e7e58
 
 #### Manual
 
 - [ ] 2.3 Zero-transaction user still sees the original empty-state message and CTA
-- [x] 2.4 Transactions render newest-first, amounts colored by sign, uncategorized rows labeled "Uncategorized"
-- [x] 2.5 "Load more" appends the next page and disappears once all transactions are loaded
+- [x] 2.4 Transactions render newest-first, amounts colored by sign, uncategorized rows labeled "Uncategorized" — 60e7e58
+- [x] 2.5 "Load more" appends the next page and disappears once all transactions are loaded — 60e7e58
 - [ ] 2.6 New transactions appear after import + navigation back to `/`, with no manual refresh
-- [x] 2.7 Dark mode and responsive layout look correct
+- [x] 2.7 Dark mode and responsive layout look correct — 60e7e58
