@@ -9,7 +9,9 @@ public class Transaction
 
     public Guid UserId { get; set; }
 
-    public required string Bank { get; set; }
+    public Guid AccountId { get; set; }
+
+    public Account Account { get; set; } = null!;
 
     public DateOnly Date { get; set; }
 

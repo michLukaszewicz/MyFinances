@@ -5,4 +5,5 @@ export default [
   route("login", "routes/login.tsx"),
   route("register", "routes/register.tsx"),
   route("import", "routes/import.tsx"),
+  route("settings", "routes/settings.tsx"),
 ] satisfies RouteConfig;

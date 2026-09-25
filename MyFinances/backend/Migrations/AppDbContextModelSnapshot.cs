@@ -154,15 +154,39 @@ namespace MyFinances.Api.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("MyFinances.Api.Transactions.Account", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AccountNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BankName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "BankName", "AccountNumber")
+                        .IsUnique();
+
+                    b.ToTable("Accounts");
+                });
+
             modelBuilder.Entity("MyFinances.Api.Transactions.ImportBatch", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Bank")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("ImportedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -181,6 +205,8 @@ namespace MyFinances.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AccountId");
+
                     b.ToTable("ImportBatches");
                 });
 
@@ -190,12 +216,11 @@ namespace MyFinances.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric");
-
-                    b.Property<string>("Bank")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<Guid?>("CategoryId")
                         .HasColumnType("uuid");
@@ -218,6 +243,8 @@ namespace MyFinances.Api.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
 
                     b.HasIndex("ImportBatchId");
 
@@ -253,11 +280,30 @@ namespace MyFinances.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("MyFinances.Api.Transactions.ImportBatch", b =>
+                {
+                    b.HasOne("MyFinances.Api.Transactions.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+                });
+
             modelBuilder.Entity("MyFinances.Api.Transactions.Transaction", b =>
                 {
+                    b.HasOne("MyFinances.Api.Transactions.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("MyFinances.Api.Transactions.ImportBatch", "ImportBatch")
                         .WithMany()
                         .HasForeignKey("ImportBatchId");
+
+                    b.Navigation("Account");
 
                     b.Navigation("ImportBatch");
                 });
