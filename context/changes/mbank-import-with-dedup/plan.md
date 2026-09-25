@@ -392,26 +392,26 @@ New EF Core migration adds `Transactions` and `ImportBatches` tables; no existin
 
 #### Automated
 
-- [x] 3.1 `dotnet build` succeeds
-- [x] 3.2 Parse endpoint returns 400 for unrecognized file with no `bank` fallback; 200 with correct duplicate flags otherwise
-- [x] 3.3 Commit endpoint persists exactly the expected `Transaction`/`ImportBatch` rows for a fixture payload with one "keep" and one "skip" collision
+- [x] 3.1 `dotnet build` succeeds — 490f3ac
+- [x] 3.2 Parse endpoint returns 400 for unrecognized file with no `bank` fallback; 200 with correct duplicate flags otherwise — 490f3ac
+- [x] 3.3 Commit endpoint persists exactly the expected `Transaction`/`ImportBatch` rows for a fixture payload with one "keep" and one "skip" collision — 490f3ac
 
 #### Manual
 
-- [x] 3.4 Manual HTTP client upload of the redacted sample returns expected parsed rows with both BLIK collisions flagged
-- [x] 3.5 Committing that payload persists the expected transaction count and summary
+- [x] 3.4 Manual HTTP client upload of the redacted sample returns expected parsed rows with both BLIK collisions flagged — 490f3ac
+- [x] 3.5 Committing that payload persists the expected transaction count and summary — 490f3ac
 
 ### Phase 4: Frontend Upload Page
 
 #### Automated
 
-- [ ] 4.1 `npm run typecheck` passes
-- [ ] 4.2 N/A — no frontend test framework yet; covered by Manual below
+- [x] 4.1 `npm run typecheck` passes
+- [x] 4.2 N/A — no frontend test framework yet; covered by Manual below
 
 #### Manual
 
-- [ ] 4.3 Uploading the redacted sample succeeds and hands off to the review screen
-- [ ] 4.4 Uploading a garbage CSV shows the recognition error and bank-selection fallback; retrying with mBank selected succeeds
+- [x] 4.3 Uploading the redacted sample succeeds and hands off to the review screen
+- [x] 4.4 Uploading a garbage CSV shows the recognition error and bank-selection fallback; retrying with mBank selected succeeds
 
 ### Phase 5: Frontend Duplicate Review Screen
 
