@@ -7,7 +7,9 @@ public class ImportBatch
 
     public Guid UserId { get; set; }
 
-    public required string Bank { get; set; }
+    public Guid AccountId { get; set; }
+
+    public Account Account { get; set; } = null!;
 
     public DateTime ImportedAtUtc { get; set; }
 

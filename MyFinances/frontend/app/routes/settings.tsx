@@ -1,0 +1,261 @@
+import { useEffect, useRef, useState } from "react";
+import { redirect } from "react-router";
+import { apiFetch, ApiError } from "../lib/api";
+import { AppHeader } from "../components/AppHeader";
+
+export async function clientLoader() {
+  const res = await fetch("/api/auth/me", { credentials: "include" });
+  if (!res.ok) throw redirect("/login");
+  return null;
+}
+
+// Mirrors the backend's AccountContracts.cs AccountDto.
+interface AccountDto {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+}
+
+async function extractErrorMessage(error: unknown): Promise<string> {
+  if (error instanceof ApiError) {
+    try {
+      const body = await error.response.json();
+      if (typeof body?.title === "string") {
+        return body.title;
+      }
+    } catch {
+      // fall through to generic message
+    }
+  }
+  return "Something went wrong. Please try again.";
+}
+
+export default function Settings() {
+  const [accounts, setAccounts] = useState<AccountDto[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+
+  const bankNameInputRef = useRef<HTMLInputElement>(null);
+
+  async function loadAccounts() {
+    const list = await apiFetch<AccountDto[]>("/accounts/");
+    setAccounts(list);
+  }
+
+  useEffect(() => {
+    async function loadInitial() {
+      await loadAccounts();
+      setLoading(false);
+    }
+    void loadInitial();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function closeForm() {
+    setIsFormOpen(false);
+    setBankName("");
+    setAccountNumber("");
+    setEditingId(null);
+    setFormError(null);
+  }
+
+  function startAdd() {
+    setEditingId(null);
+    setBankName("");
+    setAccountNumber("");
+    setFormError(null);
+    setIsFormOpen(true);
+    // Wait for the form to mount before focusing it.
+    requestAnimationFrame(() => bankNameInputRef.current?.focus());
+  }
+
+  function startEdit(account: AccountDto) {
+    setEditingId(account.id);
+    setBankName(account.bankName);
+    setAccountNumber(account.accountNumber);
+    setFormError(null);
+    setIsFormOpen(true);
+    // The form sits above a potentially long account list — scroll it into view and
+    // focus the first field once mounted, so clicking "Edit" on a far-down row doesn't
+    // leave the user looking at an unchanged screen.
+    requestAnimationFrame(() => {
+      bankNameInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      bankNameInputRef.current?.focus();
+    });
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!bankName || !accountNumber) return;
+
+    setFormError(null);
+    setSubmitting(true);
+    try {
+      if (editingId) {
+        await apiFetch<AccountDto>(`/accounts/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ BankName: bankName, AccountNumber: accountNumber }),
+        });
+      } else {
+        await apiFetch<AccountDto>("/accounts/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ BankName: bankName, AccountNumber: accountNumber }),
+        });
+      }
+      await loadAccounts();
+      closeForm();
+    } catch (err) {
+      setFormError(await extractErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    await apiFetch(`/accounts/${id}`, { method: "DELETE" });
+    setConfirmingDeleteId(null);
+    await loadAccounts();
+  }
+
+  return (
+    <>
+      <AppHeader authenticated />
+      <main className="flex items-center justify-center pb-4">
+        <div className="w-full max-w-2xl space-y-6 px-4">
+          <h1 className="text-center text-lg font-semibold text-gray-200">Settings</h1>
+
+          {isFormOpen ? (
+            <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-gray-800 p-4">
+              <h2 className="text-sm font-medium text-gray-200">
+                {editingId ? "Edit account" : "Add account"}
+              </h2>
+
+              <div className="space-y-1">
+                <label htmlFor="bankName" className="text-sm text-gray-200">
+                  Bank
+                </label>
+                <input
+                  id="bankName"
+                  ref={bankNameInputRef}
+                  type="text"
+                  required
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label htmlFor="accountNumber" className="text-sm text-gray-200">
+                  Account number
+                </label>
+                <input
+                  id="accountNumber"
+                  type="text"
+                  required
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                />
+              </div>
+
+              {formError && <p className="text-sm text-red-600">{formError}</p>}
+
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                >
+                  {submitting ? "Saving…" : editingId ? "Save changes" : "Add account"}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeForm}
+                  className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium text-gray-200 transition-colors hover:bg-white/5"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={startAdd}
+              className="w-full rounded-lg bg-brand-500 p-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+            >
+              Add account
+            </button>
+          )}
+
+          <div className="space-y-2">
+            <h2 className="text-sm font-medium text-gray-200">Your accounts</h2>
+            {loading ? (
+              <p className="text-sm text-gray-400">Loading…</p>
+            ) : accounts.length === 0 ? (
+              <p className="text-sm text-gray-400">You haven't added any accounts yet.</p>
+            ) : (
+              <ul className="space-y-2">
+                {accounts.map((account) => (
+                  <li
+                    key={account.id}
+                    className="flex items-center justify-between rounded-lg border border-gray-800 p-3 text-sm text-gray-200"
+                  >
+                    <span>
+                      {account.bankName} — {account.accountNumber}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => startEdit(account)}
+                        className="rounded-md px-2 py-1 text-xs font-medium text-brand-400 transition-colors hover:bg-white/5 hover:text-brand-300"
+                      >
+                        Edit
+                      </button>
+                      {confirmingDeleteId === account.id ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => void handleDelete(account.id)}
+                            className="rounded-md px-2 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-950/30"
+                          >
+                            Confirm delete
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmingDeleteId(null)}
+                            className="rounded-md px-2 py-1 text-xs font-medium text-gray-400 transition-colors hover:bg-white/5"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingDeleteId(account.id)}
+                          className="rounded-md px-2 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-950/30"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </main>
+    </>
+  );
+}
