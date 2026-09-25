@@ -225,13 +225,13 @@ One additive migration (`AddAccounts`) creating the new `Account` table with a u
 
 #### Automated
 
-- [ ] 1.1 `dotnet build` succeeds
-- [ ] 1.2 `AddAccounts` migration applies cleanly against a fresh database
-- [ ] 1.3 `GET /accounts/banks` returns registered parser bank names plus "Other"
-- [ ] 1.4 `GET /accounts` returns only the current user's accounts
-- [ ] 1.5 `POST /accounts` inserts on new bank+number (201); returns 409 without inserting on a duplicate for the same user
-- [ ] 1.6 `PUT /accounts/{id}` updates fields, excludes self from duplicate check, returns 409 on collision with a different account, 404 for another user's id
-- [ ] 1.7 `DELETE /accounts/{id}` removes the row; 404 for another user's account id
+- [x] 1.1 `dotnet build` succeeds
+- [x] 1.2 `AddAccounts` migration applies cleanly against a fresh database
+- [x] 1.3 `GET /accounts/banks` returns registered parser bank names plus "Other"
+- [x] 1.4 `GET /accounts` returns only the current user's accounts
+- [x] 1.5 `POST /accounts` inserts on new bank+number (201); returns 409 without inserting on a duplicate for the same user
+- [x] 1.6 `PUT /accounts/{id}` updates fields, excludes self from duplicate check, returns 409 on collision with a different account, 404 for another user's id
+- [x] 1.7 `DELETE /accounts/{id}` removes the row; 404 for another user's account id
 
 ### Phase 2: Frontend Settings Page
 
