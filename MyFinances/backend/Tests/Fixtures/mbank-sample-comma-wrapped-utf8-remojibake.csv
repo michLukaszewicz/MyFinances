@@ -1,0 +1,7 @@
+mBank S.A.;,,
+Elektroniczne zestawienie operacji;,,
+Klient: Jan Kowalski;,,
+#Data ksiêgowania;#Data operacji;#Opis operacji;#Tytu³;#Nadawca/Odbiorca;#Numer konta;#Kwota;#Saldo po operacji;,,
+"2026-08-01;2026-08-01;BLIK P2P-WYCHODZ¹CY;""NA JEDZENIE"";"""";'';-500,00;1000,00;",,
+"2026-08-05;2026-08-05;ZAKUP PRZY U¿YCIU KARTY;""Œklep ¿abka"";"""";'';-120,00;880,00;",,
+;;;;;;#Saldo ko³cowe;880,00 PLN;,,
