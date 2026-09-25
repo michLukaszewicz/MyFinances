@@ -435,10 +435,10 @@ semantics to preserve.
 
 #### Automated
 
-- [x] 2.1 Backend builds
-- [x] 2.2 TransferDetectionService unit tests pass
-- [x] 2.3 CategorizationEndpointsTests integration tests pass
-- [x] 2.4 Full `dotnet test` passes (57/57)
+- [x] 2.1 Backend builds — 66a0e54
+- [x] 2.2 TransferDetectionService unit tests pass — 66a0e54
+- [x] 2.3 CategorizationEndpointsTests integration tests pass — 66a0e54
+- [x] 2.4 Full `dotnet test` passes (57/57) — 66a0e54
 
 #### Manual
 
