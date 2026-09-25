@@ -115,8 +115,29 @@ public static class AccountEndpoints
                 return Results.NotFound();
             }
 
+            // Checked proactively (matching the duplicate-account 409 pattern above) rather than
+            // relying solely on catching the FK-restrict violation: the linked Transaction/
+            // ImportBatch rows are not necessarily tracked by this DbContext instance, so a
+            // provider that only detects severed *tracked* required relationships (e.g. EF Core's
+            // InMemory provider, used in tests) would otherwise let the delete through silently.
+            var hasLinkedHistory = await db.Transactions.AnyAsync(t => t.AccountId == id)
+                || await db.ImportBatches.AnyAsync(b => b.AccountId == id);
+            if (hasLinkedHistory)
+            {
+                return Results.Problem(statusCode: StatusCodes.Status409Conflict, title: "This account has linked transactions and cannot be deleted.");
+            }
+
             db.Accounts.Remove(account);
-            await db.SaveChangesAsync();
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Defense-in-depth for a real relational database (Npgsql): a transaction linked
+                // concurrently between the check above and this save still hits the FK constraint.
+                return Results.Problem(statusCode: StatusCodes.Status409Conflict, title: "This account has linked transactions and cannot be deleted.");
+            }
 
             return Results.NoContent();
         })
