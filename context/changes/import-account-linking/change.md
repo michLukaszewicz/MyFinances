@@ -1,7 +1,7 @@
 ---
 change_id: import-account-linking
 title: Link imported transactions to a specific account instead of a free-text bank string
-status: implementing
+status: implemented
 created: 2026-09-25
 updated: 2026-09-25
 archived_at: null
