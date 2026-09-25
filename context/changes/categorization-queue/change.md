@@ -1,7 +1,7 @@
 ---
 change_id: categorization-queue
 title: Categorization queue (assign category per transaction, auto-flagged internal transfers)
-status: planned
+status: implemented
 created: 2026-09-25
 updated: 2026-09-25
 archived_at: null

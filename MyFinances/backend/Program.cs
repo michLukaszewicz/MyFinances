@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MyFinances.Api;
 using MyFinances.Api.Auth;
+using MyFinances.Api.Categorization;
 using MyFinances.Api.DI;
 using MyFinances.Api.Import;
 using MyFinances.Api.Transactions;
@@ -82,6 +83,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddAntiforgery(options => { options.HeaderName = "X-XSRF-TOKEN"; });
 
 builder.Services.AddImportServices();
+builder.Services.AddScoped<TransferDetectionService>();
 
 var app = builder.Build();
 
@@ -105,6 +107,7 @@ var api = app.MapGroup("/api").RequireAuthorization();
 api.MapAuthEndpoints();
 api.MapImportEndpoints();
 api.MapAccountEndpoints();
+api.MapCategorizationEndpoints();
 api.MapTransactionEndpoints();
 
 // The React SPA is built (see MyFinances/frontend, `npm run build`) and its static
