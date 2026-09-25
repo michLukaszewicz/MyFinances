@@ -39,7 +39,11 @@
       "Bash(dotnet --version)",
       "Bash(dotnet --list-sdks)",
       "Skill(10x-new)",
-      "Bash(mkdir -p \"D:/repos/michLukaszewicz/Kurs 10xDev/MyFinances/frontend/app/assets\" *)"
+      "Bash(mkdir -p \"D:/repos/michLukaszewicz/Kurs 10xDev/MyFinances/frontend/app/assets\" *)",
+      "WebSearch",
+      "mcp__context7__query-docs",
+      "Bash(command -v python3 py)",
+      "Bash(py -3 --version)"
     ],
     "deny": [
       "Bash(rm -rf *)"
