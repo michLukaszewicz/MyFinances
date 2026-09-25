@@ -3,7 +3,7 @@ project: "MyFinances"
 version: 1
 status: draft
 created: 2026-09-22
-updated: 2026-09-23
+updated: 2026-09-25
 prd_version: 3
 main_goal: market-feedback
 top_blocker: time
@@ -41,7 +41,7 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | ID    | Change ID                       | Outcome (user can …)                                                              | Prerequisites | PRD refs                    | Status   |
 | ----- | -------------------------------- | ----------------------------------------------------------------------------------- | -------------- | ---------------------------- | -------- |
 | F-01  | minimal-auth-scaffold            | (foundation) register, log in, and stay logged in via a persistent session          | —              | FR-001, Access Control        | in-progress |
-| S-01  | mbank-import-with-dedup          | import an mBank CSV, resolve flagged duplicates, and see an import summary          | F-01           | FR-002, FR-004, US-01, Guardrail (dedup) | proposed |
+| S-01  | mbank-import-with-dedup          | import an mBank CSV, resolve flagged duplicates, and see an import summary          | F-01           | FR-002, FR-004, US-01, Guardrail (dedup) | in-progress |
 | S-02  | manual-transaction-entry         | manually add, edit, and delete transactions without creating import duplicates      | S-01           | FR-010                        | proposed |
 | S-03  | categorization-queue             | categorize queued transactions, with internal transfers auto-flagged (overridable)  | S-01           | FR-007, FR-009, FR-015, US-01 | proposed |
 | S-04  | category-spend-donut-chart       | see a donut chart of category spend for the current month, filterable by category   | S-03           | FR-011, FR-012, US-01         | proposed |
@@ -49,6 +49,7 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | S-06  | category-average-deviation-signal| see a category's spend flagged as above/below/in line with its historical average   | S-04           | FR-013                        | proposed |
 | S-07  | revolut-import                   | import a Revolut CSV statement through the same import/dedup/categorize/chart loop  | S-01           | FR-003                        | proposed |
 | S-08  | erste-import                     | import an Erste Bank Polska CSV statement through the same loop                     | S-07           | FR-003                        | proposed |
+| S-09  | transaction-history-view         | see a chronological list of their imported/manually-entered transactions on the dashboard (date, description, amount, category) | S-01           | FR-011 (partial)              | proposed |
 
 ## Streams
 
@@ -59,6 +60,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | A      | Core spend-insight loop         | `F-01` → `S-01` → `S-03` → `S-04` → `S-05` → `S-06` | The main validation path for `main_goal: market-feedback` — auth, import, categorize, chart, then the two comparison signals. |
 | B      | Manual transaction entry        | `S-02`                                          | Joins Stream A at `S-01` — independent of categorization/chart work, can run in parallel. |
 | C      | Bank coverage expansion         | `S-07` → `S-08`                                 | Joins Stream A at `S-01` — Revolut/Erste import, sequentially gated per PRD FR-003 (Erste only after Revolut works end-to-end). |
+| D      | Transaction visibility           | `S-09`                                          | Joins Stream A at `S-01` — closes the "no history view" gap flagged during S-01 manual testing (2026-09-25); independent of categorization/chart work, can run in parallel. |
 
 ## Baseline
 
@@ -100,7 +102,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Exact mBank CSV export format (columns, encoding, separator) from "Płatności → Historia → Zestawienie operacji" — Owner: user. Block: no (verify during `/10x-plan`'s spec step, doesn't block sequencing).
 - **Risk:** This is the north star — highest-risk assumption (can real bank data be parsed and deduped reliably) validated first, before anything else depends on transaction data.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-02: Manual transaction entry
 
@@ -134,7 +136,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Prerequisites:** S-03
 - **Parallel with:** S-07
 - **Blockers:** —
-- **Unknowns:** —
+- **Unknowns:**
+  - S-01's home page currently always shows a static "you haven't imported any transactions yet" empty state regardless of whether the user actually has data (no transaction-count/listing query exists yet) — flagged during S-01 manual testing 2026-09-25. This gap is now tracked as S-09 (transaction-history-view); until S-09 lands, the empty-state copy is a known simplification, not a fixed requirement. Owner: implementer. Block: no.
 - **Risk:** This is the slice the PRD's Primary Success Criterion is built around — correctness here depends entirely on S-03's categorization and internal-transfer flagging being right first.
 - **Status:** proposed
 
@@ -188,6 +191,18 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Third and final parser — lowest risk of the three bank slices since the abstraction is validated twice already by this point.
 - **Status:** proposed
 
+### S-09: Transaction history view
+
+- **Outcome:** user sees a chronological list of their imported and manually-entered transactions on the dashboard (date, description, amount, category), replacing the current static "you haven't imported anything yet" placeholder once data exists.
+- **Change ID:** transaction-history-view
+- **PRD refs:** FR-011 (partial — the list itself; the category/current-month filter portion of FR-011 stays with S-04, since it depends on categorization)
+- **Prerequisites:** S-01
+- **Parallel with:** S-02, S-03, S-07
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** Low risk — read-only listing over data S-01 already persists; no new write paths or dedup logic involved.
+- **Status:** proposed
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID                        | Suggested issue title                                          | Ready for `/10x-plan` | Notes |
@@ -201,6 +216,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-06       | category-average-deviation-signal  | Historical-average deviation signal per category                   | no                     | Depends on S-04 |
 | S-07       | revolut-import                     | Import Revolut CSV through the existing loop                       | no                     | Depends on S-01 |
 | S-08       | erste-import                       | Import Erste Bank Polska CSV through the existing loop             | no                     | Depends on S-07 |
+| S-09       | transaction-history-view           | Show transaction history list on the dashboard                     | no                     | Depends on S-01 |
 
 ## Open Roadmap Questions
 
