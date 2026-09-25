@@ -308,4 +308,4 @@ The Phase 1 migration wipes all existing `transactions` and `import_batches` row
 
 #### Automated
 
-- [x] 4.1 `dotnet test` passes for the full backend suite
+- [x] 4.1 `dotnet test` passes for the full backend suite — 5fe7f6b
