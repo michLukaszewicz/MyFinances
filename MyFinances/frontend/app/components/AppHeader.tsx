@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { apiFetch } from "../lib/api";
 import logo from "../assets/myfinances-logo.png";
 
@@ -19,15 +19,25 @@ export function AppHeader({ authenticated }: AppHeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between border-b border-white/5 bg-gray-950/70 px-6 py-4 backdrop-blur-md">
-      <img src={logo} alt="MyFinances" className="h-7 w-auto" />
+      <Link to="/" aria-label="MyFinances home">
+        <img src={logo} alt="MyFinances" className="h-7 w-auto" />
+      </Link>
       {authenticated ? (
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="rounded-md px-3 py-1.5 text-sm font-medium text-brand-400 transition-colors hover:bg-white/5 hover:text-brand-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-        >
-          Log out
-        </button>
+        <nav className="flex items-center gap-2 text-sm">
+          <Link
+            to="/"
+            className="rounded-md px-3 py-1.5 font-medium text-brand-400 transition-colors hover:bg-white/5 hover:text-brand-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+          >
+            Dashboard
+          </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-brand-400 transition-colors hover:bg-white/5 hover:text-brand-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+          >
+            Log out
+          </button>
+        </nav>
       ) : (
         <nav className="flex items-center gap-2 text-sm">
           <a
