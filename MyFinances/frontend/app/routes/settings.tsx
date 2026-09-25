@@ -34,6 +34,7 @@ export default function Settings() {
   const [accounts, setAccounts] = useState<AccountDto[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [bankName, setBankName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -58,11 +59,22 @@ export default function Settings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function resetForm() {
+  function closeForm() {
+    setIsFormOpen(false);
     setBankName("");
     setAccountNumber("");
     setEditingId(null);
     setFormError(null);
+  }
+
+  function startAdd() {
+    setEditingId(null);
+    setBankName("");
+    setAccountNumber("");
+    setFormError(null);
+    setIsFormOpen(true);
+    // Wait for the form to mount before focusing it.
+    requestAnimationFrame(() => bankNameInputRef.current?.focus());
   }
 
   function startEdit(account: AccountDto) {
@@ -70,11 +82,14 @@ export default function Settings() {
     setBankName(account.bankName);
     setAccountNumber(account.accountNumber);
     setFormError(null);
+    setIsFormOpen(true);
     // The form sits above a potentially long account list — scroll it into view and
-    // focus the first field so clicking "Edit" on a far-down row doesn't leave the
-    // user looking at an unchanged screen.
-    bankNameInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    bankNameInputRef.current?.focus();
+    // focus the first field once mounted, so clicking "Edit" on a far-down row doesn't
+    // leave the user looking at an unchanged screen.
+    requestAnimationFrame(() => {
+      bankNameInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      bankNameInputRef.current?.focus();
+    });
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -98,7 +113,7 @@ export default function Settings() {
         });
       }
       await loadAccounts();
-      resetForm();
+      closeForm();
     } catch (err) {
       setFormError(await extractErrorMessage(err));
     } finally {
@@ -119,61 +134,69 @@ export default function Settings() {
         <div className="w-full max-w-2xl space-y-6 px-4">
           <h1 className="text-center text-lg font-semibold text-gray-200">Settings</h1>
 
-          <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-gray-800 p-4">
-            <h2 className="text-sm font-medium text-gray-200">
-              {editingId ? "Edit account" : "Add account"}
-            </h2>
+          {isFormOpen ? (
+            <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-gray-800 p-4">
+              <h2 className="text-sm font-medium text-gray-200">
+                {editingId ? "Edit account" : "Add account"}
+              </h2>
 
-            <div className="space-y-1">
-              <label htmlFor="bankName" className="text-sm text-gray-200">
-                Bank
-              </label>
-              <input
-                id="bankName"
-                ref={bankNameInputRef}
-                type="text"
-                required
-                value={bankName}
-                onChange={(e) => setBankName(e.target.value)}
-                className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              />
-            </div>
+              <div className="space-y-1">
+                <label htmlFor="bankName" className="text-sm text-gray-200">
+                  Bank
+                </label>
+                <input
+                  id="bankName"
+                  ref={bankNameInputRef}
+                  type="text"
+                  required
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                />
+              </div>
 
-            <div className="space-y-1">
-              <label htmlFor="accountNumber" className="text-sm text-gray-200">
-                Account number
-              </label>
-              <input
-                id="accountNumber"
-                type="text"
-                required
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              />
-            </div>
+              <div className="space-y-1">
+                <label htmlFor="accountNumber" className="text-sm text-gray-200">
+                  Account number
+                </label>
+                <input
+                  id="accountNumber"
+                  type="text"
+                  required
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                />
+              </div>
 
-            {formError && <p className="text-sm text-red-600">{formError}</p>}
+              {formError && <p className="text-sm text-red-600">{formError}</p>}
 
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-              >
-                {submitting ? "Saving…" : editingId ? "Save changes" : "Add account"}
-              </button>
-              {editingId && (
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                >
+                  {submitting ? "Saving…" : editingId ? "Save changes" : "Add account"}
+                </button>
                 <button
                   type="button"
-                  onClick={resetForm}
+                  onClick={closeForm}
                   className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium text-gray-200 transition-colors hover:bg-white/5"
                 >
                   Cancel
                 </button>
-              )}
-            </div>
-          </form>
+              </div>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={startAdd}
+              className="w-full rounded-lg bg-brand-500 p-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+            >
+              Add account
+            </button>
+          )}
 
           <div className="space-y-2">
             <h2 className="text-sm font-medium text-gray-200">Your accounts</h2>
