@@ -1,4 +1,4 @@
-import { useLoaderData } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import type { Route } from "./+types/home";
 import { AppHeader } from "../components/AppHeader";
 
@@ -129,8 +129,15 @@ export default function Home() {
             className="text-sm text-gray-500 animate-[fade-slide-in_600ms_ease-out_both]"
             style={{ animationDelay: "100ms" }}
           >
-            Once bank import lands, you'll see your categorized spend here.
+            You haven't imported any transactions yet — let's start!
           </p>
+          <Link
+            to="/import"
+            className="inline-block rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-md shadow-brand-900/40 transition-all duration-200 hover:scale-105 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-600/40 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 animate-[fade-slide-in_600ms_ease-out_both]"
+            style={{ animationDelay: "200ms" }}
+          >
+            Import a bank statement
+          </Link>
         </div>
       </main>
     </>

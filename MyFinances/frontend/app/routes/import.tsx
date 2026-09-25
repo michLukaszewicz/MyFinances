@@ -34,6 +34,14 @@ interface ImportParseResponse {
 // Only mBank is supported today — extend this list as more parsers ship.
 const SUPPORTED_BANKS = ["mBank"];
 
+// Mirrors the backend's RowDecision enum (ImportContracts.cs) — the value Phase 6
+// will send per duplicate row in the /import/commit request.
+type RowDecisionValue = "Keep" | "Skip";
+
+function formatAmount(amount: number): string {
+  return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 async function extractErrorMessage(error: unknown): Promise<string> {
   if (error instanceof ApiError) {
     try {
@@ -55,6 +63,9 @@ export default function Import() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<ImportParseResponse | null>(null);
+  // Keyed by row index into result.rows — only duplicate rows ever get an entry;
+  // non-duplicate rows are implicitly "keep" and never need a decision.
+  const [decisions, setDecisions] = useState<Map<number, RowDecisionValue>>(new Map());
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -76,6 +87,7 @@ export default function Import() {
         body: formData,
       });
       setResult(response);
+      setDecisions(new Map());
     } catch (err) {
       // /import/parse only ever returns 400 when no parser recognized the file and no
       // `bank` fallback was given — any other failure (network, 401, 500) shouldn't
@@ -89,11 +101,31 @@ export default function Import() {
     }
   }
 
+  function setRowDecision(index: number, decision: RowDecisionValue) {
+    setDecisions((prev) => {
+      const next = new Map(prev);
+      next.set(index, decision);
+      return next;
+    });
+  }
+
+  const duplicateIndexes =
+    result?.rows.reduce<number[]>((acc, row, index) => {
+      if (row.isDuplicate) acc.push(index);
+      return acc;
+    }, []) ?? [];
+  const allDuplicatesDecided = duplicateIndexes.every((index) => decisions.has(index));
+
+  function handleContinue() {
+    // Phase 6 wires this to POST /import/commit using `result` + `decisions`.
+    console.log("Review complete", { result, decisions });
+  }
+
   return (
     <>
       <AppHeader authenticated />
       <main className="flex items-center justify-center pb-4">
-        <div className="max-w-[300px] w-full space-y-6 px-4">
+        <div className={`w-full space-y-6 px-4 ${result ? "max-w-2xl" : "max-w-[300px]"}`}>
           <h1
             className="text-center text-lg font-semibold text-gray-200 animate-[fade-slide-in_600ms_ease-out_both]"
             style={{ animationDelay: "0ms" }}
@@ -103,22 +135,98 @@ export default function Import() {
 
           {result ? (
             <div
-              className="space-y-2 rounded-lg border border-gray-800 p-3 text-sm text-gray-200 animate-[fade-slide-in_600ms_ease-out_both]"
+              className="space-y-4 animate-[fade-slide-in_600ms_ease-out_both]"
               style={{ animationDelay: "50ms" }}
             >
-              <p>
-                Parsed <strong>{result.rows.length}</strong> row(s) from{" "}
-                <strong>{result.bank}</strong>.
-              </p>
-              {result.skippedErrorCount > 0 && (
-                <p className="text-gray-400">
-                  {result.skippedErrorCount} row(s) skipped due to parse errors.
+              <div className="space-y-1 rounded-lg border border-gray-800 p-3 text-sm text-gray-200">
+                <p>
+                  Parsed <strong>{result.rows.length}</strong> row(s) from{" "}
+                  <strong>{result.bank}</strong>.
                 </p>
-              )}
-              <p className="text-gray-500">
-                The duplicate review screen will replace this placeholder in a
-                later step.
-              </p>
+                {result.skippedErrorCount > 0 && (
+                  <p className="text-gray-400">
+                    {result.skippedErrorCount} row(s) skipped due to parse errors.
+                  </p>
+                )}
+                {duplicateIndexes.length > 0 && (
+                  <p className="text-gray-400">
+                    {duplicateIndexes.length} possible duplicate(s) need a decision
+                    before you can continue.
+                  </p>
+                )}
+              </div>
+
+              <ul className="space-y-2">
+                {result.rows.map((row, index) => (
+                  <li
+                    key={index}
+                    className={`rounded-lg border p-3 text-sm ${
+                      row.isDuplicate ? "border-amber-700/60 bg-amber-950/20" : "border-gray-800"
+                    }`}
+                  >
+                    {row.isDuplicate && row.existingTransaction ? (
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium uppercase tracking-wide text-amber-500">
+                          Possible duplicate
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <p className="text-xs text-gray-500">Existing</p>
+                            <p className="text-gray-200">{row.existingTransaction.date}</p>
+                            <p className="text-gray-200">{row.existingTransaction.description}</p>
+                            <p className="text-gray-200">
+                              {formatAmount(row.existingTransaction.amount)}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs text-gray-500">Incoming</p>
+                            <p className="text-gray-200">{row.date}</p>
+                            <p className="text-gray-200">{row.description}</p>
+                            <p className="text-gray-200">{formatAmount(row.amount)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 pt-1">
+                          <label className="flex items-center gap-1.5 text-gray-200">
+                            <input
+                              type="radio"
+                              name={`decision-${index}`}
+                              checked={decisions.get(index) === "Keep"}
+                              onChange={() => setRowDecision(index, "Keep")}
+                              className="accent-brand-500"
+                            />
+                            Keep (import anyway)
+                          </label>
+                          <label className="flex items-center gap-1.5 text-gray-200">
+                            <input
+                              type="radio"
+                              name={`decision-${index}`}
+                              checked={decisions.get(index) === "Skip"}
+                              onChange={() => setRowDecision(index, "Skip")}
+                              className="accent-brand-500"
+                            />
+                            Skip (don't import)
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between text-gray-200">
+                        <span>{row.date}</span>
+                        <span className="flex-1 truncate px-3">{row.description}</span>
+                        <span>{formatAmount(row.amount)}</span>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                type="button"
+                onClick={handleContinue}
+                disabled={!allDuplicatesDecided}
+                className="w-full rounded-lg bg-brand-500 p-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+              >
+                Continue
+              </button>
             </div>
           ) : (
             <form
