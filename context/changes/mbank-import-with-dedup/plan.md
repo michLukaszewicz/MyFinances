@@ -370,14 +370,14 @@ New EF Core migration adds `Transactions` and `ImportBatches` tables; no existin
 
 #### Automated
 
-- [ ] 1.1 `dotnet build` succeeds with the new packages referenced
-- [ ] 1.2 New migration applies cleanly: `dotnet ef database update`
-- [ ] 1.3 Existing test suite still passes: `dotnet test`
+- [x] 1.1 `dotnet build` succeeds with the new packages referenced
+- [x] 1.2 New migration applies cleanly: `dotnet ef database update`
+- [x] 1.3 Existing test suite still passes: `dotnet test`
 
 #### Manual
 
-- [ ] 1.4 `Encoding.GetEncoding(1250)` does not throw after provider registration
-- [ ] 1.5 Multipart POST with valid antiforgery token succeeds; without token returns 400 (not 500)
+- [x] 1.4 `Encoding.GetEncoding(1250)` does not throw after provider registration
+- [x] 1.5 Multipart POST with valid antiforgery token succeeds; without token returns 400 (not 500)
 
 ### Phase 2: mBank Parser & Dedup
 
