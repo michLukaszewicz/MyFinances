@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MyFinances.Api;
 using MyFinances.Api.Auth;
+using MyFinances.Api.DI;
+using MyFinances.Api.Import;
 
 // mBank CSV exports are Windows-1250 encoded; .NET's built-in encodings don't include
 // code pages beyond UTF-8/ASCII/UTF-16/UTF-32, so the provider must be registered once
@@ -78,6 +80,8 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddAntiforgery(options => { options.HeaderName = "X-XSRF-TOKEN"; });
 
+builder.Services.AddImportServices();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -98,6 +102,7 @@ app.UseAntiforgery();
 var api = app.MapGroup("/api").RequireAuthorization();
 
 api.MapAuthEndpoints();
+api.MapImportEndpoints();
 
 // The React SPA is built (see MyFinances/frontend, `npm run build`) and its static
 // output copied into wwwroot at publish time (see the csproj's Publish target below).
