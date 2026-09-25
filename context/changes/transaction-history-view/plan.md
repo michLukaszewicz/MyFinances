@@ -196,13 +196,13 @@ None — no schema changes; this phase is purely additive (new endpoint, new fro
 
 #### Automated
 
-- [ ] 1.1 Backend builds: `dotnet build`
-- [ ] 1.2 All backend tests pass: `dotnet test`
+- [x] 1.1 Backend builds: `dotnet build`
+- [x] 1.2 All backend tests pass: `dotnet test`
 
 #### Manual
 
-- [ ] 1.3 `GET /api/transactions` via Swagger returns the logged-in user's transactions, newest-first
-- [ ] 1.4 A second user's session never sees the first user's transactions
+- [x] 1.3 `GET /api/transactions` via Swagger returns the logged-in user's transactions, newest-first
+- [x] 1.4 A second user's session never sees the first user's transactions
 
 ### Phase 2: Frontend dashboard integration
 
