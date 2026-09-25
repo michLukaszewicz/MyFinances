@@ -105,6 +105,7 @@ var api = app.MapGroup("/api").RequireAuthorization();
 api.MapAuthEndpoints();
 api.MapImportEndpoints();
 api.MapAccountEndpoints();
+api.MapTransactionEndpoints();
 
 // The React SPA is built (see MyFinances/frontend, `npm run build`) and its static
 // output copied into wwwroot at publish time (see the csproj's Publish target below).
