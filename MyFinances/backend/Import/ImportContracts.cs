@@ -9,7 +9,9 @@ public record ExistingTransactionDto(DateOnly Date, string Description, decimal 
 
 public record ImportParseRow(DateOnly Date, string Description, decimal Amount, bool IsDuplicate, ExistingTransactionDto? ExistingTransaction);
 
-public record ImportParseResponse(string Bank, IReadOnlyList<ImportParseRow> Rows, int SkippedErrorCount);
+// BankMismatch: true when the detected/selected parser's BankName differs from the chosen
+// account's BankName. Non-blocking — the caller decides whether to proceed anyway.
+public record ImportParseResponse(string Bank, bool BankMismatch, IReadOnlyList<ImportParseRow> Rows, int SkippedErrorCount);
 
 // String-serialized (not the S.T.Json default of numeric) so the wire contract matches the
 // plan's own notation (Decision: Keep|Skip) and stays self-describing for the frontend.
@@ -22,6 +24,6 @@ public enum RowDecision
 
 public record ImportCommitRow(DateOnly Date, string Description, decimal Amount, RowDecision Decision);
 
-public record ImportCommitRequest(string Bank, int SkippedErrorCount, IReadOnlyList<ImportCommitRow> Rows);
+public record ImportCommitRequest(Guid AccountId, int SkippedErrorCount, IReadOnlyList<ImportCommitRow> Rows);
 
-public record ImportSummaryDto(Guid ImportBatchId, string Bank, DateTime ImportedAtUtc, int ImportedCount, int SkippedDuplicateCount, int SkippedErrorCount);
+public record ImportSummaryDto(Guid ImportBatchId, Guid AccountId, DateTime ImportedAtUtc, int ImportedCount, int SkippedDuplicateCount, int SkippedErrorCount);
