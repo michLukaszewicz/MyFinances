@@ -22,7 +22,7 @@ A logged-in user sees their transactions listed newest-first on `/`, with amount
 | Pagination strategy | "Load more" button, 20/page | Simplest implementation with no existing precedent to build from; avoids unnecessary infinite-scroll complexity for an MVP. |
 | Uncategorized display | Show "Uncategorized" label | Sets up the category column now so S-03 just fills it in later, no layout rework. |
 | Amount styling | Color-coded by sign (red/green) | User's explicit choice, enabled by the fact that mBank amounts already carry their real sign — no extra sign-inference logic needed. |
-| Bank/source column | Omitted | Matches the roadmap outcome's literal 4 fields (date, description, amount, category); revisit once multiple banks are live (S-07/S-08). |
+| Bank/source column | Omitted | Matches the roadmap outcome's literal 4 fields (date, description, amount, category); revisit once multiple banks are live (S-07/S-08). **Note:** decided before `Transaction.AccountId`/`Account` existed as a real entity (merged post-planning, PR #13) — now cheap to add if wanted; flagged as an open question, not re-decided here. |
 | Dashboard refresh after import | Rely on React Router's natural loader re-run | Zero added complexity — this is the default behavior, not something to build. |
 | Placement | Inline on the dashboard (`home.tsx`) | Matches the roadmap outcome text ("...on the dashboard") — no new route. |
 
@@ -52,6 +52,7 @@ Backend first: a new endpoint following `ImportEndpoints.cs`'s exact structural 
 
 ## Open Risks & Assumptions
 
+- **Update:** `account-management`/`import-account-linking` (S-10) merged to `main` after this brief was written, replacing `Transaction.Bank` with a required `AccountId`/`Account` FK. Doesn't change this plan's endpoint or query shape; direct-seed tests now need a valid `Account` row (helpers for this already exist in `ImportEndpointsTests.cs` post-merge). See "Bank/source column" decision above for the resulting open product question.
 - Assumes every current transaction has `ImportBatchId != null` (manual entry, S-02, doesn't exist yet) — the list simply renders whatever's in `Transactions`, so this isn't a blocking assumption, just a note that "imported vs. manual" isn't distinguishable in the UI today.
 - No `CreatedAt` field exists on `Transaction`, so pagination's tiebreak (`Id` descending) is stable but not chronologically meaningful for same-day transactions — acceptable since it only affects ordering *within* a single day, not correctness.
 

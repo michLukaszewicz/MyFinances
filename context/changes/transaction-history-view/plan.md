@@ -8,6 +8,7 @@ Add a read-only, paginated transaction history list to the authenticated dashboa
 
 - [`home.tsx:31-39`](../../../MyFinances/frontend/app/routes/home.tsx) `clientLoader` only fetches `/api/auth/me`; the authenticated branch ([`home.tsx:113-144`](../../../MyFinances/frontend/app/routes/home.tsx)) unconditionally renders a static empty-state message ([`home.tsx:128-133`](../../../MyFinances/frontend/app/routes/home.tsx)) regardless of whether the user has any transactions.
 - [`Transaction.cs:6-29`](../../../MyFinances/backend/Transactions/Transaction.cs) already has everything needed to list history: `UserId`, `Date` (`DateOnly`), `Description`, `Amount` (signed — negative for expenses, positive for income, confirmed via `MBankCsvParser.cs:165`'s `AllowLeadingSign` parse), `CategoryId` (nullable `Guid?`, no `Category` table yet — "uncategorized" is `CategoryId == null`).
+- **Update (post-merge of `account-management`/`import-account-linking`, PR #13):** `Transaction` now also carries a **required** `AccountId` (`Guid`, non-nullable) and `Account` navigation property — the old free-text `Bank` string was removed in favor of a real per-user `Account` entity (`BankName`, `AccountNumber`). This doesn't change this plan's query shape (a plain `Where(UserId == ...)` filter is unaffected by the extra required FK), but any test seeding that inserts `Transaction` rows directly via `AppDbContext` now needs a valid `Account` row to satisfy the FK — see Phase 1, item 5.
 - No listing endpoint exists yet — only `/api/import/parse` and `/api/import/commit` ([`ImportEndpoints.cs`](../../../MyFinances/backend/Import/ImportEndpoints.cs)).
 - No pagination/sorting precedent exists anywhere in the codebase — this is the first feature to need it.
 - No `Transaction` type exists on the frontend; the closest precedent is the import-flow's row-specific DTOs in [`import.tsx:14-41`](../../../MyFinances/frontend/app/routes/import.tsx).
@@ -26,7 +27,7 @@ A logged-in user visiting `/` sees their transactions listed newest-first (date,
 ## What We're NOT Doing
 
 - No `Category` table, category names, or category filtering — categorization is S-03. Uncategorized transactions just show a static "Uncategorized" label.
-- No bank/source column (e.g. "mBank") on each row — out of scope per roadmap outcome's literal 4 fields; revisit when S-07/S-08 add more banks.
+- No bank/source column (e.g. "mBank") on each row — out of scope per roadmap outcome's literal 4 fields; revisit when S-07/S-08 add more banks. **Open question (see "Open Risks & Assumptions"):** this decision was made before `Transaction.AccountId`/`Account` existed as a real per-user entity (merged after this plan was written); showing the account name per row is now cheap (one join) and may be worth adding — flagged for a call, not implemented here.
 - No dedicated `/transactions` route — the list lives inline on the dashboard (`home.tsx`), per the roadmap outcome ("...on the dashboard").
 - No date-range filtering (that's the parked FR-016) or current-month filtering (that's S-04, which depends on categorization).
 - No manual transaction entry (S-02) — today every transaction has a non-null `ImportBatchId`; the list just renders whatever exists in `Transactions`.
@@ -84,7 +85,7 @@ public record TransactionListResponseDto(IReadOnlyList<TransactionListItemDto> I
 
 **File**: `MyFinances/backend/Tests/TransactionEndpointsTests.cs` (new)
 
-**Intent**: Follow `ImportEndpointsTests.cs`'s conventions — use `AuthApiFactory` + the shared `TestClientHelpers.CreateAuthenticatedClientAsync` (item 4 above), seed transactions directly via a scoped `AppDbContext`, and use the `MethodUnderTest_Scenario_ExpectedResult` naming convention.
+**Intent**: Follow `ImportEndpointsTests.cs`'s conventions — use `AuthApiFactory` + the shared `TestClientHelpers.CreateAuthenticatedClientAsync` (item 4 above), seed transactions directly via a scoped `AppDbContext`, and use the `MethodUnderTest_Scenario_ExpectedResult` naming convention. `ImportEndpointsTests.cs` already has an `InsertAccountForOtherUserAsync`-style helper and a `CreateAccountAsync` client helper (added by the now-merged `account-management`/`import-account-linking` changes) — reuse or mirror those to satisfy `Transaction.AccountId`'s required FK when seeding rows directly.
 
 **Contract**: Cover: unauthenticated request returns 401; a user only sees their own transactions (not another user's); results are ordered newest-first; `skip`/`take` paginate correctly; `HasMore` is `true` when more rows exist beyond the current page and `false` on the last page; an empty result set returns `Items: []`, `HasMore: false`.
 
@@ -175,6 +176,7 @@ None beyond the pagination itself — page size is capped at 100 server-side reg
 
 ## Open Risks & Assumptions
 
+- **New since this plan was written:** `account-management` (S-10) and `import-account-linking` merged to `main` (PR #13), replacing `Transaction.Bank` (free text) with a required `AccountId`/`Account` FK to a real per-user account entity. This doesn't block or change Phase 1/2 as written, but means "no bank/source column" (see "What We're NOT Doing") is now a genuine product option rather than an unavailable one — worth a quick call before/during implementation on whether to show the account name per row.
 - Offset-based pagination (`skip`/`take`) can drift if a transaction with a newer date is inserted (e.g. imported in another browser tab) between two "Load more" clicks — the shift can cause an already-seen row to reappear on the next page. Accepted as a known limitation for this solo, single-user MVP (no multi-tenant/sharing per PRD); revisit with keyset/cursor pagination if this ever becomes multi-session or multi-device concurrent usage.
 
 ## Migration Notes
