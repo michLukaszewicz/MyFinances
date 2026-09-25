@@ -127,6 +127,19 @@ export default function Import() {
       return acc;
     }, []) ?? [];
   const allDuplicatesDecided = duplicateIndexes.every((index) => decisions.has(index));
+  const allRowsAreDuplicates = duplicateIndexes.length > 0 && duplicateIndexes.length === (result?.rows.length ?? 0);
+
+  // Quick-exit for the common "I uploaded the same file by accident" case: skip every
+  // duplicate row in one click instead of clicking through each one individually.
+  function handleSkipAllDuplicates() {
+    setDecisions((prev) => {
+      const next = new Map(prev);
+      for (const index of duplicateIndexes) {
+        next.set(index, "Skip");
+      }
+      return next;
+    });
+  }
 
   async function handleContinue() {
     if (!result) return;
@@ -198,11 +211,20 @@ export default function Import() {
               className="space-y-4 animate-[fade-slide-in_600ms_ease-out_both]"
               style={{ animationDelay: "50ms" }}
             >
-              {result.rows.length > 0 && duplicateIndexes.length === result.rows.length && (
-                <div className="rounded-lg border border-amber-700/60 bg-amber-950/20 p-3 text-sm text-amber-400">
-                  Every transaction in this file is already in your account — looks like it may
-                  have been imported before. You can still choose "Keep" below for any row you
-                  want to add anyway.
+              {allRowsAreDuplicates && (
+                <div className="space-y-2 rounded-lg border border-amber-700/60 bg-amber-950/20 p-3 text-sm text-amber-400">
+                  <p>
+                    Every transaction in this file is already in your account — looks like it may
+                    have been imported before. You can still choose "Keep" below for any row you
+                    want to add anyway.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleSkipAllDuplicates}
+                    className="rounded-md border border-amber-700/60 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors hover:bg-amber-900/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+                  >
+                    Skip all — none of these were new
+                  </button>
                 </div>
               )}
 
