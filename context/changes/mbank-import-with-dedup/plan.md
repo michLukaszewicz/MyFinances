@@ -428,12 +428,12 @@ New EF Core migration adds `Transactions` and `ImportBatches` tables; no existin
 
 #### Automated
 
-- [x] 6.1 `npm run typecheck` passes
-- [x] 6.2 `npm run build` succeeds
+- [x] 6.1 `npm run typecheck` passes — f1bc154
+- [x] 6.2 `npm run build` succeeds — f1bc154
 
 #### Manual
 
-- [ ] 6.3 Full end-to-end browser flow: upload → resolve collisions → commit → summary shows correct counts
+- [x] 6.3 Full end-to-end browser flow: upload → resolve collisions → commit → summary shows correct counts — 229323e
 
 ### Phase 7: Integration Tests
 
