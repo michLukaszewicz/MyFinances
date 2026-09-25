@@ -1,7 +1,7 @@
 ---
 change_id: transaction-history-view
 title: Transaction history view on the dashboard
-status: plan_reviewed
+status: implementing
 created: 2026-09-25
 updated: 2026-09-25
 archived_at: null
