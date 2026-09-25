@@ -97,6 +97,41 @@ public class ImportEndpointsTests
         Assert.Contains(parsed.Rows, row => row.Date == new DateOnly(2026, 8, 1) && row.Amount == -500.00m && row.Description == "NA JEDZENIE");
     }
 
+    // Regression test: two stored transactions can legitimately share the same dedup hash
+    // (Transaction.Hash isn't unique — see Transaction.cs) once a prior collision was
+    // resolved as "Keep" for both. Re-parsing a file that collides with both used to throw
+    // "An item with the same key has already been added" from ToDictionaryAsync(t => t.Hash, ...).
+    [Fact]
+    public async Task Parse_WhenTwoStoredTransactionsShareTheSameHash_DoesNotThrow()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await CreateAuthenticatedClientAsync(factory);
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+            var user = await userManager.FindByEmailAsync(AuthApiFactory.AllowedEmail);
+            var userId = user!.Id;
+
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var hash = DedupHash.ComputeHash(userId, new DateOnly(2026, 8, 1), -500.00m, "NA JEDZENIE", "mBank");
+            db.Transactions.AddRange(
+                new Transaction { Id = Guid.NewGuid(), UserId = userId, Bank = "mBank", Date = new DateOnly(2026, 8, 1), Description = "NA JEDZENIE", Amount = -500.00m, Hash = hash },
+                new Transaction { Id = Guid.NewGuid(), UserId = userId, Bank = "mBank", Date = new DateOnly(2026, 8, 1), Description = "NA JEDZENIE", Amount = -500.00m, Hash = hash });
+            await db.SaveChangesAsync();
+        }
+
+        using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath));
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.NotNull(parsed);
+        Assert.All(
+            parsed!.Rows.Where(r => r.Date == new DateOnly(2026, 8, 1) && r.Amount == -500.00m && r.Description == "NA JEDZENIE"),
+            row => Assert.True(row.IsDuplicate));
+    }
+
     [Fact]
     public async Task Commit_PersistsKeptRowAndCountsSkippedDuplicate()
     {

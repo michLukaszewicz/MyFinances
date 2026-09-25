@@ -52,9 +52,15 @@ public static class ImportEndpoints
                 .Select(t => DedupHash.ComputeHash(userId, t.Date, t.Amount, t.Description, parser.BankName))
                 .ToList();
 
-            var existingByHash = await db.Transactions
-                .Where(t => t.UserId == userId && hashes.Contains(t.Hash))
-                .ToDictionaryAsync(t => t.Hash, t => t);
+            // Hash is deliberately not unique (Transaction.cs) — a "Keep" decision on a prior
+            // collision can leave multiple stored transactions sharing the same hash. Group in
+            // memory (not a DB GroupBy+First, which doesn't reliably translate) and take one
+            // representative row per hash for the side-by-side "existing" display.
+            var existingByHash = (await db.Transactions
+                    .Where(t => t.UserId == userId && hashes.Contains(t.Hash))
+                    .ToListAsync())
+                .GroupBy(t => t.Hash)
+                .ToDictionary(g => g.Key, g => g.First());
 
             var rows = parseResult.Transactions.Select(t =>
             {

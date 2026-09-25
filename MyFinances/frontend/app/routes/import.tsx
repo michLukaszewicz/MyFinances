@@ -31,6 +31,15 @@ interface ImportParseResponse {
   skippedErrorCount: number;
 }
 
+interface ImportSummaryDto {
+  importBatchId: string;
+  bank: string;
+  importedAtUtc: string;
+  importedCount: number;
+  skippedDuplicateCount: number;
+  skippedErrorCount: number;
+}
+
 // Only mBank is supported today — extend this list as more parsers ship.
 const SUPPORTED_BANKS = ["mBank"];
 
@@ -66,6 +75,9 @@ export default function Import() {
   // Keyed by row index into result.rows — only duplicate rows ever get an entry;
   // non-duplicate rows are implicitly "keep" and never need a decision.
   const [decisions, setDecisions] = useState<Map<number, RowDecisionValue>>(new Map());
+  const [committing, setCommitting] = useState(false);
+  const [commitError, setCommitError] = useState<string | null>(null);
+  const [summary, setSummary] = useState<ImportSummaryDto | null>(null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -116,9 +128,35 @@ export default function Import() {
     }, []) ?? [];
   const allDuplicatesDecided = duplicateIndexes.every((index) => decisions.has(index));
 
-  function handleContinue() {
-    // Phase 6 wires this to POST /import/commit using `result` + `decisions`.
-    console.log("Review complete", { result, decisions });
+  async function handleContinue() {
+    if (!result) return;
+
+    setCommitError(null);
+    setCommitting(true);
+    try {
+      const rows = result.rows.map((row, index) => ({
+        Date: row.date,
+        Description: row.description,
+        Amount: row.amount,
+        // Non-duplicate rows never get a decisions entry — they're implicitly kept.
+        Decision: decisions.get(index) ?? "Keep",
+      }));
+
+      const response = await apiFetch<ImportSummaryDto>("/import/commit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          Bank: result.bank,
+          SkippedErrorCount: result.skippedErrorCount,
+          Rows: rows,
+        }),
+      });
+      setSummary(response);
+    } catch (err) {
+      setCommitError(await extractErrorMessage(err));
+    } finally {
+      setCommitting(false);
+    }
   }
 
   return (
@@ -133,7 +171,29 @@ export default function Import() {
             Import statement
           </h1>
 
-          {result ? (
+          {summary ? (
+            <div
+              className="space-y-4 animate-[fade-slide-in_600ms_ease-out_both]"
+              style={{ animationDelay: "50ms" }}
+            >
+              <div className="space-y-1 rounded-lg border border-gray-800 p-3 text-sm text-gray-200">
+                <p>
+                  Imported <strong>{summary.importedCount}</strong> row(s) from{" "}
+                  <strong>{summary.bank}</strong>.
+                </p>
+                {summary.skippedDuplicateCount > 0 && (
+                  <p className="text-gray-400">
+                    {summary.skippedDuplicateCount} duplicate row(s) skipped.
+                  </p>
+                )}
+                {summary.skippedErrorCount > 0 && (
+                  <p className="text-gray-400">
+                    {summary.skippedErrorCount} row(s) skipped due to parse errors.
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : result ? (
             <div
               className="space-y-4 animate-[fade-slide-in_600ms_ease-out_both]"
               style={{ animationDelay: "50ms" }}
@@ -219,13 +279,15 @@ export default function Import() {
                 ))}
               </ul>
 
+              {commitError && <p className="text-sm text-red-600">{commitError}</p>}
+
               <button
                 type="button"
                 onClick={handleContinue}
-                disabled={!allDuplicatesDecided}
+                disabled={!allDuplicatesDecided || committing}
                 className="w-full rounded-lg bg-brand-500 p-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
               >
-                Continue
+                {committing ? "Importing…" : "Continue"}
               </button>
             </div>
           ) : (
