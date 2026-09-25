@@ -37,6 +37,7 @@ interface Transaction {
   description: string;
   amount: number;
   categoryId: string | null;
+  categoryName: string | null;
 }
 
 interface TransactionListResponseDto {
@@ -200,7 +201,7 @@ export default function Home() {
                     <span className="shrink-0 text-gray-400">{transaction.date}</span>
                     <span className="flex-1 truncate px-3">{transaction.description}</span>
                     <span className="shrink-0 text-xs text-gray-500">
-                      {transaction.categoryId === null ? "Uncategorized" : transaction.categoryId}
+                      {transaction.categoryName ?? "Uncategorized"}
                     </span>
                     <span
                       className={`shrink-0 font-medium ${

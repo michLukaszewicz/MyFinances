@@ -180,7 +180,7 @@ export default function Categorize() {
                         value={upNextCategoryId}
                         disabled={upNextTransfer}
                         onChange={(e) => setUpNextCategoryId(e.target.value)}
-                        className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:opacity-50"
+                        className="w-full rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:opacity-50"
                       >
                         <option value="">Select a category…</option>
                         {categories.map((category) => (
@@ -248,7 +248,7 @@ export default function Categorize() {
                             onChange={(e) =>
                               void handleUpdateHandled(item, { categoryId: e.target.value })
                             }
-                            className="rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:opacity-50"
+                            className="rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:opacity-50"
                           >
                             <option value="">Uncategorized</option>
                             {categories.map((category) => (
