@@ -1,9 +1,22 @@
+using System.Text;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MyFinances.Api;
 using MyFinances.Api.Auth;
 
+// mBank CSV exports are Windows-1250 encoded; .NET's built-in encodings don't include
+// code pages beyond UTF-8/ASCII/UTF-16/UTF-32, so the provider must be registered once
+// at startup or Encoding.GetEncoding(1250) throws the first time an import runs.
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Imported statements are realistically a few KB to low hundreds of KB; cap request/
+// multipart body size well below the framework defaults to shrink needless attack surface.
+const long MaxUploadSizeBytes = 5 * 1024 * 1024;
+builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = MaxUploadSizeBytes);
+builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = MaxUploadSizeBytes);
 
 // Render (and similar PaaS platforms) inject the port to bind via $PORT at runtime;
 // ASP.NET Core has no built-in convention for it, so we wire it up explicitly.
@@ -80,6 +93,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
 
 var api = app.MapGroup("/api").RequireAuthorization();
 
