@@ -198,6 +198,14 @@ export default function Import() {
               className="space-y-4 animate-[fade-slide-in_600ms_ease-out_both]"
               style={{ animationDelay: "50ms" }}
             >
+              {result.rows.length > 0 && duplicateIndexes.length === result.rows.length && (
+                <div className="rounded-lg border border-amber-700/60 bg-amber-950/20 p-3 text-sm text-amber-400">
+                  Every transaction in this file is already in your account — looks like it may
+                  have been imported before. You can still choose "Keep" below for any row you
+                  want to add anyway.
+                </div>
+              )}
+
               <div className="space-y-1 rounded-lg border border-gray-800 p-3 text-sm text-gray-200">
                 <p>
                   Parsed <strong>{result.rows.length}</strong> row(s) from{" "}
