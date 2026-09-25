@@ -252,4 +252,4 @@ One additive migration (`AddAccounts`) creating the new `Account` table with a u
 
 #### Automated
 
-- [x] 3.1 `dotnet test` passes, including the new `AccountEndpointsTests`
+- [x] 3.1 `dotnet test` passes, including the new `AccountEndpointsTests` — d26e964
