@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { redirect } from "react-router";
 import { apiFetch, ApiError } from "../lib/api";
 import { AppHeader } from "../components/AppHeader";
@@ -42,6 +42,8 @@ export default function Settings() {
 
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
 
+  const bankNameInputRef = useRef<HTMLInputElement>(null);
+
   async function loadAccounts() {
     const list = await apiFetch<AccountDto[]>("/accounts/");
     setAccounts(list);
@@ -68,6 +70,11 @@ export default function Settings() {
     setBankName(account.bankName);
     setAccountNumber(account.accountNumber);
     setFormError(null);
+    // The form sits above a potentially long account list — scroll it into view and
+    // focus the first field so clicking "Edit" on a far-down row doesn't leave the
+    // user looking at an unchanged screen.
+    bankNameInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    bankNameInputRef.current?.focus();
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -123,6 +130,7 @@ export default function Settings() {
               </label>
               <input
                 id="bankName"
+                ref={bankNameInputRef}
                 type="text"
                 required
                 value={bankName}
