@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Link, useLoaderData } from "react-router";
 import type { Route } from "./+types/home";
 import { AppHeader } from "../components/AppHeader";
+import { apiFetch } from "../lib/api";
 
 const valueProps = [
   {
@@ -28,18 +30,56 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
+// Mirrors the backend's TransactionContracts.cs
+interface Transaction {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  categoryId: string | null;
+}
+
+interface TransactionListResponseDto {
+  items: Transaction[];
+  hasMore: boolean;
+}
+
+const TRANSACTIONS_PAGE_SIZE = 20;
+
+function formatAmount(amount: number): string {
+  return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export async function clientLoader() {
   try {
     const res = await fetch("/api/auth/me", { credentials: "include" });
-    if (!res.ok) return null;
-    return res.json();
+    if (!res.ok) return { user: null, transactions: null };
+    const user = await res.json();
+
+    // A transaction-fetch failure shouldn't break login state — caught and returned
+    // as null distinctly from `user`, so the component below turns it into an inline
+    // error message rather than crashing.
+    let transactions: TransactionListResponseDto | null = null;
+    try {
+      transactions = await apiFetch<TransactionListResponseDto>(
+        `/transactions?skip=0&take=${TRANSACTIONS_PAGE_SIZE}`,
+      );
+    } catch {
+      transactions = null;
+    }
+
+    return { user, transactions };
   } catch {
-    return null;
+    return { user: null, transactions: null };
   }
 }
 
 export default function Home() {
-  const user = useLoaderData<typeof clientLoader>();
+  const { user, transactions: initialTransactions } = useLoaderData<typeof clientLoader>();
+  const [items, setItems] = useState<Transaction[]>(initialTransactions?.items ?? []);
+  const [hasMore, setHasMore] = useState(initialTransactions?.hasMore ?? false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
 
   if (!user) {
     return (
@@ -110,6 +150,24 @@ export default function Home() {
     );
   }
 
+  const hasTransactions = items.length > 0;
+
+  async function handleLoadMore() {
+    setLoadMoreError(null);
+    setLoadingMore(true);
+    try {
+      const response = await apiFetch<TransactionListResponseDto>(
+        `/transactions?skip=${items.length}&take=${TRANSACTIONS_PAGE_SIZE}`,
+      );
+      setItems((prev) => [...prev, ...response.items]);
+      setHasMore(response.hasMore);
+    } catch {
+      setLoadMoreError("Something went wrong loading more transactions. Please try again.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
   return (
     <>
       <AppHeader authenticated />
@@ -118,26 +176,75 @@ export default function Home() {
           className="pointer-events-none absolute left-1/2 top-16 -z-10 h-56 w-56 -translate-x-1/2 rounded-full bg-brand-600 opacity-20 blur-3xl animate-[ambient-glow_6s_ease-in-out_infinite]"
           aria-hidden="true"
         />
-        <div className="max-w-[300px] w-full space-y-6 px-4 text-center">
+        <div
+          className={`w-full space-y-6 px-4 text-center ${hasTransactions ? "max-w-2xl" : "max-w-[300px]"}`}
+        >
           <h1
             className="text-lg font-semibold text-gray-200 animate-[fade-slide-in_600ms_ease-out_both]"
             style={{ animationDelay: "0ms" }}
           >
             Welcome back, {user.email}
           </h1>
-          <p
-            className="text-sm text-gray-500 animate-[fade-slide-in_600ms_ease-out_both]"
-            style={{ animationDelay: "100ms" }}
-          >
-            You haven't imported any transactions yet — let's start!
-          </p>
-          <Link
-            to="/import"
-            className="inline-block rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-md shadow-brand-900/40 transition-all duration-200 hover:scale-105 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-600/40 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 animate-[fade-slide-in_600ms_ease-out_both]"
-            style={{ animationDelay: "200ms" }}
-          >
-            Import a bank statement
-          </Link>
+
+          {hasTransactions ? (
+            <div
+              className="space-y-4 text-left animate-[fade-slide-in_600ms_ease-out_both]"
+              style={{ animationDelay: "100ms" }}
+            >
+              <ul className="space-y-2">
+                {items.map((transaction) => (
+                  <li
+                    key={transaction.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-gray-800 p-3 text-sm text-gray-200"
+                  >
+                    <span className="shrink-0 text-gray-400">{transaction.date}</span>
+                    <span className="flex-1 truncate px-3">{transaction.description}</span>
+                    <span className="shrink-0 text-xs text-gray-500">
+                      {transaction.categoryId === null ? "Uncategorized" : transaction.categoryId}
+                    </span>
+                    <span
+                      className={`shrink-0 font-medium ${
+                        transaction.amount < 0 ? "text-red-500" : "text-emerald-500"
+                      }`}
+                    >
+                      {formatAmount(transaction.amount)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              {loadMoreError && <p className="text-sm text-red-600">{loadMoreError}</p>}
+
+              {hasMore && (
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="rounded-md border border-gray-700 px-4 py-2 text-sm font-medium text-gray-200 transition-colors duration-200 hover:bg-gray-800 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                  >
+                    {loadingMore ? "Loading…" : "Load more"}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <p
+                className="text-sm text-gray-500 animate-[fade-slide-in_600ms_ease-out_both]"
+                style={{ animationDelay: "100ms" }}
+              >
+                You haven't imported any transactions yet — let's start!
+              </p>
+              <Link
+                to="/import"
+                className="inline-block rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-md shadow-brand-900/40 transition-all duration-200 hover:scale-105 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-600/40 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 animate-[fade-slide-in_600ms_ease-out_both]"
+                style={{ animationDelay: "200ms" }}
+              >
+                Import a bank statement
+              </Link>
+            </>
+          )}
         </div>
       </main>
     </>
