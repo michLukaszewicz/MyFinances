@@ -237,19 +237,19 @@ One additive migration (`AddAccounts`) creating the new `Account` table with a u
 
 #### Automated
 
-- [x] 2.1 `npm run typecheck` passes
-- [x] 2.2 `npm run build` succeeds
+- [x] 2.1 `npm run typecheck` passes — ef8606f
+- [x] 2.2 `npm run build` succeeds — ef8606f
 
 #### Manual
 
-- [x] 2.3 Adding an account with a new bank + number succeeds and appears in the list
-- [x] 2.4 Adding a duplicate bank + number shows an inline error and does not add a second row
-- [x] 2.5 Editing an account updates it; editing into a collision with a different account shows the duplicate error
-- [x] 2.6 Deleting an account removes it from the list (after confirming)
-- [x] 2.7 Nav link "Settings" works; empty state shows correctly with zero accounts
+- [x] 2.3 Adding an account with a new bank + number succeeds and appears in the list — ef8606f
+- [x] 2.4 Adding a duplicate bank + number shows an inline error and does not add a second row — ef8606f
+- [x] 2.5 Editing an account updates it; editing into a collision with a different account shows the duplicate error — ef8606f
+- [x] 2.6 Deleting an account removes it from the list (after confirming) — ef8606f
+- [x] 2.7 Nav link "Settings" works; empty state shows correctly with zero accounts — ef8606f
 
 ### Phase 3: Integration Tests
 
 #### Automated
 
-- [ ] 3.1 `dotnet test` passes, including the new `AccountEndpointsTests`
+- [x] 3.1 `dotnet test` passes, including the new `AccountEndpointsTests`
