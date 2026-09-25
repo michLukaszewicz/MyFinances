@@ -423,37 +423,37 @@ semantics to preserve.
 
 #### Automated
 
-- [ ] 1.1 Migration applies cleanly
-- [ ] 1.2 Backend builds
-- [ ] 1.3 Existing tests still pass
+- [x] 1.1 Migration applies cleanly — e3e3447
+- [x] 1.2 Backend builds — e3e3447
+- [x] 1.3 Existing tests still pass — e3e3447
 
 #### Manual
 
-- [ ] 1.4 Seeded Categories table inspected — 12 rows, correct SortOrder
+- [x] 1.4 Seeded Categories table inspected — 12 rows, correct SortOrder — e3e3447
 
 ### Phase 2: Backend categorization module
 
 #### Automated
 
-- [ ] 2.1 Backend builds
-- [ ] 2.2 TransferDetectionService unit tests pass
-- [ ] 2.3 CategorizationEndpointsTests integration tests pass
-- [ ] 2.4 Full `dotnet test` passes
+- [x] 2.1 Backend builds — 66a0e54
+- [x] 2.2 TransferDetectionService unit tests pass — 66a0e54
+- [x] 2.3 CategorizationEndpointsTests integration tests pass — 66a0e54
+- [x] 2.4 Full `dotnet test` passes (57/57) — 66a0e54
 
 #### Manual
 
-- [ ] 2.5 Matching transfer pair auto-flagged and excluded from queue (verified via Swagger)
-- [ ] 2.6 Manual override of an auto-flagged transfer persists and moves it back to the queue
+- [ ] 2.5 Matching transfer pair auto-flagged and excluded from queue (verified via Swagger) — skipped: starting a second local backend instance on this shared dev machine collided with the sibling S-09 preview on port 5007 (both worktrees' launchSettings default to 5007); killed the stray process immediately to avoid disrupting that live manual-testing session. Needs a human pass with a dedicated port/profile.
+- [ ] 2.6 Manual override of an auto-flagged transfer persists and moves it back to the queue — same reason as 2.5, not verified live.
 
 ### Phase 3: Frontend categorization page
 
 #### Automated
 
-- [ ] 3.1 `npm run typecheck` passes
-- [ ] 3.2 `npm run build` succeeds
+- [x] 3.1 `npm run typecheck` passes
+- [x] 3.2 `npm run build` succeeds
 
 #### Manual
 
-- [ ] 3.3 Categorize a transaction from "up next"; it moves to handled and the queue advances
-- [ ] 3.4 Toggle internal-transfer checkbox on a handled transaction; persists after reload
-- [ ] 3.5 Uncategorized transaction stays in queue indefinitely if left untouched
+- [ ] 3.3 Categorize a transaction from "up next"; it moves to handled and the queue advances — not verified live: the frontend dev server defaults to the same port (5173) as the sibling S-09 preview running on this dev machine; skipped to avoid a repeat of the port collision hit during Phase 2's backend verification.
+- [ ] 3.4 Toggle internal-transfer checkbox on a handled transaction; persists after reload — same reason as 3.3, not verified live.
+- [ ] 3.5 Uncategorized transaction stays in queue indefinitely if left untouched — same reason as 3.3, not verified live (also true by construction: nothing in the queue endpoint or UI forces a decision).

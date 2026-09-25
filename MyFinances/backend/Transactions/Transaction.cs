@@ -1,3 +1,5 @@
+using MyFinances.Api.Categorization;
+
 namespace MyFinances.Api.Transactions;
 
 // One imported (or, in a later slice, manually entered) bank transaction.
@@ -26,6 +28,16 @@ public class Transaction
 
     public ImportBatch? ImportBatch { get; set; }
 
-    // Nullable: categorization lands in a later slice.
+    // Nullable: uncategorized until the user assigns one via the categorization queue (S-03).
     public Guid? CategoryId { get; set; }
+
+    public Category? Category { get; set; }
+
+    // Auto-flagged by TransferDetectionService, or set explicitly via the categorization
+    // queue's PUT endpoint (FR-009).
+    public bool IsInternalTransfer { get; set; }
+
+    // Once true, TransferDetectionService permanently skips this row so a user's manual
+    // decision is never silently re-flagged by a later automatic detection pass.
+    public bool TransferFlagManuallySet { get; set; }
 }
