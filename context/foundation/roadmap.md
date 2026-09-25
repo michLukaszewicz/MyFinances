@@ -43,13 +43,14 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | F-01  | minimal-auth-scaffold            | (foundation) register, log in, and stay logged in via a persistent session          | —              | FR-001, Access Control        | in-progress |
 | S-01  | mbank-import-with-dedup          | import an mBank CSV, resolve flagged duplicates, and see an import summary          | F-01           | FR-002, FR-004, US-01, Guardrail (dedup) | in-progress |
 | S-02  | manual-transaction-entry         | manually add, edit, and delete transactions without creating import duplicates      | S-01           | FR-010                        | proposed |
-| S-03  | categorization-queue             | categorize queued transactions, with internal transfers auto-flagged (overridable)  | S-01           | FR-007, FR-009, FR-015, US-01 | proposed |
+| S-03  | categorization-queue             | categorize queued transactions, with internal transfers auto-flagged (overridable)  | S-01, S-10     | FR-007, FR-009, FR-015, US-01 | proposed |
 | S-04  | category-spend-donut-chart       | see a donut chart of category spend for the current month, filterable by category   | S-03           | FR-011, FR-012, US-01         | proposed |
 | S-05  | category-budget-vs-actual        | optionally set a per-category budget and see actual-vs-budget alongside the chart   | S-04           | FR-017                        | proposed |
 | S-06  | category-average-deviation-signal| see a category's spend flagged as above/below/in line with its historical average   | S-04           | FR-013                        | proposed |
 | S-07  | revolut-import                   | import a Revolut CSV statement through the same import/dedup/categorize/chart loop  | S-01           | FR-003                        | proposed |
 | S-08  | erste-import                     | import an Erste Bank Polska CSV statement through the same loop                     | S-07           | FR-003                        | proposed |
 | S-09  | transaction-history-view         | see a chronological list of their imported/manually-entered transactions on the dashboard (date, description, amount, category) | S-01           | FR-011 (partial)              | proposed |
+| S-10  | account-management                | add/edit/remove their own bank accounts (account number + bank name) via a settings page, and pick from them when manually entering a transaction | F-01           | FR-009, FR-010                | in-progress |
 
 ## Streams
 
@@ -61,6 +62,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | B      | Manual transaction entry        | `S-02`                                          | Joins Stream A at `S-01` — independent of categorization/chart work, can run in parallel. |
 | C      | Bank coverage expansion         | `S-07` → `S-08`                                 | Joins Stream A at `S-01` — Revolut/Erste import, sequentially gated per PRD FR-003 (Erste only after Revolut works end-to-end). |
 | D      | Transaction visibility           | `S-09`                                          | Joins Stream A at `S-01` — closes the "no history view" gap flagged during S-01 manual testing (2026-09-25); independent of categorization/chart work, can run in parallel. |
+| E      | Account management              | `S-10`                                          | Joins Stream A at `S-03` — S-03's internal-transfer heuristic (FR-009) consumes S-10's account list; only needs F-01, so it can be built in parallel with S-01/S-02/S-07/S-09. |
 
 ## Baseline
 
@@ -121,7 +123,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Outcome:** user can select a category for each transaction in the queue (no auto-suggestion); internal transfers are auto-flagged by default (overridable by hand); the user can re-categorize any transaction at any time.
 - **Change ID:** categorization-queue
 - **PRD refs:** FR-007, FR-009, FR-015, US-01 (When/Then)
-- **Prerequisites:** S-01
+- **Prerequisites:** S-01, S-10 (needs the user's own known-accounts list from S-10 to identify internal transfers)
 - **Parallel with:** S-02, S-07
 - **Blockers:** —
 - **Unknowns:** —
@@ -203,6 +205,18 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Low risk — read-only listing over data S-01 already persists; no new write paths or dedup logic involved.
 - **Status:** proposed
 
+### S-10: Account management
+
+- **Outcome:** user can add, edit, and remove their own bank accounts (account number + bank name) via a settings page, and pick from their own accounts when manually entering a transaction, instead of a generic bank-name dropdown.
+- **Change ID:** account-management
+- **PRD refs:** FR-009 (the "user's own known accounts" concept internal-transfer detection needs), FR-010 (manual-entry integration)
+- **Prerequisites:** F-01 (needs auth/user-scoping; does not touch transaction data, so no dependency on S-01)
+- **Parallel with:** S-01, S-02, S-07, S-09
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** Deferred out of S-02's `/10x-plan` scope (S-02 shipped with a minimal bank-name dropdown instead); sequenced ahead of S-03 because S-03's internal-transfer heuristic (FR-009) needs a stable list of the user's own accounts to match transfers against. S-02 can optionally be revisited later to consume this account list instead of its original dropdown, but that's not required for S-10 to land.
+- **Status:** in-progress
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID                        | Suggested issue title                                          | Ready for `/10x-plan` | Notes |
@@ -210,13 +224,14 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | F-01       | minimal-auth-scaffold              | Add email/password auth with persistent session                  | yes                    | — |
 | S-01       | mbank-import-with-dedup            | Import mBank CSV with duplicate review and summary                | no                     | Depends on F-01 landing first |
 | S-02       | manual-transaction-entry           | Manual transaction add/edit/delete with dedup-hash parity         | no                     | Depends on S-01 |
-| S-03       | categorization-queue               | Categorization queue with internal-transfer auto-flag              | no                     | Depends on S-01 |
+| S-03       | categorization-queue               | Categorization queue with internal-transfer auto-flag              | no                     | Depends on S-01, S-10 |
 | S-04       | category-spend-donut-chart         | Donut chart of category spend, current-month filter                | no                     | Depends on S-03 |
 | S-05       | category-budget-vs-actual          | Optional per-category budget vs. actual                            | no                     | Depends on S-04 |
 | S-06       | category-average-deviation-signal  | Historical-average deviation signal per category                   | no                     | Depends on S-04 |
 | S-07       | revolut-import                     | Import Revolut CSV through the existing loop                       | no                     | Depends on S-01 |
 | S-08       | erste-import                       | Import Erste Bank Polska CSV through the existing loop             | no                     | Depends on S-07 |
 | S-09       | transaction-history-view           | Show transaction history list on the dashboard                     | no                     | Depends on S-01 |
+| S-10       | account-management                 | Add/edit/remove user's own bank accounts, use in manual entry       | yes                    | Depends on F-01 only; unblocks S-03's internal-transfer detection |
 
 ## Open Roadmap Questions
 
