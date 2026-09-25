@@ -9,15 +9,11 @@ export async function clientLoader() {
   return null;
 }
 
-// Mirrors the backend's AccountContracts.cs (AccountDto / BankOptionsResponse).
+// Mirrors the backend's AccountContracts.cs AccountDto.
 interface AccountDto {
   id: string;
   bankName: string;
   accountNumber: string;
-}
-
-interface BankOptionsResponse {
-  bankNames: string[];
 }
 
 async function extractErrorMessage(error: unknown): Promise<string> {
@@ -35,7 +31,6 @@ async function extractErrorMessage(error: unknown): Promise<string> {
 }
 
 export default function Settings() {
-  const [banks, setBanks] = useState<string[]>([]);
   const [accounts, setAccounts] = useState<AccountDto[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,11 +49,7 @@ export default function Settings() {
 
   useEffect(() => {
     async function loadInitial() {
-      const [bankOptions] = await Promise.all([
-        apiFetch<BankOptionsResponse>("/accounts/banks"),
-        loadAccounts(),
-      ]);
-      setBanks(bankOptions.bankNames);
+      await loadAccounts();
       setLoading(false);
     }
     void loadInitial();
@@ -130,22 +121,14 @@ export default function Settings() {
               <label htmlFor="bankName" className="text-sm text-gray-200">
                 Bank
               </label>
-              <select
+              <input
                 id="bankName"
+                type="text"
                 required
                 value={bankName}
                 onChange={(e) => setBankName(e.target.value)}
                 className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              >
-                <option value="" disabled>
-                  Select a bank…
-                </option>
-                {banks.map((b) => (
-                  <option key={b} value={b} className="bg-gray-900">
-                    {b}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div className="space-y-1">
