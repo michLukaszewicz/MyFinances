@@ -196,25 +196,25 @@ None — no schema changes; this phase is purely additive (new endpoint, new fro
 
 #### Automated
 
-- [ ] 1.1 Backend builds: `dotnet build`
-- [ ] 1.2 All backend tests pass: `dotnet test`
+- [x] 1.1 Backend builds: `dotnet build` — 8855671
+- [x] 1.2 All backend tests pass: `dotnet test` — 8855671
 
 #### Manual
 
-- [ ] 1.3 `GET /api/transactions` via Swagger returns the logged-in user's transactions, newest-first
-- [ ] 1.4 A second user's session never sees the first user's transactions
+- [x] 1.3 `GET /api/transactions` via Swagger returns the logged-in user's transactions, newest-first — 8855671
+- [x] 1.4 A second user's session never sees the first user's transactions — 8855671
 
 ### Phase 2: Frontend dashboard integration
 
 #### Automated
 
-- [ ] 2.1 Frontend type checks pass: `npm run typecheck`
-- [ ] 2.2 Frontend builds: `npm run build`
+- [x] 2.1 Frontend type checks pass: `npm run typecheck` — 60e7e58
+- [x] 2.2 Frontend builds: `npm run build` — 60e7e58
 
 #### Manual
 
 - [ ] 2.3 Zero-transaction user still sees the original empty-state message and CTA
-- [ ] 2.4 Transactions render newest-first, amounts colored by sign, uncategorized rows labeled "Uncategorized"
-- [ ] 2.5 "Load more" appends the next page and disappears once all transactions are loaded
+- [x] 2.4 Transactions render newest-first, amounts colored by sign, uncategorized rows labeled "Uncategorized" — 60e7e58
+- [x] 2.5 "Load more" appends the next page and disappears once all transactions are loaded — 60e7e58
 - [ ] 2.6 New transactions appear after import + navigation back to `/`, with no manual refresh
-- [ ] 2.7 Dark mode and responsive layout look correct
+- [x] 2.7 Dark mode and responsive layout look correct — 60e7e58
