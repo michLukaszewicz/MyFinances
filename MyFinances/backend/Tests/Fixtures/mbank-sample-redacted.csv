@@ -1,0 +1,20 @@
+mBank S.A.;;;;;;;;
+Elektroniczne zestawienie operacji;;;;;;;;
+Klient: Jan Kowalski;;;;;;;;
+Za okres:;01.08.2026;31.08.2026;;;;;;;
+Numer rachunku: '12345678901234567890123456';;;;;;;;
+Rodzaj rachunku: eKONTO;;;;;;;;
+Waluta: PLN;;;;;;;;
+Uznania;1 500,00 PLN;;;;;;;
+Obci¹¿enia;-2 300,00 PLN;;;;;;;
+£¹cznie;-800,00 PLN;;;;;;;
+#Saldo pocz¹tkowe;7 089,70 PLN;;;;;;;
+#Data ksiêgowania;#Data operacji;#Opis operacji;#Tytu³;#Nadawca/Odbiorca;#Numer konta;#Kwota;#Saldo po operacji;
+2026-08-01;2026-08-01;BLIK P2P-WYCHODZ¥CY;"NA JEDZENIE";"";'';-500,00;6 789,70;
+2026-08-01;2026-08-01;BLIK P2P-WYCHODZ¥CY;"NA JEDZENIE";"";'';-500,00;6 289,70;
+2026-08-02;2026-08-02;PRZELEW PRZYCHODZ¥CY;"ZWROT";"Anna Nowak";'11223344556677889900112233';250,50;6 540,20;
+2026-08-03;2026-08-03;OPLATA;"BLAD KWOTY";"";'';ZLE-KWOTY;6 540,20;
+2026-08-05;2026-08-05;PLATNOSC KARTA;"SKLEP SPOZYWCZY DATA TRANSAKCJI: 2026-08-05";"";'';-120,00;6 420,20;
+
+#Saldo koñcowe;6 420,20 PLN;;;;;;;
+Niniejsze zestawienie ma charakter wy³¹cznie informacyjny.;;;;;;;;
