@@ -38,6 +38,12 @@ export function AppHeader({ authenticated }: AppHeaderProps) {
               Import transactions
             </Link>
             <Link
+              to="/categorize"
+              className="rounded-md px-3 py-1.5 font-medium text-brand-400 transition-colors hover:bg-white/5 hover:text-brand-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+            >
+              Categorize
+            </Link>
+            <Link
               to="/settings"
               className="rounded-md px-3 py-1.5 font-medium text-brand-400 transition-colors hover:bg-white/5 hover:text-brand-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
             >

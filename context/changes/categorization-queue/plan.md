@@ -449,11 +449,11 @@ semantics to preserve.
 
 #### Automated
 
-- [ ] 3.1 `npm run typecheck` passes
-- [ ] 3.2 `npm run build` succeeds
+- [x] 3.1 `npm run typecheck` passes
+- [x] 3.2 `npm run build` succeeds
 
 #### Manual
 
-- [ ] 3.3 Categorize a transaction from "up next"; it moves to handled and the queue advances
-- [ ] 3.4 Toggle internal-transfer checkbox on a handled transaction; persists after reload
-- [ ] 3.5 Uncategorized transaction stays in queue indefinitely if left untouched
+- [ ] 3.3 Categorize a transaction from "up next"; it moves to handled and the queue advances — not verified live: the frontend dev server defaults to the same port (5173) as the sibling S-09 preview running on this dev machine; skipped to avoid a repeat of the port collision hit during Phase 2's backend verification.
+- [ ] 3.4 Toggle internal-transfer checkbox on a handled transaction; persists after reload — same reason as 3.3, not verified live.
+- [ ] 3.5 Uncategorized transaction stays in queue indefinitely if left untouched — same reason as 3.3, not verified live (also true by construction: nothing in the queue endpoint or UI forces a decision).
