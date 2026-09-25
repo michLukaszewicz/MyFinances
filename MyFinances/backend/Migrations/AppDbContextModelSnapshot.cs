@@ -154,6 +154,98 @@ namespace MyFinances.Api.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("MyFinances.Api.Categorization.Category", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000001"),
+                            Name = "Groceries",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000002"),
+                            Name = "Dining & Takeout",
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000003"),
+                            Name = "Transport",
+                            SortOrder = 3
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000004"),
+                            Name = "Housing & Utilities",
+                            SortOrder = 4
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000005"),
+                            Name = "Health",
+                            SortOrder = 5
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000006"),
+                            Name = "Shopping",
+                            SortOrder = 6
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000007"),
+                            Name = "Entertainment",
+                            SortOrder = 7
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000008"),
+                            Name = "Travel",
+                            SortOrder = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000009"),
+                            Name = "Subscriptions",
+                            SortOrder = 9
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000010"),
+                            Name = "Income",
+                            SortOrder = 10
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000011"),
+                            Name = "Fees & Charges",
+                            SortOrder = 11
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000012"),
+                            Name = "Other",
+                            SortOrder = 12
+                        });
+                });
+
             modelBuilder.Entity("MyFinances.Api.Transactions.Account", b =>
                 {
                     b.Property<Guid>("Id")
@@ -239,12 +331,20 @@ namespace MyFinances.Api.Migrations
                     b.Property<Guid?>("ImportBatchId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsInternalTransfer")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("TransferFlagManuallySet")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AccountId");
+
+                    b.HasIndex("CategoryId");
 
                     b.HasIndex("ImportBatchId");
 
@@ -299,11 +399,18 @@ namespace MyFinances.Api.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("MyFinances.Api.Categorization.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("MyFinances.Api.Transactions.ImportBatch", "ImportBatch")
                         .WithMany()
                         .HasForeignKey("ImportBatchId");
 
                     b.Navigation("Account");
+
+                    b.Navigation("Category");
 
                     b.Navigation("ImportBatch");
                 });

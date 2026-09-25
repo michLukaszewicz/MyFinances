@@ -423,13 +423,13 @@ semantics to preserve.
 
 #### Automated
 
-- [ ] 1.1 Migration applies cleanly
-- [ ] 1.2 Backend builds
-- [ ] 1.3 Existing tests still pass
+- [x] 1.1 Migration applies cleanly
+- [x] 1.2 Backend builds
+- [x] 1.3 Existing tests still pass
 
 #### Manual
 
-- [ ] 1.4 Seeded Categories table inspected — 12 rows, correct SortOrder
+- [x] 1.4 Seeded Categories table inspected — 12 rows, correct SortOrder
 
 ### Phase 2: Backend categorization module
 

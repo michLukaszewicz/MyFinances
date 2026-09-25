@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using MyFinances.Api.Categorization;
 using MyFinances.Api.Transactions;
 
 namespace MyFinances.Api;
@@ -14,6 +15,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityUser
     public DbSet<ImportBatch> ImportBatches => Set<ImportBatch>();
 
     public DbSet<Account> Accounts => Set<Account>();
+
+    public DbSet<Category> Categories => Set<Category>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -43,5 +46,29 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityUser
         builder.Entity<Account>()
             .HasIndex(a => new { a.UserId, a.BankName, a.AccountNumber })
             .IsUnique();
+
+        // Category is a fixed, seeded, non-user-owned list (no category-management FR yet);
+        // deleting one should fail loudly rather than silently orphan transactions.
+        builder.Entity<Transaction>()
+            .HasOne(t => t.Category)
+            .WithMany()
+            .HasForeignKey(t => t.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Deterministic, hard-coded Guids so the seed is stable across environments/migrations.
+        builder.Entity<Category>().HasData(
+            new Category { Id = new Guid("00000000-0000-0000-0000-000000000001"), Name = "Groceries", SortOrder = 1 },
+            new Category { Id = new Guid("00000000-0000-0000-0000-000000000002"), Name = "Dining & Takeout", SortOrder = 2 },
+            new Category { Id = new Guid("00000000-0000-0000-0000-000000000003"), Name = "Transport", SortOrder = 3 },
+            new Category { Id = new Guid("00000000-0000-0000-0000-000000000004"), Name = "Housing & Utilities", SortOrder = 4 },
+            new Category { Id = new Guid("00000000-0000-0000-0000-000000000005"), Name = "Health", SortOrder = 5 },
+            new Category { Id = new Guid("00000000-0000-0000-0000-000000000006"), Name = "Shopping", SortOrder = 6 },
+            new Category { Id = new Guid("00000000-0000-0000-0000-000000000007"), Name = "Entertainment", SortOrder = 7 },
+            new Category { Id = new Guid("00000000-0000-0000-0000-000000000008"), Name = "Travel", SortOrder = 8 },
+            new Category { Id = new Guid("00000000-0000-0000-0000-000000000009"), Name = "Subscriptions", SortOrder = 9 },
+            new Category { Id = new Guid("00000000-0000-0000-0000-000000000010"), Name = "Income", SortOrder = 10 },
+            new Category { Id = new Guid("00000000-0000-0000-0000-000000000011"), Name = "Fees & Charges", SortOrder = 11 },
+            new Category { Id = new Guid("00000000-0000-0000-0000-000000000012"), Name = "Other", SortOrder = 12 }
+        );
     }
 }
