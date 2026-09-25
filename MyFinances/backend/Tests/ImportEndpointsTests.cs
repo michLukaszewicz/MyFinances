@@ -21,15 +21,6 @@ public class ImportEndpointsTests
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    private static async Task<HttpClient> CreateAuthenticatedClientAsync(AuthApiFactory factory)
-    {
-        var client = factory.CreateClient();
-        var registerResponse = await client.PostAsJsonAsync("/api/auth/register",
-            new RegisterRequest(AuthApiFactory.AllowedEmail, "correct-horse-battery"));
-        Assert.Equal(HttpStatusCode.OK, registerResponse.StatusCode);
-        return client;
-    }
-
     private static async Task<string> GetAntiforgeryTokenAsync(HttpClient client)
     {
         var response = await client.GetAsync("/api/auth/antiforgery-token");
@@ -97,7 +88,7 @@ public class ImportEndpointsTests
     public async Task Parse_UnrecognizedFileWithNoBankFallback_ReturnsBadRequest()
     {
         using var factory = new AuthApiFactory();
-        using var client = await CreateAuthenticatedClientAsync(factory);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, Encoding.UTF8.GetBytes("not,a,recognizable,export\r\n1,2,3,4\r\n"), account.Id);
@@ -110,7 +101,7 @@ public class ImportEndpointsTests
     public async Task Parse_AccountIdNotOwnedByUser_ReturnsNotFound()
     {
         using var factory = new AuthApiFactory();
-        using var client = await CreateAuthenticatedClientAsync(factory);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var otherUsersAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), otherUsersAccount.Id);
@@ -123,7 +114,7 @@ public class ImportEndpointsTests
     public async Task Parse_AccountIdThatDoesNotExist_ReturnsNotFound()
     {
         using var factory = new AuthApiFactory();
-        using var client = await CreateAuthenticatedClientAsync(factory);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), Guid.NewGuid());
         var response = await client.SendAsync(request);
@@ -135,7 +126,7 @@ public class ImportEndpointsTests
     public async Task Parse_RecognizedMBankFile_ReturnsRowsWithDuplicateFlags()
     {
         using var factory = new AuthApiFactory();
-        using var client = await CreateAuthenticatedClientAsync(factory);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
@@ -156,7 +147,7 @@ public class ImportEndpointsTests
     public async Task Parse_AccountBankNameMatchesDetectedBank_BankMismatchIsFalse()
     {
         using var factory = new AuthApiFactory();
-        using var client = await CreateAuthenticatedClientAsync(factory);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
@@ -172,7 +163,7 @@ public class ImportEndpointsTests
     public async Task Parse_AccountBankNameDiffersFromDetectedBank_BankMismatchIsTrue()
     {
         using var factory = new AuthApiFactory();
-        using var client = await CreateAuthenticatedClientAsync(factory);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "Revolut", "111");
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
@@ -192,7 +183,7 @@ public class ImportEndpointsTests
     public async Task Parse_WhenTwoStoredTransactionsShareTheSameHash_DoesNotThrow()
     {
         using var factory = new AuthApiFactory();
-        using var client = await CreateAuthenticatedClientAsync(factory);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
         using (var scope = factory.Services.CreateScope())
@@ -227,7 +218,7 @@ public class ImportEndpointsTests
     public async Task Parse_SameTransactionDataUnderDifferentAccount_IsNotFlaggedAsDuplicate()
     {
         using var factory = new AuthApiFactory();
-        using var client = await CreateAuthenticatedClientAsync(factory);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var firstAccount = await CreateAccountAsync(client, "mBank", "111");
         var secondAccount = await CreateAccountAsync(client, "mBank", "222");
 
@@ -261,7 +252,7 @@ public class ImportEndpointsTests
     public async Task Commit_PersistsKeptRowAndCountsSkippedDuplicate()
     {
         using var factory = new AuthApiFactory();
-        using var client = await CreateAuthenticatedClientAsync(factory);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
         Guid userId;
@@ -329,7 +320,7 @@ public class ImportEndpointsTests
     public async Task Commit_AccountIdNotOwnedByUser_ReturnsNotFound()
     {
         using var factory = new AuthApiFactory();
-        using var client = await CreateAuthenticatedClientAsync(factory);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var otherUsersAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "111");
 
         var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
@@ -351,7 +342,7 @@ public class ImportEndpointsTests
     public async Task Commit_WithoutAntiforgeryToken_ReturnsBadRequest()
     {
         using var factory = new AuthApiFactory();
-        using var client = await CreateAuthenticatedClientAsync(factory);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
         var response = await client.PostAsJsonAsync("/api/import/commit", new
