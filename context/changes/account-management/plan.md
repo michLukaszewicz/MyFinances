@@ -225,28 +225,28 @@ One additive migration (`AddAccounts`) creating the new `Account` table with a u
 
 #### Automated
 
-- [x] 1.1 `dotnet build` succeeds
-- [x] 1.2 `AddAccounts` migration applies cleanly against a fresh database
-- [x] 1.3 `GET /accounts/banks` returns registered parser bank names plus "Other"
-- [x] 1.4 `GET /accounts` returns only the current user's accounts
-- [x] 1.5 `POST /accounts` inserts on new bank+number (201); returns 409 without inserting on a duplicate for the same user
-- [x] 1.6 `PUT /accounts/{id}` updates fields, excludes self from duplicate check, returns 409 on collision with a different account, 404 for another user's id
-- [x] 1.7 `DELETE /accounts/{id}` removes the row; 404 for another user's account id
+- [x] 1.1 `dotnet build` succeeds — d1a4a17
+- [x] 1.2 `AddAccounts` migration applies cleanly against a fresh database — d1a4a17
+- [x] 1.3 `GET /accounts/banks` returns registered parser bank names plus "Other" — d1a4a17
+- [x] 1.4 `GET /accounts` returns only the current user's accounts — d1a4a17
+- [x] 1.5 `POST /accounts` inserts on new bank+number (201); returns 409 without inserting on a duplicate for the same user — d1a4a17
+- [x] 1.6 `PUT /accounts/{id}` updates fields, excludes self from duplicate check, returns 409 on collision with a different account, 404 for another user's id — d1a4a17
+- [x] 1.7 `DELETE /accounts/{id}` removes the row; 404 for another user's account id — d1a4a17
 
 ### Phase 2: Frontend Settings Page
 
 #### Automated
 
-- [ ] 2.1 `npm run typecheck` passes
-- [ ] 2.2 `npm run build` succeeds
+- [x] 2.1 `npm run typecheck` passes
+- [x] 2.2 `npm run build` succeeds
 
 #### Manual
 
-- [ ] 2.3 Adding an account with a new bank + number succeeds and appears in the list
-- [ ] 2.4 Adding a duplicate bank + number shows an inline error and does not add a second row
-- [ ] 2.5 Editing an account updates it; editing into a collision with a different account shows the duplicate error
-- [ ] 2.6 Deleting an account removes it from the list (after confirming)
-- [ ] 2.7 Nav link "Settings" works; empty state shows correctly with zero accounts
+- [x] 2.3 Adding an account with a new bank + number succeeds and appears in the list
+- [x] 2.4 Adding a duplicate bank + number shows an inline error and does not add a second row
+- [x] 2.5 Editing an account updates it; editing into a collision with a different account shows the duplicate error
+- [x] 2.6 Deleting an account removes it from the list (after confirming)
+- [x] 2.7 Nav link "Settings" works; empty state shows correctly with zero accounts
 
 ### Phase 3: Integration Tests
 
