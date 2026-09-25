@@ -85,7 +85,7 @@ Fix the two setup blockers research found, add the domain schema, and establish 
 **Contract**:
 - `Transaction`: `Id (Guid)`, `UserId (Guid, FK to AppUser)`, `Bank (string)`, `Date (DateOnly)`, `Description (string)`, `Amount (decimal)`, `Hash (string)` — **not** a unique constraint, since a colliding hash is an expected, legitimate outcome once the user picks "keep" (user decision) — `ImportBatchId (Guid?, FK, nullable for S-02's later manual entries)`, `CategoryId (Guid?, nullable — S-03)`.
 - `ImportBatch`: `Id (Guid)`, `UserId (Guid, FK)`, `Bank (string)`, `ImportedAtUtc (DateTime)`, `ImportedCount (int)`, `SkippedDuplicateCount (int)`, `SkippedErrorCount (int)`.
-- Add both `DbSet`s to `AppDbContext` and generate one EF Core migration.
+- Add both `DbSet`s to `AppDbContext`, add a composite (non-unique) index on `Transaction(UserId, Hash)` since every parse/commit does a per-user hash lookup, and generate one EF Core migration.
 
 #### 6. User-scoping convention
 
@@ -197,7 +197,7 @@ Wire the parser and dedup hash into the two-endpoint upload → review → commi
 
 **Intent**: Accept the full row set plus the user's skip/keep decisions and persist the result — re-validating everything server-side rather than trusting the client payload (user decision: client-side round-trip means the server is not a trust boundary on the data it re-receives).
 
-**Contract**: `POST /import/commit` (JSON body, antiforgery via the existing manual `AddEndpointFilter` pattern from `/logout`) accepts `{ Bank, Rows: [{ Date, Description, Amount, Decision: Keep|Skip }] }`. For each `Keep` row, the endpoint **recomputes the dedup hash and duplicate flag itself** (never trusts a client-supplied hash or `IsDuplicate` value) before inserting a `Transaction`; `Skip` rows are counted but not inserted. Persists one `ImportBatch` with the final `ImportedCount`/`SkippedDuplicateCount`/`SkippedErrorCount` and returns it as the import summary.
+**Contract**: `POST /import/commit` (JSON body, antiforgery via the existing manual `AddEndpointFilter` pattern from `/logout`) accepts `{ Bank, SkippedErrorCount, Rows: [{ Date, Description, Amount, Decision: Keep|Skip }] }`. `SkippedErrorCount` is the value the frontend received from `/import/parse`'s response, echoed straight back — it's purely an informational count for the summary display and never influences which rows get persisted, so it doesn't need server-side re-validation the way row data does. For each `Keep` row, the endpoint **recomputes the dedup hash and duplicate flag itself** (never trusts a client-supplied hash or `IsDuplicate` value) before inserting a `Transaction`; `Skip` rows are counted but not inserted. Persists one `ImportBatch` with `ImportedCount`/`SkippedDuplicateCount` derived from re-validating `Rows`, plus the echoed `SkippedErrorCount`, and returns it as the import summary.
 
 ### Success Criteria:
 
@@ -235,7 +235,7 @@ Build the file-upload UI, including the manual bank-selection fallback.
 #### Automated Verification:
 
 - `npm run typecheck` passes
-- Component test (if the project's test setup supports frontend tests by this point — otherwise covered by Phase 7's manual step) renders the upload form and bank-fallback dropdown
+- N/A — no frontend test framework exists yet in this repo; upload form and bank-fallback dropdown rendering is covered by Manual Verification below instead
 
 #### Manual Verification:
 
@@ -268,7 +268,7 @@ Build the single-pass side-by-side review screen for FR-004.
 
 #### Manual Verification:
 
-- With the redacted sample file's two colliding BLIK rows, both are shown side-by-side with the pre-existing (already-imported) transaction; committing is blocked until both have an explicit decision
+- On a re-upload of an already-imported file, both BLIK rows are shown side-by-side with their respective pre-existing (already-imported) transaction; committing is blocked until both have an explicit decision. (Dedup only fires against already-stored transactions — see the note in Manual Testing Steps — so this scenario requires the file to have been imported once already, not a fresh first upload.)
 - Non-colliding rows are visible in the review list without needing a decision
 
 ---
@@ -345,10 +345,12 @@ Cover the full upload → review → commit flow with `WebApplicationFactory`-ba
 ### Manual Testing Steps:
 
 1. Register/log in, navigate to the import page
-2. Upload the real redacted mBank sample; confirm parsing succeeds and the review screen shows the two known colliding BLIK rows side-by-side
+2. Upload the real redacted mBank sample for the first time (empty database); confirm parsing succeeds and the review screen lists every row, none flagged as a duplicate — dedup only checks against already-stored transactions (Phase 3), and nothing has been imported yet, so the sample's two same-day/same-amount/same-description BLIK rows are *not* expected to flag each other on this first pass (see note below)
 3. Upload a non-mBank CSV; confirm the recognition-failure error and manual bank-selection fallback appear
-4. Resolve one collision as "keep" and one as "skip"; commit; confirm the summary counts match expectations
-5. Re-upload the same file; confirm every previously-imported row (including the "kept" duplicate) is now flagged as colliding
+4. Commit the first import (no collisions to resolve yet); confirm the summary counts match the file's contents
+5. Re-upload the same file; confirm every previously-imported row — including both BLIK rows, each now colliding with its own already-stored counterpart — is flagged as colliding side-by-side with the matching stored transaction; resolve one collision as "keep" and one as "skip"; commit; confirm the summary counts match expectations
+
+> Note: dedup is scoped to "collides with an already-stored transaction" (Desired End State) — it does not compare rows against each other within the same upload batch. Two genuinely distinct transactions that happen to share date/amount/description (like the sample's two BLIK transfers) will both import silently, unflagged, the first time such a file is uploaded; the collision only surfaces on a later upload once one of them is already stored. This is a deliberate scope boundary, not a gap: see Option C in `research.md`'s Open Questions, which routes collisions through review only when a hash matches something already persisted.
 
 ## Migration Notes
 
@@ -404,7 +406,7 @@ New EF Core migration adds `Transactions` and `ImportBatches` tables; no existin
 #### Automated
 
 - [ ] 4.1 `npm run typecheck` passes
-- [ ] 4.2 Upload form and bank-fallback dropdown render correctly
+- [ ] 4.2 N/A — no frontend test framework yet; covered by Manual below
 
 #### Manual
 
