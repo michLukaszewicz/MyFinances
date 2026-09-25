@@ -6,4 +6,5 @@ export default [
   route("register", "routes/register.tsx"),
   route("import", "routes/import.tsx"),
   route("settings", "routes/settings.tsx"),
+  route("categorize", "routes/categorize.tsx"),
 ] satisfies RouteConfig;
