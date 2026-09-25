@@ -218,4 +218,40 @@ public class AccountEndpointsTests
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Delete_ForAccountWithLinkedTransactions_ReturnsConflictWithoutThrowing()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await CreateAuthenticatedClientAsync(factory);
+
+        var created = await (await PostAccountAsync(client, "mBank", "111")).Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+            var user = await userManager.FindByEmailAsync(AuthApiFactory.AllowedEmail);
+            var userId = user!.Id;
+
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.Transactions.Add(new Transaction
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                AccountId = created!.Id,
+                Date = new DateOnly(2026, 8, 1),
+                Description = "Linked transaction",
+                Amount = -10.00m,
+                Hash = "irrelevant-for-this-test",
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var deleteResponse = await DeleteAccountAsync(client, created!.Id);
+
+        Assert.Equal(HttpStatusCode.Conflict, deleteResponse.StatusCode);
+
+        var list = await (await client.GetAsync("/api/accounts/")).Content.ReadFromJsonAsync<List<AccountDto>>(JsonOptions);
+        Assert.Single(list!);
+    }
 }
