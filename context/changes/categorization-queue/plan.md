@@ -423,27 +423,27 @@ semantics to preserve.
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly
-- [x] 1.2 Backend builds
-- [x] 1.3 Existing tests still pass
+- [x] 1.1 Migration applies cleanly — e3e3447
+- [x] 1.2 Backend builds — e3e3447
+- [x] 1.3 Existing tests still pass — e3e3447
 
 #### Manual
 
-- [x] 1.4 Seeded Categories table inspected — 12 rows, correct SortOrder
+- [x] 1.4 Seeded Categories table inspected — 12 rows, correct SortOrder — e3e3447
 
 ### Phase 2: Backend categorization module
 
 #### Automated
 
-- [ ] 2.1 Backend builds
-- [ ] 2.2 TransferDetectionService unit tests pass
-- [ ] 2.3 CategorizationEndpointsTests integration tests pass
-- [ ] 2.4 Full `dotnet test` passes
+- [x] 2.1 Backend builds
+- [x] 2.2 TransferDetectionService unit tests pass
+- [x] 2.3 CategorizationEndpointsTests integration tests pass
+- [x] 2.4 Full `dotnet test` passes (57/57)
 
 #### Manual
 
-- [ ] 2.5 Matching transfer pair auto-flagged and excluded from queue (verified via Swagger)
-- [ ] 2.6 Manual override of an auto-flagged transfer persists and moves it back to the queue
+- [ ] 2.5 Matching transfer pair auto-flagged and excluded from queue (verified via Swagger) — skipped: starting a second local backend instance on this shared dev machine collided with the sibling S-09 preview on port 5007 (both worktrees' launchSettings default to 5007); killed the stray process immediately to avoid disrupting that live manual-testing session. Needs a human pass with a dedicated port/profile.
+- [ ] 2.6 Manual override of an auto-flagged transfer persists and moves it back to the queue — same reason as 2.5, not verified live.
 
 ### Phase 3: Frontend categorization page
 
