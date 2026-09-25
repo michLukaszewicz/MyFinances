@@ -129,19 +129,7 @@ export default function Import() {
   const allDuplicatesDecided = duplicateIndexes.every((index) => decisions.has(index));
   const allRowsAreDuplicates = duplicateIndexes.length > 0 && duplicateIndexes.length === (result?.rows.length ?? 0);
 
-  // Quick-exit for the common "I uploaded the same file by accident" case: skip every
-  // duplicate row in one click instead of clicking through each one individually.
-  function handleSkipAllDuplicates() {
-    setDecisions((prev) => {
-      const next = new Map(prev);
-      for (const index of duplicateIndexes) {
-        next.set(index, "Skip");
-      }
-      return next;
-    });
-  }
-
-  async function handleContinue() {
+  async function commitImport(decisionsToUse: Map<number, RowDecisionValue>) {
     if (!result) return;
 
     setCommitError(null);
@@ -152,7 +140,7 @@ export default function Import() {
         Description: row.description,
         Amount: row.amount,
         // Non-duplicate rows never get a decisions entry — they're implicitly kept.
-        Decision: decisions.get(index) ?? "Keep",
+        Decision: decisionsToUse.get(index) ?? "Keep",
       }));
 
       const response = await apiFetch<ImportSummaryDto>("/import/commit", {
@@ -170,6 +158,21 @@ export default function Import() {
     } finally {
       setCommitting(false);
     }
+  }
+
+  function handleContinue() {
+    void commitImport(decisions);
+  }
+
+  // Quick-exit for the common "I uploaded the same file by accident" case: skip every
+  // duplicate row and commit immediately, instead of making the user also click Continue.
+  function handleSkipAllDuplicates() {
+    const allSkipped = new Map(decisions);
+    for (const index of duplicateIndexes) {
+      allSkipped.set(index, "Skip");
+    }
+    setDecisions(allSkipped);
+    void commitImport(allSkipped);
   }
 
   return (
@@ -221,9 +224,10 @@ export default function Import() {
                   <button
                     type="button"
                     onClick={handleSkipAllDuplicates}
-                    className="rounded-md border border-amber-700/60 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors hover:bg-amber-900/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+                    disabled={committing}
+                    className="rounded-md border border-amber-700/60 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors hover:bg-amber-900/30 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
                   >
-                    Skip all — none of these were new
+                    {committing ? "Skipping…" : "Skip all — none of these were new"}
                   </button>
                 </div>
               )}
