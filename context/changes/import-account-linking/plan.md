@@ -280,15 +280,15 @@ The Phase 1 migration wipes all existing `transactions` and `import_batches` row
 
 #### Automated
 
-- [x] 1.1 `dotnet build` succeeds in `MyFinances/backend`
-- [x] 1.2 `dotnet ef migrations add LinkTransactionsToAccounts` generates without errors and `dotnet ef migrations script` runs clean
+- [x] 1.1 `dotnet build` succeeds in `MyFinances/backend` — a1d687c
+- [x] 1.2 `dotnet ef migrations add LinkTransactionsToAccounts` generates without errors and `dotnet ef migrations script` runs clean — a1d687c
 
 ### Phase 2: Backend Import Endpoints
 
 #### Automated
 
-- [ ] 2.1 `dotnet build` succeeds
-- [ ] 2.2 `dotnet test` passes for the updated `ImportEndpointsTests` and `DedupHashTests`
+- [x] 2.1 `dotnet build` succeeds
+- [x] 2.2 `dotnet test` passes for the updated `ImportEndpointsTests` and `DedupHashTests`
 
 ### Phase 3: Frontend Import Page
 

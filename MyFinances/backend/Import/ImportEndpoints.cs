@@ -18,11 +18,20 @@ public static class ImportEndpoints
         import.MapPost("/parse", async (
             IFormFile file,
             [FromForm] string? bank,
+            [FromForm] Guid accountId,
             IEnumerable<IBankStatementParser> parsers,
             AppDbContext db,
             UserManager<AppUser> userManager,
             ClaimsPrincipal principal) =>
         {
+            var userId = principal.GetUserId(userManager);
+
+            var account = await db.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId);
+            if (account is null)
+            {
+                return Results.NotFound();
+            }
+
             await using var stream = new MemoryStream();
             await file.CopyToAsync(stream);
             stream.Position = 0;
@@ -46,10 +55,8 @@ public static class ImportEndpoints
             stream.Position = 0;
             var parseResult = parser.Parse(stream);
 
-            var userId = principal.GetUserId(userManager);
-
             var hashes = parseResult.Transactions
-                .Select(t => DedupHash.ComputeHash(userId, t.Date, t.Amount, t.Description, parser.BankName))
+                .Select(t => DedupHash.ComputeHash(userId, t.Date, t.Amount, t.Description, account.Id))
                 .ToList();
 
             // Hash is deliberately not unique (Transaction.cs) — a "Keep" decision on a prior
@@ -64,7 +71,7 @@ public static class ImportEndpoints
 
             var rows = parseResult.Transactions.Select(t =>
             {
-                var hash = DedupHash.ComputeHash(userId, t.Date, t.Amount, t.Description, parser.BankName);
+                var hash = DedupHash.ComputeHash(userId, t.Date, t.Amount, t.Description, account.Id);
                 existingByHash.TryGetValue(hash, out var existing);
 
                 return new ImportParseRow(
@@ -75,35 +82,36 @@ public static class ImportEndpoints
                     existing is null ? null : new ExistingTransactionDto(existing.Date, existing.Description, existing.Amount));
             }).ToList();
 
-            return Results.Ok(new ImportParseResponse(parser.BankName, rows, parseResult.SkippedErrorCount));
+            var bankMismatch = !string.Equals(parser.BankName, account.BankName, StringComparison.OrdinalIgnoreCase);
+
+            return Results.Ok(new ImportParseResponse(parser.BankName, bankMismatch, rows, parseResult.SkippedErrorCount));
         });
 
         import.MapPost("/commit", async (
             ImportCommitRequest request,
-            IEnumerable<IBankStatementParser> parsers,
             AppDbContext db,
             UserManager<AppUser> userManager,
             ClaimsPrincipal principal) =>
         {
+            var userId = principal.GetUserId(userManager);
+
             // The server is not a trust boundary on data it re-receives from its own prior
             // response: every row is re-validated here rather than trusting client-supplied
             // hashes or IsDuplicate flags.
-            var parser = parsers.FirstOrDefault(p => string.Equals(p.BankName, request.Bank, StringComparison.OrdinalIgnoreCase));
-            if (parser is null)
+            var account = await db.Accounts.FirstOrDefaultAsync(a => a.Id == request.AccountId && a.UserId == userId);
+            if (account is null)
             {
-                return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: "Unknown bank.");
+                return Results.NotFound();
             }
-
-            var userId = principal.GetUserId(userManager);
 
             var keepRows = request.Rows.Where(r => r.Decision == RowDecision.Keep).ToList();
             var keepHashes = keepRows
-                .Select(r => DedupHash.ComputeHash(userId, r.Date, r.Amount, r.Description, parser.BankName))
+                .Select(r => DedupHash.ComputeHash(userId, r.Date, r.Amount, r.Description, account.Id))
                 .ToList();
 
             var skipRows = request.Rows.Where(r => r.Decision == RowDecision.Skip).ToList();
             var skipHashes = skipRows
-                .Select(r => DedupHash.ComputeHash(userId, r.Date, r.Amount, r.Description, parser.BankName))
+                .Select(r => DedupHash.ComputeHash(userId, r.Date, r.Amount, r.Description, account.Id))
                 .ToList();
 
             var allHashes = keepHashes.Concat(skipHashes).ToList();
@@ -116,7 +124,7 @@ public static class ImportEndpoints
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
-                Bank = parser.BankName,
+                AccountId = account.Id,
                 ImportedAtUtc = DateTime.UtcNow,
                 ImportedCount = keepRows.Count,
                 SkippedDuplicateCount = skipHashes.Count(h => existingHashes.Contains(h)),
@@ -137,7 +145,7 @@ public static class ImportEndpoints
                 {
                     Id = Guid.NewGuid(),
                     UserId = userId,
-                    Bank = parser.BankName,
+                    AccountId = account.Id,
                     Date = row.Date,
                     Description = row.Description,
                     Amount = row.Amount,
@@ -150,7 +158,7 @@ public static class ImportEndpoints
 
             return Results.Ok(new ImportSummaryDto(
                 importBatch.Id,
-                importBatch.Bank,
+                importBatch.AccountId,
                 importBatch.ImportedAtUtc,
                 importBatch.ImportedCount,
                 importBatch.SkippedDuplicateCount,
