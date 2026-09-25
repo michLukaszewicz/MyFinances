@@ -24,4 +24,10 @@
     <ProjectReference Include="../MyFinances.Api.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Fixtures/mbank-sample-redacted.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

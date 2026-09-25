@@ -370,23 +370,23 @@ New EF Core migration adds `Transactions` and `ImportBatches` tables; no existin
 
 #### Automated
 
-- [x] 1.1 `dotnet build` succeeds with the new packages referenced
-- [x] 1.2 New migration applies cleanly: `dotnet ef database update`
-- [x] 1.3 Existing test suite still passes: `dotnet test`
+- [x] 1.1 `dotnet build` succeeds with the new packages referenced — 30d6704
+- [x] 1.2 New migration applies cleanly: `dotnet ef database update` — 30d6704
+- [x] 1.3 Existing test suite still passes: `dotnet test` — 30d6704
 
 #### Manual
 
-- [x] 1.4 `Encoding.GetEncoding(1250)` does not throw after provider registration
-- [x] 1.5 Multipart POST with valid antiforgery token succeeds; without token returns 400 (not 500)
+- [x] 1.4 `Encoding.GetEncoding(1250)` does not throw after provider registration — 30d6704
+- [x] 1.5 Multipart POST with valid antiforgery token succeeds; without token returns 400 (not 500) — 30d6704
 
 ### Phase 2: mBank Parser & Dedup
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass: `dotnet test --filter MBankCsvParserTests`
-- [ ] 2.2 Parser correctly extracts all rows from the redacted real-format fixture, including both colliding BLIK rows
-- [ ] 2.3 Parser skips a malformed row without aborting the rest of the file
-- [ ] 2.4 Dedup hash is identical for equivalent inputs regardless of call site
+- [x] 2.1 Unit tests pass: `dotnet test --filter MBankCsvParserTests`
+- [x] 2.2 Parser correctly extracts all rows from the redacted real-format fixture, including both colliding BLIK rows
+- [x] 2.3 Parser skips a malformed row without aborting the rest of the file
+- [x] 2.4 Dedup hash is identical for equivalent inputs regardless of call site
 
 ### Phase 3: Import API Endpoints
 
