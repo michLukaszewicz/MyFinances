@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MyFinances.Api;
 using MyFinances.Api.Auth;
+using MyFinances.Api.Categorization;
+using MyFinances.Api.Import;
 using MyFinances.Api.Transactions;
 using Xunit;
 
@@ -66,6 +68,89 @@ public class TransactionEndpointsTests
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
         var user = await userManager.FindByEmailAsync(AuthApiFactory.AllowedEmail);
         return user!.Id;
+    }
+
+    private static async Task<Guid> GetFirstCategoryIdAsync(HttpClient client)
+    {
+        var categories = await (await client.GetAsync("/api/categorization/categories"))
+            .Content.ReadFromJsonAsync<List<CategoryDto>>(JsonOptions);
+        return categories!.First().Id;
+    }
+
+    private static async Task<Account> InsertAccountForOtherUserAsync(AuthApiFactory factory, string bank, string number)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var account = new Account { Id = Guid.NewGuid(), UserId = Guid.NewGuid(), BankName = bank, AccountNumber = number };
+        db.Accounts.Add(account);
+        await db.SaveChangesAsync();
+        return account;
+    }
+
+    private static async Task<Transaction> InsertTransactionAsync(
+        AuthApiFactory factory,
+        Guid userId,
+        Guid accountId,
+        DateOnly date,
+        decimal amount,
+        string description = "txn",
+        Guid? importBatchId = null,
+        string? hash = null)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var transaction = new Transaction
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            AccountId = accountId,
+            Date = date,
+            Description = description,
+            Amount = amount,
+            Hash = hash ?? Guid.NewGuid().ToString(),
+            ImportBatchId = importBatchId,
+        };
+        db.Transactions.Add(transaction);
+        await db.SaveChangesAsync();
+        return transaction;
+    }
+
+    private static async Task<string> GetAntiforgeryTokenAsync(HttpClient client)
+    {
+        var response = await client.GetAsync("/api/auth/antiforgery-token");
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadFromJsonAsync<TokenResponse>(JsonOptions);
+        return payload!.Token;
+    }
+
+    private static async Task<HttpResponseMessage> PostTransactionAsync(HttpClient client, TransactionWriteRequest request)
+    {
+        var token = await GetAntiforgeryTokenAsync(client);
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/transactions/")
+        {
+            Content = JsonContent.Create(request),
+        };
+        httpRequest.Headers.Add("X-XSRF-TOKEN", token);
+        return await client.SendAsync(httpRequest);
+    }
+
+    private static async Task<HttpResponseMessage> PutTransactionAsync(HttpClient client, Guid id, TransactionWriteRequest request)
+    {
+        var token = await GetAntiforgeryTokenAsync(client);
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Put, $"/api/transactions/{id}")
+        {
+            Content = JsonContent.Create(request),
+        };
+        httpRequest.Headers.Add("X-XSRF-TOKEN", token);
+        return await client.SendAsync(httpRequest);
+    }
+
+    private static async Task<HttpResponseMessage> DeleteTransactionAsync(HttpClient client, Guid id)
+    {
+        var token = await GetAntiforgeryTokenAsync(client);
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Delete, $"/api/transactions/{id}");
+        httpRequest.Headers.Add("X-XSRF-TOKEN", token);
+        return await client.SendAsync(httpRequest);
     }
 
     [Fact]
@@ -185,5 +270,359 @@ public class TransactionEndpointsTests
         Assert.NotNull(result);
         Assert.Equal(10, result!.Items.Count);
         Assert.False(result.HasMore);
+    }
+
+    [Fact]
+    public async Task Post_WithoutAuthCookie_ReturnsUnauthorized()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync(
+            "/api/transactions/",
+            new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, Guid.NewGuid(), Guid.NewGuid(), false));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Post_WithoutValidAntiforgeryToken_ReturnsBadRequest()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var categoryId = await GetFirstCategoryIdAsync(client);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/transactions/",
+            new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, account.Id, categoryId, false));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Post_CreatesTransaction_WithNullImportBatchIdAndMatchingHash()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var categoryId = await GetFirstCategoryIdAsync(client);
+        var userId = await GetUserIdAsync(factory);
+        var request = new TransactionWriteRequest(new DateOnly(2026, 1, 1), "Groceries run", 42.50m, account.Id, categoryId, false);
+
+        var response = await PostTransactionAsync(client, request);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var dto = await response.Content.ReadFromJsonAsync<TransactionDetailDto>(JsonOptions);
+        Assert.NotNull(dto);
+        Assert.Equal(account.Id, dto!.AccountId);
+        Assert.Equal(categoryId, dto.CategoryId);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var stored = await db.Transactions.FirstAsync(t => t.Id == dto.Id);
+        Assert.Null(stored.ImportBatchId);
+        var expectedHash = DedupHash.ComputeHash(userId, request.Date, request.Amount, request.Description, request.AccountId);
+        Assert.Equal(expectedHash, stored.Hash);
+    }
+
+    [Fact]
+    public async Task Post_WithoutForce_AgainstExistingHash_ReturnsConflictWithExistingSnapshot()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var categoryId = await GetFirstCategoryIdAsync(client);
+        var request = new TransactionWriteRequest(new DateOnly(2026, 1, 1), "Groceries run", 42.50m, account.Id, categoryId, false);
+
+        var first = await PostTransactionAsync(client, request);
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+
+        var second = await PostTransactionAsync(client, request);
+
+        Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
+        var body = await second.Content.ReadFromJsonAsync<DuplicateTransactionResponse>(JsonOptions);
+        Assert.NotNull(body);
+        Assert.Equal(request.Date, body!.ExistingTransaction.Date);
+        Assert.Equal(request.Description, body.ExistingTransaction.Description);
+        Assert.Equal(request.Amount, body.ExistingTransaction.Amount);
+    }
+
+    [Fact]
+    public async Task Post_WithForce_AgainstExistingHash_InsertsAnyway()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var categoryId = await GetFirstCategoryIdAsync(client);
+        var request = new TransactionWriteRequest(new DateOnly(2026, 1, 1), "Groceries run", 42.50m, account.Id, categoryId, false);
+
+        var first = await PostTransactionAsync(client, request);
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+
+        var forced = request with { Force = true };
+        var second = await PostTransactionAsync(client, forced);
+
+        Assert.Equal(HttpStatusCode.Created, second.StatusCode);
+
+        var list = await (await client.GetAsync("/api/transactions?skip=0&take=100")).Content
+            .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
+        Assert.Equal(2, list!.Items.Count);
+    }
+
+    [Fact]
+    public async Task Post_WithAccountNotOwnedByCaller_ReturnsBadRequest()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var categoryId = await GetFirstCategoryIdAsync(client);
+        var otherAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "999");
+
+        var response = await PostTransactionAsync(
+            client,
+            new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, otherAccount.Id, categoryId, false));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Post_WithUnknownCategoryId_ReturnsBadRequest()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        var response = await PostTransactionAsync(
+            client,
+            new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, account.Id, Guid.NewGuid(), false));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_WithoutAuthCookie_ReturnsUnauthorized()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.PutAsJsonAsync(
+            $"/api/transactions/{Guid.NewGuid()}",
+            new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, Guid.NewGuid(), Guid.NewGuid(), false));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_WithoutValidAntiforgeryToken_ReturnsBadRequest()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var categoryId = await GetFirstCategoryIdAsync(client);
+        var userId = await GetUserIdAsync(factory);
+        var transaction = await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2026, 1, 1), 10m);
+
+        var response = await client.PutAsJsonAsync(
+            $"/api/transactions/{transaction.Id}",
+            new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, account.Id, categoryId, false));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_RecomputesHash_LeavesImportBatchIdUnchanged()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var categoryId = await GetFirstCategoryIdAsync(client);
+        var userId = await GetUserIdAsync(factory);
+        var importBatchId = Guid.NewGuid();
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.ImportBatches.Add(new ImportBatch
+            {
+                Id = importBatchId,
+                UserId = userId,
+                AccountId = account.Id,
+                ImportedAtUtc = DateTime.UtcNow,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var seeded = await InsertTransactionAsync(
+            factory, userId, account.Id, new DateOnly(2026, 1, 1), 10m, "original", importBatchId, "original-hash");
+
+        var updateRequest = new TransactionWriteRequest(new DateOnly(2026, 2, 2), "updated desc", 55m, account.Id, categoryId, false);
+        var response = await PutTransactionAsync(client, seeded.Id, updateRequest);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var updated = await verifyDb.Transactions.FirstAsync(t => t.Id == seeded.Id);
+        Assert.Equal(importBatchId, updated.ImportBatchId);
+        var expectedHash = DedupHash.ComputeHash(userId, updateRequest.Date, updateRequest.Amount, updateRequest.Description, updateRequest.AccountId);
+        Assert.Equal(expectedHash, updated.Hash);
+    }
+
+    [Fact]
+    public async Task Put_WithoutForce_AgainstAnotherRowsHash_ReturnsConflict()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var categoryId = await GetFirstCategoryIdAsync(client);
+        var otherRequest = new TransactionWriteRequest(new DateOnly(2026, 1, 1), "existing", 20m, account.Id, categoryId, false);
+        var otherCreated = await PostTransactionAsync(client, otherRequest);
+        Assert.Equal(HttpStatusCode.Created, otherCreated.StatusCode);
+
+        var userId = await GetUserIdAsync(factory);
+        var toEdit = await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2026, 3, 3), 99m, "to edit");
+
+        var response = await PutTransactionAsync(client, toEdit.Id, otherRequest);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_SameRowUnchanged_WithoutForce_DoesNotConflictWithItself()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var categoryId = await GetFirstCategoryIdAsync(client);
+        var request = new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 20m, account.Id, categoryId, false);
+
+        var created = await PostTransactionAsync(client, request);
+        var dto = await created.Content.ReadFromJsonAsync<TransactionDetailDto>(JsonOptions);
+
+        var response = await PutTransactionAsync(client, dto!.Id, request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_ForTransactionNotOwnedByCaller_ReturnsNotFound()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var categoryId = await GetFirstCategoryIdAsync(client);
+        var otherAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "222");
+        var otherTransaction = await InsertTransactionAsync(factory, otherAccount.UserId, otherAccount.Id, new DateOnly(2026, 1, 1), 5m);
+
+        var response = await PutTransactionAsync(
+            client, otherTransaction.Id, new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 5m, account.Id, categoryId, false));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_WithAccountNotOwnedByCaller_ReturnsBadRequest()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var categoryId = await GetFirstCategoryIdAsync(client);
+        var userId = await GetUserIdAsync(factory);
+        var transaction = await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2026, 1, 1), 10m);
+        var otherAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "999");
+
+        var response = await PutTransactionAsync(
+            client, transaction.Id, new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, otherAccount.Id, categoryId, false));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_WithUnknownCategoryId_ReturnsBadRequest()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        var transaction = await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2026, 1, 1), 10m);
+
+        var response = await PutTransactionAsync(
+            client, transaction.Id, new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, account.Id, Guid.NewGuid(), false));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_WithoutAuthCookie_ReturnsUnauthorized()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.DeleteAsync($"/api/transactions/{Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_WithoutValidAntiforgeryToken_ReturnsBadRequest()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        var transaction = await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2026, 1, 1), 10m);
+
+        var response = await client.DeleteAsync($"/api/transactions/{transaction.Id}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_RemovesTransaction_RegardlessOfImportBatchId()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        var importBatchId = Guid.NewGuid();
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.ImportBatches.Add(new ImportBatch
+            {
+                Id = importBatchId,
+                UserId = userId,
+                AccountId = account.Id,
+                ImportedAtUtc = DateTime.UtcNow,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var imported = await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2026, 1, 1), 10m, "imported", importBatchId);
+        var manual = await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2026, 1, 2), 20m, "manual");
+
+        var deleteImported = await DeleteTransactionAsync(client, imported.Id);
+        var deleteManual = await DeleteTransactionAsync(client, manual.Id);
+
+        Assert.Equal(HttpStatusCode.NoContent, deleteImported.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, deleteManual.StatusCode);
+
+        var list = await (await client.GetAsync("/api/transactions?skip=0&take=100")).Content
+            .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
+        Assert.Empty(list!.Items);
+    }
+
+    [Fact]
+    public async Task Delete_ForTransactionNotOwnedByCaller_ReturnsNotFound()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var otherAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "999");
+        var otherTransaction = await InsertTransactionAsync(factory, otherAccount.UserId, otherAccount.Id, new DateOnly(2026, 1, 1), 5m);
+
+        var response = await DeleteTransactionAsync(client, otherTransaction.Id);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 }

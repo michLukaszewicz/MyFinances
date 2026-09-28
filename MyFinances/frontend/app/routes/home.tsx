@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLoaderData } from "react-router";
 import type { Route } from "./+types/home";
 import { AppHeader } from "../components/AppHeader";
-import { apiFetch } from "../lib/api";
+import { apiFetch, ApiError } from "../lib/api";
 
 const valueProps = [
   {
@@ -30,7 +30,7 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-// Mirrors the backend's TransactionContracts.cs
+// Mirrors the backend's TransactionContracts.cs TransactionListItemDto.
 interface Transaction {
   id: string;
   date: string;
@@ -38,6 +38,7 @@ interface Transaction {
   amount: number;
   categoryId: string | null;
   categoryName: string | null;
+  accountId: string;
 }
 
 interface TransactionListResponseDto {
@@ -45,10 +46,70 @@ interface TransactionListResponseDto {
   hasMore: boolean;
 }
 
+// Mirrors the backend's TransactionContracts.cs TransactionDetailDto.
+interface TransactionDetailDto {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  accountId: string;
+  categoryId: string;
+  categoryName: string;
+}
+
+// Mirrors the backend's AccountContracts.cs AccountDto.
+interface AccountDto {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+}
+
+// Mirrors the backend's CategorizationContracts.cs CategoryDto.
+interface CategoryDto {
+  id: string;
+  name: string;
+}
+
+interface ExistingTransaction {
+  date: string;
+  description: string;
+  amount: number;
+}
+
 const TRANSACTIONS_PAGE_SIZE = 20;
 
 function formatAmount(amount: number): string {
   return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Local calendar date (not UTC) in the yyyy-MM-dd shape the <input type="date"> / backend expect.
+function todayDateInputValue(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+async function parseErrorBody(
+  error: unknown,
+): Promise<{ message: string; existingTransaction?: ExistingTransaction }> {
+  if (error instanceof ApiError) {
+    try {
+      const body = await error.response.json();
+      if (error.response.status === 409 && body?.existingTransaction) {
+        return {
+          message: typeof body?.title === "string" ? body.title : "A matching transaction already exists.",
+          existingTransaction: body.existingTransaction,
+        };
+      }
+      if (typeof body?.title === "string") {
+        return { message: body.title };
+      }
+    } catch {
+      // fall through to generic message
+    }
+  }
+  return { message: "Something went wrong. Please try again." };
 }
 
 export async function clientLoader() {
@@ -81,6 +142,41 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(initialTransactions?.hasMore ?? false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+
+  const [accounts, setAccounts] = useState<AccountDto[]>([]);
+  const [categories, setCategories] = useState<CategoryDto[]>([]);
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [date, setDate] = useState("");
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [accountId, setAccountId] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [pendingDuplicate, setPendingDuplicate] = useState<ExistingTransaction | null>(null);
+
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    async function loadOptions() {
+      try {
+        const [accountList, categoryList] = await Promise.all([
+          apiFetch<AccountDto[]>("/accounts/"),
+          apiFetch<CategoryDto[]>("/categorization/categories"),
+        ]);
+        setAccounts(accountList);
+        setCategories(categoryList);
+      } catch {
+        // Options failure surfaces when the user tries to open the form and finds
+        // empty selects; the transaction list itself still renders fine.
+      }
+    }
+    void loadOptions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   if (!user) {
     return (
@@ -169,6 +265,266 @@ export default function Home() {
     }
   }
 
+  async function refreshTransactions() {
+    try {
+      const take = Math.max(items.length, TRANSACTIONS_PAGE_SIZE);
+      const response = await apiFetch<TransactionListResponseDto>(`/transactions?skip=0&take=${take}`);
+      setItems(response.items);
+      setHasMore(response.hasMore);
+    } catch {
+      // Leave the current list in place — the write itself already succeeded.
+    }
+  }
+
+  function closeForm() {
+    setIsFormOpen(false);
+    setEditingId(null);
+    setDate("");
+    setDescription("");
+    setAmount("");
+    setAccountId("");
+    setCategoryId("");
+    setFormError(null);
+    setPendingDuplicate(null);
+  }
+
+  function startAdd() {
+    setEditingId(null);
+    setDate(todayDateInputValue());
+    setDescription("");
+    setAmount("");
+    setAccountId("");
+    setCategoryId("");
+    setFormError(null);
+    setPendingDuplicate(null);
+    setIsFormOpen(true);
+  }
+
+  function startEdit(transaction: Transaction) {
+    setEditingId(transaction.id);
+    setDate(transaction.date);
+    setDescription(transaction.description);
+    setAmount(String(transaction.amount));
+    setAccountId(transaction.accountId);
+    setCategoryId(transaction.categoryId ?? "");
+    setFormError(null);
+    setPendingDuplicate(null);
+    setIsFormOpen(true);
+  }
+
+  async function submitTransaction(force: boolean) {
+    const amountValue = Number(amount);
+    if (!date || !description || !accountId || !categoryId || Number.isNaN(amountValue)) return;
+
+    setFormError(null);
+    setSubmitting(true);
+    try {
+      const body = JSON.stringify({
+        Date: date,
+        Description: description,
+        Amount: amountValue,
+        AccountId: accountId,
+        CategoryId: categoryId,
+        Force: force,
+      });
+
+      if (editingId) {
+        await apiFetch<TransactionDetailDto>(`/transactions/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body,
+        });
+      } else {
+        await apiFetch<TransactionDetailDto>("/transactions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body,
+        });
+      }
+      await refreshTransactions();
+      closeForm();
+    } catch (err) {
+      const { message, existingTransaction } = await parseErrorBody(err);
+      setFormError(message);
+      setPendingDuplicate(existingTransaction ?? null);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void submitTransaction(false);
+  }
+
+  function handleForceSubmit() {
+    void submitTransaction(true);
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await apiFetch(`/transactions/${id}`, { method: "DELETE" });
+      setConfirmingDeleteId(null);
+      await refreshTransactions();
+    } catch {
+      setConfirmingDeleteId(null);
+    }
+  }
+
+  const transactionForm = isFormOpen ? (
+    accounts.length === 0 ? (
+      <div className="space-y-3 rounded-lg border border-gray-800 p-4 text-left">
+        <p className="text-sm text-gray-400">
+          You need at least one account before adding a transaction. Add one in{" "}
+          <Link to="/settings" className="text-brand-400 hover:text-brand-300">
+            Settings
+          </Link>
+          .
+        </p>
+        <button
+          type="button"
+          onClick={closeForm}
+          className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium text-gray-200 transition-colors hover:bg-white/5"
+        >
+          Close
+        </button>
+      </div>
+    ) : (
+      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-gray-800 p-4 text-left">
+        <h2 className="text-sm font-medium text-gray-200">
+          {editingId ? "Edit transaction" : "Add transaction"}
+        </h2>
+
+        <div className="space-y-1">
+          <label htmlFor="transactionDate" className="text-sm text-gray-200">
+            Date
+          </label>
+          <input
+            id="transactionDate"
+            type="date"
+            required
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="transactionDescription" className="text-sm text-gray-200">
+            Description
+          </label>
+          <input
+            id="transactionDescription"
+            type="text"
+            required
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="transactionAmount" className="text-sm text-gray-200">
+            Amount
+          </label>
+          <input
+            id="transactionAmount"
+            type="number"
+            step="0.01"
+            required
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="transactionAccount" className="text-sm text-gray-200">
+            Account
+          </label>
+          <select
+            id="transactionAccount"
+            required
+            value={accountId}
+            onChange={(e) => setAccountId(e.target.value)}
+            className="w-full rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          >
+            <option value="">Select an account…</option>
+            {accounts.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.bankName} — {account.accountNumber}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="transactionCategory" className="text-sm text-gray-200">
+            Category
+          </label>
+          <select
+            id="transactionCategory"
+            required
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            className="w-full rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          >
+            <option value="">Select a category…</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {formError && <p className="text-sm text-red-600">{formError}</p>}
+
+        {pendingDuplicate && (
+          <div className="space-y-2 rounded-lg border border-amber-700/60 bg-amber-950/30 p-3 text-sm text-amber-300">
+            <p>
+              A similar transaction already exists: {pendingDuplicate.date} —{" "}
+              {pendingDuplicate.description} — {formatAmount(pendingDuplicate.amount)}
+            </p>
+            <button
+              type="button"
+              onClick={handleForceSubmit}
+              disabled={submitting}
+              className="rounded-md border border-amber-600 px-3 py-1 text-xs font-medium text-amber-200 transition-colors hover:bg-amber-900/40 disabled:opacity-50"
+            >
+              Save anyway
+            </button>
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+          >
+            {submitting ? "Saving…" : editingId ? "Save changes" : "Add transaction"}
+          </button>
+          <button
+            type="button"
+            onClick={closeForm}
+            className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium text-gray-200 transition-colors hover:bg-white/5"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    )
+  ) : (
+    <button
+      type="button"
+      onClick={startAdd}
+      className="w-full rounded-md border border-gray-700 px-4 py-2 text-sm font-medium text-gray-200 transition-colors duration-200 hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+    >
+      Add transaction
+    </button>
+  );
+
   return (
     <>
       <AppHeader authenticated />
@@ -192,6 +548,8 @@ export default function Home() {
               className="space-y-4 text-left animate-[fade-slide-in_600ms_ease-out_both]"
               style={{ animationDelay: "100ms" }}
             >
+              {transactionForm}
+
               <ul className="space-y-2">
                 {items.map((transaction) => (
                   <li
@@ -210,6 +568,41 @@ export default function Home() {
                     >
                       {formatAmount(transaction.amount)}
                     </span>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => startEdit(transaction)}
+                        className="rounded-md px-2 py-1 text-xs font-medium text-brand-400 transition-colors hover:bg-white/5 hover:text-brand-300"
+                      >
+                        Edit
+                      </button>
+                      {confirmingDeleteId === transaction.id ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => void handleDelete(transaction.id)}
+                            className="rounded-md px-2 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-950/30"
+                          >
+                            Confirm delete
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmingDeleteId(null)}
+                            className="rounded-md px-2 py-1 text-xs font-medium text-gray-400 transition-colors hover:bg-white/5"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingDeleteId(transaction.id)}
+                          className="rounded-md px-2 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-950/30"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -230,21 +623,24 @@ export default function Home() {
               )}
             </div>
           ) : (
-            <>
-              <p
-                className="text-sm text-gray-500 animate-[fade-slide-in_600ms_ease-out_both]"
-                style={{ animationDelay: "100ms" }}
-              >
+            <div
+              className="space-y-4 text-left animate-[fade-slide-in_600ms_ease-out_both]"
+              style={{ animationDelay: "100ms" }}
+            >
+              {transactionForm}
+
+              <p className="text-center text-sm text-gray-500">
                 You haven't imported any transactions yet — let's start!
               </p>
-              <Link
-                to="/import"
-                className="inline-block rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-md shadow-brand-900/40 transition-all duration-200 hover:scale-105 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-600/40 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 animate-[fade-slide-in_600ms_ease-out_both]"
-                style={{ animationDelay: "200ms" }}
-              >
-                Import a bank statement
-              </Link>
-            </>
+              <div className="text-center">
+                <Link
+                  to="/import"
+                  className="inline-block rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-md shadow-brand-900/40 transition-all duration-200 hover:scale-105 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-600/40 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                >
+                  Import a bank statement
+                </Link>
+              </div>
+            </div>
           )}
         </div>
       </main>
