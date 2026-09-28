@@ -290,8 +290,8 @@ proceeding to the next phase.
 
 #### Automated
 
-- [ ] 2.1 Frontend typechecks: `npm run typecheck`
-- [ ] 2.2 Frontend builds: `npm run build`
+- [x] 2.1 Frontend typechecks: `npm run typecheck`
+- [x] 2.2 Frontend builds: `npm run build`
 
 #### Manual
 
