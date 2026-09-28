@@ -1,7 +1,7 @@
 ---
 change_id: manual-transaction-entry
 title: Manual transaction add/edit/delete with dedup-hash parity (S-02)
-status: implemented
+status: impl_reviewed
 created: 2026-09-25
 updated: 2026-09-28
 archived_at: null
