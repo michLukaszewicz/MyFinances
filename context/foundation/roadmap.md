@@ -3,7 +3,7 @@ project: "MyFinances"
 version: 1
 status: draft
 created: 2026-09-22
-updated: 2026-09-25
+updated: 2026-09-28
 prd_version: 3
 main_goal: market-feedback
 top_blocker: time
@@ -42,7 +42,7 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | ----- | -------------------------------- | ----------------------------------------------------------------------------------- | -------------- | ---------------------------- | -------- |
 | F-01  | minimal-auth-scaffold            | (foundation) register, log in, and stay logged in via a persistent session          | —              | FR-001, Access Control        | in-progress |
 | S-01  | mbank-import-with-dedup          | import an mBank CSV, resolve flagged duplicates, and see an import summary          | F-01           | FR-002, FR-004, US-01, Guardrail (dedup) | in-progress |
-| S-02  | manual-transaction-entry         | manually add, edit, and delete transactions without creating import duplicates      | S-01           | FR-010                        | proposed |
+| S-02  | manual-transaction-entry         | manually add, edit, and delete transactions without creating import duplicates      | S-01           | FR-010                        | done |
 | S-03  | categorization-queue             | categorize queued transactions, with internal transfers auto-flagged (overridable)  | S-01, S-10     | FR-007, FR-009, FR-015, US-01 | planning |
 | S-04  | category-spend-donut-chart       | see a donut chart of category spend for the current month, filterable by category   | S-03           | FR-011, FR-012, US-01         | proposed |
 | S-05  | category-budget-vs-actual        | optionally set a per-category budget and see actual-vs-budget alongside the chart   | S-04           | FR-017                        | proposed |
@@ -116,7 +116,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Low risk — extends the dedup mechanism from S-01 to a second entry path rather than building new detection logic.
-- **Status:** proposed
+- **Status:** done
 
 ### S-03: Categorization queue
 
@@ -258,3 +258,5 @@ No cross-cutting open questions at this time — PRD's own `## Open Questions` s
 ## Done
 
 (Empty on first generation. `/10x-archive` appends an entry here — and flips that item's `Status` to `done` — when a change whose `Change ID` matches the item is archived.)
+
+- **S-02: user can manually add, edit, and delete transactions; a manually-entered transaction is recognized as the same one if it later appears in an imported statement, so it's never duplicated.** — Archived 2026-09-28 → `context/archive/2026-09-25-manual-transaction-entry/`. Lesson: —.
