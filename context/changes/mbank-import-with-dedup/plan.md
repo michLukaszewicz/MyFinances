@@ -439,5 +439,5 @@ New EF Core migration adds `Transactions` and `ImportBatches` tables; no existin
 
 #### Automated
 
-- [ ] 7.1 `dotnet test` passes including new `ImportEndpointsTests`
-- [ ] 7.2 Re-importing the same file against a seeded database flags exactly the expected duplicates and never silently double-counts
+- [x] 7.1 `dotnet test` passes including new `ImportEndpointsTests` — 5fe7f6b
+- [x] 7.2 Re-importing the same file against a seeded database flags exactly the expected duplicates and never silently double-counts — 5fe7f6b
