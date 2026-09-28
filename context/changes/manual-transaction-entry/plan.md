@@ -282,9 +282,9 @@ proceeding to the next phase.
 
 #### Manual
 
-- [ ] 1.3 POST creates a transaction; repeating the same body returns 409 with existing snapshot; Force: true inserts anyway
-- [ ] 1.4 PUT against an imported transaction succeeds and leaves ImportBatchId unchanged
-- [ ] 1.5 DELETE succeeds against both a manually-created and an imported transaction
+- [x] 1.3 POST creates a transaction; repeating the same body returns 409 with existing snapshot; Force: true inserts anyway
+- [x] 1.4 PUT against an imported transaction succeeds and leaves ImportBatchId unchanged
+- [x] 1.5 DELETE succeeds against both a manually-created and an imported transaction
 
 ### Phase 2: Frontend add/edit/delete UI
 
@@ -295,9 +295,9 @@ proceeding to the next phase.
 
 #### Manual
 
-- [ ] 2.3 No accounts configured shows Settings-link message instead of the form
-- [ ] 2.4 Adding a transaction succeeds and appears in the home list without a page reload
-- [ ] 2.5 Editing a manual and an imported row pre-fills and saves correctly
-- [ ] 2.6 Deleting a manual and an imported row removes it after the two-step confirm
-- [ ] 2.7 Duplicate warning shows existing transaction details; "anyway" inserts/saves regardless
-- [ ] 2.8 A manually-entered transaction is flagged as a duplicate when later imported via mBank CSV
+- [x] 2.3 No accounts configured shows Settings-link message instead of the form
+- [x] 2.4 Adding a transaction succeeds and appears in the home list without a page reload
+- [x] 2.5 Editing a manual and an imported row pre-fills and saves correctly
+- [x] 2.6 Deleting a manual and an imported row removes it after the two-step confirm
+- [x] 2.7 Duplicate warning shows existing transaction details; "anyway" inserts/saves regardless
+- [x] 2.8 A manually-entered transaction is flagged as a duplicate when later imported via mBank CSV
