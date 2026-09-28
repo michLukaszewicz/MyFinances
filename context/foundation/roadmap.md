@@ -49,7 +49,7 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | S-06  | category-average-deviation-signal| see a category's spend flagged as above/below/in line with its historical average   | S-04           | FR-013                        | proposed |
 | S-07  | revolut-import                   | import a Revolut CSV statement through the same import/dedup/categorize/chart loop  | S-01           | FR-003                        | proposed |
 | S-08  | erste-import                     | import an Erste Bank Polska CSV statement through the same loop                     | S-07           | FR-003                        | proposed |
-| S-09  | transaction-history-view         | see a chronological list of their imported/manually-entered transactions on the dashboard (date, description, amount, category) | S-01           | FR-011 (partial)              | in-progress |
+| S-09  | transaction-history-view         | see a chronological list of their imported/manually-entered transactions on the dashboard (date, description, amount, category) | S-01           | FR-011 (partial)              | done |
 | S-10  | account-management                | add/edit/remove their own bank accounts (account number + bank name) via a settings page, and pick from them when manually entering a transaction | F-01           | FR-009, FR-010                | in-progress |
 
 ## Streams
@@ -203,7 +203,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Low risk — read-only listing over data S-01 already persists; no new write paths or dedup logic involved.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-10: Account management
 
@@ -263,3 +263,4 @@ No cross-cutting open questions at this time — PRD's own `## Open Questions` s
 - **F-01: (foundation) user can register and log in with email/password; the session persists across visits; every API endpoint requires auth and scopes data to the logged-in user.** — Archived 2026-09-28 → `context/archive/2026-09-22-minimal-auth-scaffold/`. Lesson: —.
 - **S-01: user can import an mBank CSV export, see any detected duplicate shown side-by-side (existing vs. incoming) to decide skip/keep, and see an import summary (imported count / skipped-duplicate count).** — Archived 2026-09-28 → `context/archive/2026-09-25-mbank-import-with-dedup/`. Lesson: —.
 - **S-03: user can select a category for each transaction in the queue (no auto-suggestion); internal transfers are auto-flagged by default (overridable by hand); the user can re-categorize any transaction at any time.** — Archived 2026-09-28 → `context/archive/2026-09-25-categorization-queue/`. Lesson: —.
+- **S-09: user sees a chronological list of their imported and manually-entered transactions on the dashboard (date, description, amount, category), replacing the current static "you haven't imported anything yet" placeholder once data exists.** — Archived 2026-09-28 → `context/archive/2026-09-25-transaction-history-view/`. Lesson: —.
