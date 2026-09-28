@@ -1,7 +1,9 @@
+using System.Data;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using MyFinances.Api.Categorization;
 using MyFinances.Api.Import;
 
@@ -78,6 +80,11 @@ public static class TransactionEndpoints
 
             var hash = DedupHash.ComputeHash(userId, request.Date, request.Amount, request.Description, request.AccountId);
 
+            // Serializable transaction so the duplicate-hash check and the insert are atomic
+            // against a concurrent identical request — see BeginTransactionIfSupportedAsync for
+            // why this is best-effort rather than unconditional.
+            await using var dbTransaction = await BeginTransactionIfSupportedAsync(db);
+
             if (!request.Force)
             {
                 var duplicate = await db.Transactions
@@ -107,6 +114,11 @@ public static class TransactionEndpoints
 
             db.Transactions.Add(transaction);
             await db.SaveChangesAsync();
+
+            if (dbTransaction is not null)
+            {
+                await dbTransaction.CommitAsync();
+            }
 
             var categoryName = await db.Categories.Where(c => c.Id == request.CategoryId).Select(c => c.Name).FirstAsync();
 
@@ -145,6 +157,11 @@ public static class TransactionEndpoints
 
             var hash = DedupHash.ComputeHash(userId, request.Date, request.Amount, request.Description, request.AccountId);
 
+            // Serializable transaction so the duplicate-hash check and the update are atomic
+            // against a concurrent identical request — see BeginTransactionIfSupportedAsync for
+            // why this is best-effort rather than unconditional.
+            await using var dbTransaction = await BeginTransactionIfSupportedAsync(db);
+
             if (!request.Force)
             {
                 var duplicate = await db.Transactions
@@ -170,6 +187,11 @@ public static class TransactionEndpoints
             transaction.Hash = hash;
 
             await db.SaveChangesAsync();
+
+            if (dbTransaction is not null)
+            {
+                await dbTransaction.CommitAsync();
+            }
 
             var categoryName = await db.Categories.Where(c => c.Id == request.CategoryId).Select(c => c.Name).FirstAsync();
 
@@ -199,6 +221,23 @@ public static class TransactionEndpoints
             return Results.NoContent();
         })
         .AddEndpointFilter(RequireValidAntiforgery);
+    }
+
+    // Best-effort: the EF Core InMemory provider used by the test suite (see
+    // Tests/AuthApiFactory.cs) doesn't support transactions and throws InvalidOperationException
+    // from BeginTransactionAsync. Production (Npgsql) supports it, so Serializable actually
+    // closes the duplicate-hash check-then-write race there; tests fall back to no transaction,
+    // which is fine since they don't exercise concurrent requests.
+    private static async ValueTask<IDbContextTransaction?> BeginTransactionIfSupportedAsync(AppDbContext db)
+    {
+        try
+        {
+            return await db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
     }
 
     private static async ValueTask<object?> RequireValidAntiforgery(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
