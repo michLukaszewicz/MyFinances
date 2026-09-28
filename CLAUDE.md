@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **MyFinances** — a personal-finance MVP (single user) for importing bank CSV statements (mBank, then Revolut, then Erste Bank Polska), manually categorizing transactions, detecting duplicates and internal transfers, and visualizing spend-per-category against both historical averages and optional per-category budgets. Full requirements live in [context/foundation/prd.md](context/foundation/prd.md). Solo build, after-hours, 3-week MVP timeline, no multi-tenant/sharing.
 
-The repo is currently a freshly-scaffolded split stack — the backend is still the default WeatherForecast template and the frontend is still the default React Router welcome page. No domain code (auth, import, categorization, charts) has been implemented yet.
+Foundation (F-01) and slices S-01/S-02/S-03/S-09/S-10 are implemented and merged to `main` — auth (register/login/persistent session), mBank CSV import with dedup, manual transaction entry, the categorization queue (with internal-transfer auto-flagging), the dashboard transaction history view, and user-managed bank accounts. See [context/foundation/roadmap.md](context/foundation/roadmap.md) for current per-slice status; not-yet-built slices (S-04 donut chart, S-05 budget-vs-actual, S-06 average-deviation signal, S-07 Revolut import, S-08 Erste import) remain `proposed`.
 
 ## Architecture
 
@@ -33,7 +33,7 @@ npm run build        # production build -> build/client + build/server
 npm run typecheck    # react-router typegen && tsc
 ```
 
-No test suite exists yet in either project.
+Backend has an xUnit test suite (`MyFinances/backend/Tests`, run via `dotnet test` from `MyFinances/backend`). No frontend test framework exists yet.
 
 ## 10xDevs AI Toolkit context
 

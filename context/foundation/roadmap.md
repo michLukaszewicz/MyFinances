@@ -138,8 +138,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Prerequisites:** S-03
 - **Parallel with:** S-07
 - **Blockers:** —
-- **Unknowns:**
-  - S-01's home page currently always shows a static "you haven't imported any transactions yet" empty state regardless of whether the user actually has data (no transaction-count/listing query exists yet) — flagged during S-01 manual testing 2026-09-25. This gap is now tracked as S-09 (transaction-history-view); until S-09 lands, the empty-state copy is a known simplification, not a fixed requirement. Owner: implementer. Block: no.
+- **Unknowns:** — (S-09, transaction-history-view, has landed and resolved the static empty-state gap this used to track.)
 - **Risk:** This is the slice the PRD's Primary Success Criterion is built around — correctness here depends entirely on S-03's categorization and internal-transfer flagging being right first.
 - **Status:** proposed
 
