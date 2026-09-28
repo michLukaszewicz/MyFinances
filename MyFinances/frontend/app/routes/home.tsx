@@ -82,6 +82,14 @@ function formatAmount(amount: number): string {
   return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// Local calendar date (not UTC) in the yyyy-MM-dd shape the <input type="date"> / backend expect.
+function todayDateInputValue(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
 async function parseErrorBody(
   error: unknown,
 ): Promise<{ message: string; existingTransaction?: ExistingTransaction }> {
@@ -282,7 +290,7 @@ export default function Home() {
 
   function startAdd() {
     setEditingId(null);
-    setDate("");
+    setDate(todayDateInputValue());
     setDescription("");
     setAmount("");
     setAccountId("");
