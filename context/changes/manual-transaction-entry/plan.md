@@ -277,8 +277,8 @@ proceeding to the next phase.
 
 #### Automated
 
-- [x] 1.1 Backend builds: `dotnet build`
-- [x] 1.2 Backend tests pass: `dotnet test`
+- [x] 1.1 Backend builds: `dotnet build` — efa758f
+- [x] 1.2 Backend tests pass: `dotnet test` — efa758f
 
 #### Manual
 
@@ -290,8 +290,8 @@ proceeding to the next phase.
 
 #### Automated
 
-- [x] 2.1 Frontend typechecks: `npm run typecheck`
-- [x] 2.2 Frontend builds: `npm run build`
+- [x] 2.1 Frontend typechecks: `npm run typecheck` — fa2938d
+- [x] 2.2 Frontend builds: `npm run build` — fa2938d
 
 #### Manual
 
