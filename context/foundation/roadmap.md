@@ -40,7 +40,7 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 
 | ID    | Change ID                       | Outcome (user can …)                                                              | Prerequisites | PRD refs                    | Status   |
 | ----- | -------------------------------- | ----------------------------------------------------------------------------------- | -------------- | ---------------------------- | -------- |
-| F-01  | minimal-auth-scaffold            | (foundation) register, log in, and stay logged in via a persistent session          | —              | FR-001, Access Control        | in-progress |
+| F-01  | minimal-auth-scaffold            | (foundation) register, log in, and stay logged in via a persistent session          | —              | FR-001, Access Control        | done |
 | S-01  | mbank-import-with-dedup          | import an mBank CSV, resolve flagged duplicates, and see an import summary          | F-01           | FR-002, FR-004, US-01, Guardrail (dedup) | in-progress |
 | S-02  | manual-transaction-entry         | manually add, edit, and delete transactions without creating import duplicates      | S-01           | FR-010                        | done |
 | S-03  | categorization-queue             | categorize queued transactions, with internal transfers auto-flagged (overridable)  | S-01, S-10     | FR-007, FR-009, FR-015, US-01 | planning |
@@ -89,7 +89,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Sequenced first because retrofitting user-scoping onto transactions/categories built without it would mean redoing data-access code across every later slice.
-- **Status:** in-progress
+- **Status:** done
 
 ## Slices
 
@@ -260,3 +260,4 @@ No cross-cutting open questions at this time — PRD's own `## Open Questions` s
 (Empty on first generation. `/10x-archive` appends an entry here — and flips that item's `Status` to `done` — when a change whose `Change ID` matches the item is archived.)
 
 - **S-02: user can manually add, edit, and delete transactions; a manually-entered transaction is recognized as the same one if it later appears in an imported statement, so it's never duplicated.** — Archived 2026-09-28 → `context/archive/2026-09-25-manual-transaction-entry/`. Lesson: —.
+- **F-01: (foundation) user can register and log in with email/password; the session persists across visits; every API endpoint requires auth and scopes data to the logged-in user.** — Archived 2026-09-28 → `context/archive/2026-09-22-minimal-auth-scaffold/`. Lesson: —.
