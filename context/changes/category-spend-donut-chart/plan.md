@@ -227,14 +227,14 @@ Category-spend aggregation itself runs over at most one user's one month of tran
 
 #### Automated
 
-- [x] 2.1 Frontend type-checks: `npm run typecheck`
-- [x] 2.2 Frontend builds: `npm run build`
+- [x] 2.1 Frontend type-checks: `npm run typecheck` — f83d7ad
+- [x] 2.2 Frontend builds: `npm run build` — f83d7ad
 
 #### Manual
 
-- [x] 2.3 Donut chart renders with distinct colors, working legend/tooltip, above the transaction list
-- [x] 2.4 Clicking a slice filters the list to that category/current month; clicking again clears it
-- [x] 2.5 "Filtering by: X · Clear" affordance appears and works correctly
-- [x] 2.6 Empty state (zero categorized current-month spend) shows message + working `/categorize` link
-- [x] 2.7 Uncategorized/internal-transfer transactions confirmed absent from chart totals
-- [x] 2.8 Dark-theme contrast of chart colors/legend/tooltip is acceptable
+- [x] 2.3 Donut chart renders with distinct colors, working legend/tooltip, above the transaction list — f83d7ad
+- [x] 2.4 Clicking a slice filters the list to that category/current month; clicking again clears it — f83d7ad
+- [x] 2.5 "Filtering by: X · Clear" affordance appears and works correctly — f83d7ad
+- [x] 2.6 Empty state (zero categorized current-month spend) shows message + working `/categorize` link — f83d7ad
+- [x] 2.7 Uncategorized/internal-transfer transactions confirmed absent from chart totals — f83d7ad
+- [x] 2.8 Dark-theme contrast of chart colors/legend/tooltip is acceptable — f83d7ad
