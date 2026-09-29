@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLoaderData } from "react-router";
 import type { Route } from "./+types/home";
 import { AppHeader } from "../components/AppHeader";
+import { CategorySpendDonut } from "../components/CategorySpendDonut";
 import { apiFetch, ApiError } from "../lib/api";
 
 const valueProps = [
@@ -90,6 +91,11 @@ function todayDateInputValue(): string {
   return `${now.getFullYear()}-${month}-${day}`;
 }
 
+// Query-string suffix restricting the transaction list to one category in the current month.
+function categoryFilterQuery(categoryId: string | null): string {
+  return categoryId ? `&categoryId=${encodeURIComponent(categoryId)}&currentMonth=true` : "";
+}
+
 async function parseErrorBody(
   error: unknown,
 ): Promise<{ message: string; existingTransaction?: ExistingTransaction }> {
@@ -158,6 +164,45 @@ export default function Home() {
   const [pendingDuplicate, setPendingDuplicate] = useState<ExistingTransaction | null>(null);
 
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedCategoryName, setSelectedCategoryName] = useState<string | null>(null);
+  const [filterLoading, setFilterLoading] = useState(false);
+  const isFirstFilterRun = useRef(true);
+
+  // Re-fetch page 1 when the donut selection changes. The first run is skipped: the
+  // clientLoader already provided the unfiltered page 1.
+  useEffect(() => {
+    if (isFirstFilterRun.current) {
+      isFirstFilterRun.current = false;
+      return;
+    }
+    if (!user) return;
+    let cancelled = false;
+    async function loadFiltered() {
+      setLoadMoreError(null);
+      setFilterLoading(true);
+      try {
+        const response = await apiFetch<TransactionListResponseDto>(
+          `/transactions?skip=0&take=${TRANSACTIONS_PAGE_SIZE}${categoryFilterQuery(selectedCategoryId)}`,
+        );
+        if (cancelled) return;
+        setItems(response.items);
+        setHasMore(response.hasMore);
+      } catch {
+        if (!cancelled) {
+          setLoadMoreError("Something went wrong loading transactions. Please try again.");
+        }
+      } finally {
+        if (!cancelled) setFilterLoading(false);
+      }
+    }
+    void loadFiltered();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategoryId]);
 
   useEffect(() => {
     if (!user) return;
@@ -247,14 +292,20 @@ export default function Home() {
     );
   }
 
-  const hasTransactions = items.length > 0;
+  // A filter that matches nothing must still show the list branch (with the Clear affordance).
+  const hasTransactions = items.length > 0 || selectedCategoryId !== null;
+
+  function handleSelectCategory(id: string | null, name: string | null) {
+    setSelectedCategoryId(id);
+    setSelectedCategoryName(name);
+  }
 
   async function handleLoadMore() {
     setLoadMoreError(null);
     setLoadingMore(true);
     try {
       const response = await apiFetch<TransactionListResponseDto>(
-        `/transactions?skip=${items.length}&take=${TRANSACTIONS_PAGE_SIZE}`,
+        `/transactions?skip=${items.length}&take=${TRANSACTIONS_PAGE_SIZE}${categoryFilterQuery(selectedCategoryId)}`,
       );
       setItems((prev) => [...prev, ...response.items]);
       setHasMore(response.hasMore);
@@ -268,7 +319,9 @@ export default function Home() {
   async function refreshTransactions() {
     try {
       const take = Math.max(items.length, TRANSACTIONS_PAGE_SIZE);
-      const response = await apiFetch<TransactionListResponseDto>(`/transactions?skip=0&take=${take}`);
+      const response = await apiFetch<TransactionListResponseDto>(
+        `/transactions?skip=0&take=${take}${categoryFilterQuery(selectedCategoryId)}`,
+      );
       setItems(response.items);
       setHasMore(response.hasMore);
     } catch {
@@ -534,7 +587,7 @@ export default function Home() {
           aria-hidden="true"
         />
         <div
-          className={`w-full space-y-6 px-4 text-center ${hasTransactions ? "max-w-2xl" : "max-w-[300px]"}`}
+          className="w-full max-w-2xl space-y-6 px-4 text-center"
         >
           <h1
             className="text-lg font-semibold text-gray-200 animate-[fade-slide-in_600ms_ease-out_both]"
@@ -543,12 +596,38 @@ export default function Home() {
             Welcome back, {user.email}
           </h1>
 
+          <CategorySpendDonut
+            selectedCategoryId={selectedCategoryId}
+            onSelectCategory={handleSelectCategory}
+          />
+
           {hasTransactions ? (
             <div
               className="space-y-4 text-left animate-[fade-slide-in_600ms_ease-out_both]"
               style={{ animationDelay: "100ms" }}
             >
               {transactionForm}
+
+              {selectedCategoryId && (
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <span>
+                    Filtering by: <span className="text-gray-200">{selectedCategoryName}</span> · this month
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectCategory(null, null)}
+                    className="rounded-md px-2 py-1 text-xs font-medium text-brand-400 transition-colors hover:bg-white/5 hover:text-brand-300"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+
+              {filterLoading && <p className="text-sm text-gray-400">Loading…</p>}
+
+              {!filterLoading && items.length === 0 && (
+                <p className="text-center text-sm text-gray-400">No transactions in this category this month.</p>
+              )}
 
               <ul className="space-y-2">
                 {items.map((transaction) => (
