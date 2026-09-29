@@ -213,15 +213,15 @@ Category-spend aggregation itself runs over at most one user's one month of tran
 
 #### Automated
 
-- [ ] 1.1 Backend builds: `dotnet build`
-- [ ] 1.2 Existing tests still pass: `dotnet test`
-- [ ] 1.3 New `DashboardEndpointsTests.cs` covers aggregation correctness, exclusions, zero-omission, per-user scoping, unauthenticated 401
-- [ ] 1.4 `TransactionEndpointsTests.cs` gains `categoryId`/`currentMonth` filter tests, including combined and pagination-metadata cases
+- [x] 1.1 Backend builds: `dotnet build`
+- [x] 1.2 Existing tests still pass: `dotnet test`
+- [x] 1.3 New `DashboardEndpointsTests.cs` covers aggregation correctness, exclusions, zero-omission, per-user scoping, unauthenticated 401
+- [x] 1.4 `TransactionEndpointsTests.cs` gains `categoryId`/`currentMonth` filter tests, including combined and pagination-metadata cases
 
 #### Manual
 
-- [ ] 1.5 `GET /api/dashboard/category-spend` returns sensible totals against real data via Swagger UI
-- [ ] 1.6 `GET /api/transactions?categoryId=<id>&currentMonth=true` returns only that category's current-month transactions
+- [x] 1.5 `GET /api/dashboard/category-spend` returns sensible totals against real data via Swagger UI
+- [x] 1.6 `GET /api/transactions?categoryId=<id>&currentMonth=true` returns only that category's current-month transactions
 
 ### Phase 2: Frontend — donut chart and dashboard filter wiring
 
