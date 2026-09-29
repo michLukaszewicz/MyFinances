@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using MyFinances.Api;
 using MyFinances.Api.Auth;
 using MyFinances.Api.Categorization;
+using MyFinances.Api.Dashboard;
 using MyFinances.Api.DI;
 using MyFinances.Api.Import;
 using MyFinances.Api.Transactions;
@@ -109,6 +110,7 @@ api.MapImportEndpoints();
 api.MapAccountEndpoints();
 api.MapCategorizationEndpoints();
 api.MapTransactionEndpoints();
+api.MapDashboardEndpoints();
 
 // The React SPA is built (see MyFinances/frontend, `npm run build`) and its static
 // output copied into wwwroot at publish time (see the csproj's Publish target below).
