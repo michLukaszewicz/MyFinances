@@ -129,7 +129,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:** —
 - **Risk:** Internal-transfer auto-detection heuristic needs the user's known accounts to be identifiable across banks — worth confirming the heuristic's accuracy against real data early, since it directly affects chart totals (S-04).
 - **Status:** done
-- **Follow-up (2026-09-30, `categorize-queue-only`):** `/categorize` now lists only uncategorized transactions ("Yay, all done!" when empty); the "Handled" list was removed. Category re-editing lives on the dashboard; toggling the internal-transfer flag on handled transactions has no UI right now (known gap). See `context/archive/2026-09-30-categorize-queue-only/`.
+- **Follow-up (2026-09-30, `categorize-queue-only`):** `/categorize` now lists only uncategorized transactions ("Yay, all done!" when empty); the "Handled" list was removed. Category re-editing lives on the dashboard; the internal-transfer flag of handled transactions is toggled from the dashboard edit form (issue #23). See `context/archive/2026-09-30-categorize-queue-only/`.
 
 ### S-04: Category spend donut chart
 
