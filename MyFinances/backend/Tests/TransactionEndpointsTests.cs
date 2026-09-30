@@ -411,6 +411,31 @@ public class TransactionEndpointsTests
     }
 
     [Fact]
+    public async Task List_ExposesIsInternalTransferFlag()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.Transactions.Add(new Transaction
+            {
+                Id = Guid.NewGuid(), UserId = userId, AccountId = account.Id, Date = new DateOnly(2026, 1, 5),
+                Description = "transfer", Amount = -40m, Hash = Guid.NewGuid().ToString(),
+                IsInternalTransfer = true,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var result = await (await client.GetAsync("/api/transactions?take=100")).Content
+            .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
+
+        Assert.True(Assert.Single(result!.Items).IsInternalTransfer);
+    }
+
+    [Fact]
     public async Task List_WithCategoryIdCurrentMonthAndKindIncome_ReturnsOnlyPositiveNonTransferRows()
     {
         using var factory = new AuthApiFactory();

@@ -73,7 +73,8 @@ public static class TransactionEndpoints
                     t.Amount,
                     t.CategoryId,
                     db.Categories.Where(c => c.Id == t.CategoryId).Select(c => c.Name).FirstOrDefault(),
-                    t.AccountId))
+                    t.AccountId,
+                    t.IsInternalTransfer))
                 .ToListAsync();
 
             var totalCount = await query.CountAsync();

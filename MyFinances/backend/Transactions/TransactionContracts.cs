@@ -5,9 +5,9 @@ namespace MyFinances.Api.Transactions;
 // Request/response contracts for the transaction history list and manual write endpoints
 // (TransactionEndpoints: GET /transactions, POST /transactions, PUT/DELETE /transactions/{id}).
 
-// AccountId appended as the last positional parameter so the existing single construction site
+// AccountId and IsInternalTransfer appended as the last positional parameters so the existing single construction site
 // (TransactionEndpoints.cs's GET /) doesn't need every other positional argument reordered.
-public record TransactionListItemDto(Guid Id, DateOnly Date, string Description, decimal Amount, Guid? CategoryId, string? CategoryName, Guid AccountId);
+public record TransactionListItemDto(Guid Id, DateOnly Date, string Description, decimal Amount, Guid? CategoryId, string? CategoryName, Guid AccountId, bool IsInternalTransfer);
 
 public record TransactionListResponseDto(IReadOnlyList<TransactionListItemDto> Items, bool HasMore);
 
