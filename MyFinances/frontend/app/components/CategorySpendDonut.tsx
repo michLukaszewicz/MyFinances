@@ -176,10 +176,13 @@ export function CategorySpendDonut({ kind, selectedCategoryId, refreshKey, onSel
                   type="button"
                   onClick={() => toggleEntry(entry)}
                   aria-pressed={selectedCategoryId === entry.categoryId}
-                  style={{ opacity: entry.fillOpacity }}
                   className="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-sm hover:bg-gray-800"
                 >
-                  <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: entry.fill }} />
+                  {/* Only the dot dims with the slices; dimming the text would drop it below readable contrast. */}
+                  <span
+                    className="h-3 w-3 shrink-0 rounded-full"
+                    style={{ backgroundColor: entry.fill, opacity: entry.fillOpacity }}
+                  />
                   <span className="min-w-0 flex-1 truncate text-gray-200">{entry.categoryName}</span>
                   <span className="text-gray-200">{formatAmount(entry.amount)}</span>
                   {badge && (
