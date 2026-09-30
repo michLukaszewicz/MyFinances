@@ -27,4 +27,27 @@ public class CurrentMonthRangeTests
 
         Assert.Equal(new DateOnly(2026, 10, 1), start);
     }
+
+    [Fact]
+    public void Today_LateOnUtcDay_IsNextDayInWarsawTime()
+    {
+        // 23:30 UTC on 9 Sep is 01:30 on 10 Sep in Warsaw (UTC+2). Skipped when tzdata is absent.
+        if (TimeZoneInfo.TryFindSystemTimeZoneById("Europe/Warsaw", out _) is false)
+        {
+            return;
+        }
+
+        var today = CurrentMonthRange.Today(new FixedTimeProvider(new DateTimeOffset(2026, 9, 9, 23, 30, 0, TimeSpan.Zero)));
+
+        Assert.Equal(new DateOnly(2026, 9, 10), today);
+    }
+
+    [Fact]
+    public void MonthOf_ReturnsFirstAndLastDayOfTheGivenDaysMonth()
+    {
+        var (start, end) = CurrentMonthRange.MonthOf(new DateOnly(2028, 2, 10));
+
+        Assert.Equal(new DateOnly(2028, 2, 1), start);
+        Assert.Equal(new DateOnly(2028, 2, 29), end);
+    }
 }

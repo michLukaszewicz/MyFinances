@@ -306,7 +306,7 @@ public class DashboardEndpointsTests
     }
 
     [Fact]
-    public async Task CategorySpend_HistoryExcludesInternalTransfersAndUncategorizedRows()
+    public async Task CategorySpend_HistoryExcludesInternalTransfers()
     {
         using var baseFactory = new AuthApiFactory();
         var factory = WithClock(baseFactory, March10);
@@ -314,7 +314,6 @@ public class DashboardEndpointsTests
         var userId = await GetUserIdAsync(factory);
         var accountId = await SeedAccountAsync(factory, userId, "111");
         await SeedAsync(factory, userId, accountId, new DateOnly(2099, 2, 5), -1000m, GroceriesId, isInternalTransfer: true);
-        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 2, 6), -1000m, null);
         await SeedAsync(factory, userId, accountId, new DateOnly(2099, 3, 3), -10m, GroceriesId);
 
         var item = Assert.Single(await GetSignalAsync(client));

@@ -10,8 +10,13 @@ public static class CurrentMonthRange
 
     public static (DateOnly Start, DateOnly End) Get(TimeProvider? clock = null)
     {
-        var today = Today(clock);
-        var start = new DateOnly(today.Year, today.Month, 1);
+        return MonthOf(Today(clock));
+    }
+
+    // Month boundaries for an already-resolved day, so a caller that also needs the day itself reads the clock once.
+    public static (DateOnly Start, DateOnly End) MonthOf(DateOnly day)
+    {
+        var start = new DateOnly(day.Year, day.Month, 1);
         var end = start.AddMonths(1).AddDays(-1);
         return (start, end);
     }
