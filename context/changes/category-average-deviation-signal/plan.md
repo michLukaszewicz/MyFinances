@@ -169,13 +169,13 @@ The spend endpoint now reads all of a user's earlier categorized spend rows (sin
 
 #### Automated
 
-- [ ] 1.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 1.2 All backend tests pass, including the new ones: `dotnet test` (from `MyFinances/backend`)
+- [x] 1.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
+- [x] 1.2 All backend tests pass, including the new ones: `dotnet test` (from `MyFinances/backend`)
 
 #### Manual
 
-- [ ] 1.3 Via Swagger with the test account and transactions in prior months, `GET /api/dashboard/category-spend` returns `averageToDate` and `deviation` for a category with history and `null` for both on a category whose first spend is this month
-- [ ] 1.4 `GET /api/dashboard/category-income` output shape is unchanged
+- [x] 1.3 Via Swagger with the test account and transactions in prior months, `GET /api/dashboard/category-spend` returns `averageToDate` and `deviation` for a category with history and `null` for both on a category whose first spend is this month
+- [x] 1.4 `GET /api/dashboard/category-income` output shape is unchanged
 
 ### Phase 2: Frontend category list with badge
 
