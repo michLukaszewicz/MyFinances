@@ -169,24 +169,24 @@ The spend endpoint now reads all of a user's earlier categorized spend rows (sin
 
 #### Automated
 
-- [x] 1.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [x] 1.2 All backend tests pass, including the new ones: `dotnet test` (from `MyFinances/backend`)
+- [x] 1.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — 2e185be
+- [x] 1.2 All backend tests pass, including the new ones: `dotnet test` (from `MyFinances/backend`) — 2e185be
 
 #### Manual
 
-- [x] 1.3 Via Swagger with the test account and transactions in prior months, `GET /api/dashboard/category-spend` returns `averageToDate` and `deviation` for a category with history and `null` for both on a category whose first spend is this month
-- [x] 1.4 `GET /api/dashboard/category-income` output shape is unchanged
+- [x] 1.3 Via Swagger with the test account and transactions in prior months, `GET /api/dashboard/category-spend` returns `averageToDate` and `deviation` for a category with history and `null` for both on a category whose first spend is this month — 2e185be
+- [x] 1.4 `GET /api/dashboard/category-income` output shape is unchanged — 2e185be
 
 ### Phase 2: Frontend category list with badge
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npm run typecheck` (from `MyFinances/frontend`)
-- [ ] 2.2 Production build succeeds: `npm run build` (from `MyFinances/frontend`)
+- [x] 2.1 Type checking passes: `npm run typecheck` (from `MyFinances/frontend`)
+- [x] 2.2 Production build succeeds: `npm run build` (from `MyFinances/frontend`)
 
 #### Manual
 
-- [ ] 2.3 Spend donut shows the list with correct colour dots, names and amounts; rows with prior-month history show the right badge and average, rows without history show no badge
-- [ ] 2.4 Clicking a list row filters the transaction list like clicking its slice, and clicking it again clears the filter
-- [ ] 2.5 Income donut renders and behaves exactly as before
-- [ ] 2.6 Adding/editing/deleting a transaction refreshes the list and badges
+- [x] 2.3 Spend donut shows the list with correct colour dots, names and amounts; rows with prior-month history show the right badge and average, rows without history show no badge
+- [x] 2.4 Clicking a list row filters the transaction list like clicking its slice, and clicking it again clears the filter
+- [x] 2.5 Income donut renders and behaves exactly as before
+- [x] 2.6 Adding/editing/deleting a transaction refreshes the list and badges

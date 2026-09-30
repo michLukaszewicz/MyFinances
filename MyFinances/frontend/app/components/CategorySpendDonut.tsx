@@ -8,7 +8,18 @@ interface CategorySpendDto {
   categoryId: string;
   categoryName: string;
   amount: number;
+  // Only returned by the spend endpoint; null when there is no history to compare against.
+  averageToDate?: number | null;
+  deviation?: Deviation | null;
 }
+
+type Deviation = "above" | "below" | "inLine";
+
+const DEVIATION_BADGE: Record<Deviation, { label: string; className: string }> = {
+  above: { label: "Above average", className: "bg-red-900/40 text-red-300" },
+  below: { label: "Below average", className: "bg-green-900/40 text-green-300" },
+  inLine: { label: "In line", className: "bg-gray-700 text-gray-300" },
+};
 
 export type FlowKind = "spend" | "income";
 
@@ -113,14 +124,18 @@ export function CategorySpendDonut({ kind, selectedCategoryId, refreshKey, onSel
     fillOpacity: selectedCategoryId === null || selectedCategoryId === entry.categoryId ? 1 : 0.35,
   }));
 
-  function handleSliceClick(_slice: unknown, index: number) {
-    const entry = data?.[index];
-    if (!entry) return;
+  function toggleEntry(entry: CategorySpendDto) {
     if (entry.categoryId === selectedCategoryId) {
       onSelectCategory(null, null);
     } else {
       onSelectCategory(entry.categoryId, entry.categoryName);
     }
+  }
+
+  function handleSliceClick(_slice: unknown, index: number) {
+    const entry = data?.[index];
+    if (!entry) return;
+    toggleEntry(entry);
   }
 
   return (
@@ -151,6 +166,36 @@ export function CategorySpendDonut({ kind, selectedCategoryId, refreshKey, onSel
           </PieChart>
         </ResponsiveContainer>
       </div>
+      {kind === "spend" && (
+        <ul className="space-y-1">
+          {chartData.map((entry) => {
+            const badge = entry.deviation ? DEVIATION_BADGE[entry.deviation] : null;
+            return (
+              <li key={entry.categoryId}>
+                <button
+                  type="button"
+                  onClick={() => toggleEntry(entry)}
+                  aria-pressed={selectedCategoryId === entry.categoryId}
+                  style={{ opacity: entry.fillOpacity }}
+                  className="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-sm hover:bg-gray-800"
+                >
+                  <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: entry.fill }} />
+                  <span className="min-w-0 flex-1 truncate text-gray-200">{entry.categoryName}</span>
+                  <span className="text-gray-200">{formatAmount(entry.amount)}</span>
+                  {badge && (
+                    <span className="flex flex-col items-end">
+                      <span className={`rounded px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
+                      {entry.averageToDate != null && (
+                        <span className="text-xs text-gray-400">avg by this day: {formatAmount(entry.averageToDate)}</span>
+                      )}
+                    </span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
