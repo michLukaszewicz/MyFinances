@@ -1,18 +1,13 @@
 import { useEffect, useState } from "react";
 import { redirect } from "react-router";
 import { apiFetch, ApiError } from "../lib/api";
+import { categoriesForAmount, type CategoryDto } from "../lib/categories";
 import { AppHeader } from "../components/AppHeader";
 
 export async function clientLoader() {
   const res = await fetch("/api/auth/me", { credentials: "include" });
   if (!res.ok) throw redirect("/login");
   return null;
-}
-
-// Mirrors the backend's CategorizationContracts.cs CategoryDto.
-interface CategoryDto {
-  id: string;
-  name: string;
 }
 
 // Mirrors the backend's CategorizationContracts.cs TransactionQueueItemDto.
@@ -183,7 +178,7 @@ export default function Categorize() {
                         className="w-full rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:opacity-50"
                       >
                         <option value="">Select a category…</option>
-                        {categories.map((category) => (
+                        {categoriesForAmount(categories, upNext.amount).map((category) => (
                           <option key={category.id} value={category.id}>
                             {category.name}
                           </option>
@@ -251,7 +246,7 @@ export default function Categorize() {
                             className="rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:opacity-50"
                           >
                             <option value="">Uncategorized</option>
-                            {categories.map((category) => (
+                            {categoriesForAmount(categories, item.amount, item.categoryId).map((category) => (
                               <option key={category.id} value={category.id}>
                                 {category.name}
                               </option>
