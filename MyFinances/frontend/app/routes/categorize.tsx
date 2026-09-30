@@ -40,7 +40,6 @@ async function extractErrorMessage(error: unknown): Promise<string> {
 export default function Categorize() {
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [queue, setQueue] = useState<TransactionQueueItemDto[]>([]);
-  const [handled, setHandled] = useState<TransactionQueueItemDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -49,18 +48,13 @@ export default function Categorize() {
   const [upNextError, setUpNextError] = useState<string | null>(null);
   const [savingUpNext, setSavingUpNext] = useState(false);
 
-  const [savingHandledId, setSavingHandledId] = useState<string | null>(null);
-  const [handledErrors, setHandledErrors] = useState<Record<string, string>>({});
-
   async function loadAll() {
-    const [categoryList, queueList, handledList] = await Promise.all([
+    const [categoryList, queueList] = await Promise.all([
       apiFetch<CategoryDto[]>("/categorization/categories"),
       apiFetch<TransactionQueueItemDto[]>("/categorization/queue"),
-      apiFetch<TransactionQueueItemDto[]>("/categorization/handled"),
     ]);
     setCategories(categoryList);
     setQueue(queueList);
-    setHandled(handledList);
   }
 
   useEffect(() => {
@@ -110,30 +104,6 @@ export default function Categorize() {
     }
   }
 
-  async function handleUpdateHandled(
-    item: TransactionQueueItemDto,
-    changes: { categoryId?: string | null; isInternalTransfer?: boolean },
-  ) {
-    setHandledErrors((prev) => ({ ...prev, [item.id]: "" }));
-    setSavingHandledId(item.id);
-    try {
-      await apiFetch<TransactionQueueItemDto>(`/categorization/transactions/${item.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          CategoryId: changes.categoryId ?? item.categoryId,
-          IsInternalTransfer: changes.isInternalTransfer ?? item.isInternalTransfer,
-        }),
-      });
-      await loadAll();
-    } catch (err) {
-      const message = await extractErrorMessage(err);
-      setHandledErrors((prev) => ({ ...prev, [item.id]: message }));
-    } finally {
-      setSavingHandledId(null);
-    }
-  }
-
   return (
     <>
       <AppHeader authenticated />
@@ -148,7 +118,7 @@ export default function Categorize() {
           ) : (
             <>
               <section className="space-y-2">
-                <h2 className="text-sm font-medium text-gray-200">Up next</h2>
+                {upNext && <h2 className="text-sm font-medium text-gray-200">Up next</h2>}
                 {upNext ? (
                   <form
                     onSubmit={handleSaveUpNext}
@@ -207,22 +177,18 @@ export default function Categorize() {
                     </button>
                   </form>
                 ) : (
-                  <p className="text-sm text-gray-400">
-                    Nothing left to categorize — every transaction has been handled.
-                  </p>
+                  <p className="text-center text-sm text-gray-400">Yay, all done! 🎉</p>
                 )}
               </section>
 
-              <section className="space-y-2">
-                <h2 className="text-sm font-medium text-gray-200">Handled</h2>
-                {handled.length === 0 ? (
-                  <p className="text-sm text-gray-400">No transactions have been handled yet.</p>
-                ) : (
+              {queue.length > 1 && (
+                <section className="space-y-2">
+                  <h2 className="text-sm font-medium text-gray-200">Remaining</h2>
                   <ul className="space-y-2">
-                    {handled.map((item) => (
+                    {queue.slice(1).map((item) => (
                       <li
                         key={item.id}
-                        className="space-y-2 rounded-lg border border-gray-800 p-3 text-sm text-gray-200"
+                        className="space-y-1 rounded-lg border border-gray-800 p-3 text-sm text-gray-200"
                       >
                         <div className="flex items-center justify-between">
                           <span>
@@ -235,48 +201,11 @@ export default function Categorize() {
                         <p className="text-xs text-gray-400">
                           {item.bankName} — {item.accountNumber}
                         </p>
-
-                        <div className="flex flex-wrap items-center gap-3">
-                          <select
-                            value={item.categoryId ?? ""}
-                            disabled={item.isInternalTransfer || savingHandledId === item.id}
-                            onChange={(e) =>
-                              void handleUpdateHandled(item, { categoryId: e.target.value })
-                            }
-                            className="rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:opacity-50"
-                          >
-                            <option value="">Uncategorized</option>
-                            {categoriesForAmount(categories, item.amount, item.categoryId).map((category) => (
-                              <option key={category.id} value={category.id}>
-                                {category.name}
-                              </option>
-                            ))}
-                          </select>
-
-                          <label className="flex items-center gap-2 text-sm text-gray-200">
-                            <input
-                              type="checkbox"
-                              checked={item.isInternalTransfer}
-                              disabled={savingHandledId === item.id}
-                              onChange={(e) =>
-                                void handleUpdateHandled(item, {
-                                  isInternalTransfer: e.target.checked,
-                                })
-                              }
-                              className="h-4 w-4 rounded border-gray-700 bg-transparent text-brand-500 focus:ring-brand-500"
-                            />
-                            Internal transfer
-                          </label>
-                        </div>
-
-                        {handledErrors[item.id] && (
-                          <p className="text-sm text-red-600">{handledErrors[item.id]}</p>
-                        )}
                       </li>
                     ))}
                   </ul>
-                )}
-              </section>
+                </section>
+              )}
             </>
           )}
         </div>
