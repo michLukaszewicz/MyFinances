@@ -46,7 +46,7 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | S-03  | categorization-queue             | categorize queued transactions, with internal transfers auto-flagged (overridable)  | S-01, S-10     | FR-007, FR-009, FR-015, US-01 | done |
 | S-04  | category-spend-donut-chart       | see a donut chart of category spend for the current month, filterable by category   | S-03           | FR-011, FR-012, US-01         | done |
 | S-05  | category-budget-vs-actual        | optionally set a per-category budget and see actual-vs-budget alongside the chart   | S-04           | FR-017                        | proposed |
-| S-06  | category-average-deviation-signal| see a category's spend flagged as above/below/in line with its historical average   | S-04           | FR-013                        | proposed |
+| S-06  | category-average-deviation-signal| see a category's spend flagged as above/below/in line with its historical average   | S-04           | FR-013                        | in-progress |
 | S-07  | revolut-import                   | import a Revolut CSV statement through the same import/dedup/categorize/chart loop  | S-01           | FR-003                        | proposed |
 | S-08  | erste-import                     | import an Erste Bank Polska CSV statement through the same loop                     | S-07           | FR-003                        | proposed |
 | S-09  | transaction-history-view         | see a chronological list of their imported/manually-entered transactions on the dashboard (date, description, amount, category) | S-01           | FR-011 (partial)              | done |
@@ -165,7 +165,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Can only be verified end-to-end once real usage spans more than 1 month; plan and implement it, but full verification is naturally delayed relative to the other slices.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-07: Revolut import
 

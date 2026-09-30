@@ -19,16 +19,18 @@ public static class DashboardEndpoints
             AppDbContext db,
             TransferDetectionService transferDetection,
             UserManager<AppUser> userManager,
-            ClaimsPrincipal principal) =>
-            GetCategoryTotalsAsync(db, transferDetection, userManager, principal, income: false));
+            ClaimsPrincipal principal,
+            TimeProvider clock) =>
+            GetCategoryTotalsAsync(db, transferDetection, userManager, principal, clock, income: false));
 
         // Income: positive amounts (salary, refunds, ...), categorized and non-transfer.
         dashboard.MapGet("/category-income", (
             AppDbContext db,
             TransferDetectionService transferDetection,
             UserManager<AppUser> userManager,
-            ClaimsPrincipal principal) =>
-            GetCategoryTotalsAsync(db, transferDetection, userManager, principal, income: true));
+            ClaimsPrincipal principal,
+            TimeProvider clock) =>
+            GetCategoryTotalsAsync(db, transferDetection, userManager, principal, clock, income: true));
     }
 
     private static async Task<IResult> GetCategoryTotalsAsync(
@@ -36,6 +38,7 @@ public static class DashboardEndpoints
         TransferDetectionService transferDetection,
         UserManager<AppUser> userManager,
         ClaimsPrincipal principal,
+        TimeProvider clock,
         bool income)
     {
         var userId = principal.GetUserId(userManager);
@@ -44,7 +47,9 @@ public static class DashboardEndpoints
         // CategorizationEndpoints), so IsInternalTransfer is current when we exclude it.
         await transferDetection.DetectAsync(userId, db);
 
-        var range = CurrentMonthRange.Get();
+        // Read the clock once so `today` and the month range can never straddle a boundary.
+        var today = CurrentMonthRange.Today(clock);
+        var range = CurrentMonthRange.MonthOf(today);
 
         var rows = await db.Transactions
             .AsNoTracking()
@@ -59,15 +64,58 @@ public static class DashboardEndpoints
 
         // Grouped in memory: DB-side GroupBy over this shape doesn't reliably translate
         // (same precedent as ImportEndpoints).
-        var result = rows
+        var groups = rows
             .GroupBy(t => t.CategoryId)
             .OrderBy(g => g.First().Category!.SortOrder)
-            .Select(g => new CategorySpendDto(
-                g.First().Category!.Id,
-                g.First().Category!.Name,
-                g.Sum(t => income ? t.Amount : -t.Amount)))
             .ToList();
 
-        return Results.Ok(result);
+        if (income)
+        {
+            return Results.Ok(groups
+                .Select(g => new CategorySpendDto(
+                    g.First().Category!.Id,
+                    g.First().Category!.Name,
+                    g.Sum(t => t.Amount)))
+                .ToList());
+        }
+
+        // Spend signal: compare spend-to-date against the same day-of-month window in prior
+        // months. History only decorates categories that already have current-month spend.
+        var categoryIds = groups.Select(g => g.First().Category!.Id).ToList();
+        var history = categoryIds.Count == 0
+            ? new Dictionary<Guid, List<(DateOnly Date, decimal Amount)>>()
+            : (await db.Transactions
+                .AsNoTracking()
+                .Where(t => t.UserId == userId
+                    && t.CategoryId != null
+                    && categoryIds.Contains(t.CategoryId.Value)
+                    && !t.IsInternalTransfer
+                    && t.Amount < 0
+                    && t.Date < range.Start)
+                .Select(t => new { CategoryId = t.CategoryId!.Value, t.Date, t.Amount })
+                .ToListAsync())
+                .GroupBy(t => t.CategoryId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(t => (t.Date, Amount: -t.Amount)).ToList());
+
+        var spendResult = groups
+            .Select(g =>
+            {
+                var categoryId = g.First().Category!.Id;
+                var toDate = g.Where(t => t.Date <= today).Sum(t => -t.Amount);
+                var signal = history.TryGetValue(categoryId, out var prior)
+                    ? CategoryDeviation.Calculate(prior, toDate, today)
+                    : null;
+                return new CategorySpendSignalDto(
+                    categoryId,
+                    g.First().Category!.Name,
+                    g.Sum(t => -t.Amount),
+                    signal?.AverageToDate,
+                    signal?.Deviation);
+            })
+            .ToList();
+
+        return Results.Ok(spendResult);
     }
 }

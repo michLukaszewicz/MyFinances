@@ -85,6 +85,7 @@ builder.Services.AddAntiforgery(options => { options.HeaderName = "X-XSRF-TOKEN"
 
 builder.Services.AddImportServices();
 builder.Services.AddScoped<TransferDetectionService>();
+builder.Services.AddSingleton(TimeProvider.System);
 
 var app = builder.Build();
 
