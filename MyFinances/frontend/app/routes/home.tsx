@@ -41,6 +41,7 @@ interface Transaction {
   categoryId: string | null;
   categoryName: string | null;
   accountId: string;
+  isInternalTransfer: boolean;
 }
 
 interface TransactionListResponseDto {
@@ -151,6 +152,8 @@ export default function Home() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingOriginalTransfer, setEditingOriginalTransfer] = useState(false);
+  const [isInternalTransfer, setIsInternalTransfer] = useState(false);
   const [date, setDate] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -344,6 +347,8 @@ export default function Home() {
   function closeForm() {
     setIsFormOpen(false);
     setEditingId(null);
+    setEditingOriginalTransfer(false);
+    setIsInternalTransfer(false);
     setDate("");
     setDescription("");
     setAmount("");
@@ -355,6 +360,8 @@ export default function Home() {
 
   function startAdd() {
     setEditingId(null);
+    setEditingOriginalTransfer(false);
+    setIsInternalTransfer(false);
     setDate(todayDateInputValue());
     setDescription("");
     setAmount("");
@@ -367,6 +374,8 @@ export default function Home() {
 
   function startEdit(transaction: Transaction) {
     setEditingId(transaction.id);
+    setEditingOriginalTransfer(transaction.isInternalTransfer);
+    setIsInternalTransfer(transaction.isInternalTransfer);
     setDate(transaction.date);
     setDescription(transaction.description);
     setAmount(String(transaction.amount));
@@ -379,7 +388,9 @@ export default function Home() {
 
   async function submitTransaction(force: boolean) {
     const amountValue = Number(amount);
-    if (!date || !description || !accountId || !categoryId || Number.isNaN(amountValue)) return;
+    // An internal transfer may legitimately have no category; in that case only the flag is saved.
+    const flagOnly = editingId !== null && isInternalTransfer && !categoryId;
+    if (!flagOnly && (!date || !description || !accountId || !categoryId || Number.isNaN(amountValue))) return;
 
     setFormError(null);
     setSubmitting(true);
@@ -394,11 +405,20 @@ export default function Home() {
       });
 
       if (editingId) {
-        await apiFetch<TransactionDetailDto>(`/transactions/${editingId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body,
-        });
+        if (!flagOnly) {
+          await apiFetch<TransactionDetailDto>(`/transactions/${editingId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body,
+          });
+        }
+        if (isInternalTransfer !== editingOriginalTransfer) {
+          await apiFetch(`/categorization/transactions/${editingId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ IsInternalTransfer: isInternalTransfer }),
+          });
+        }
       } else {
         await apiFetch<TransactionDetailDto>("/transactions", {
           method: "POST",
@@ -529,7 +549,7 @@ export default function Home() {
           </label>
           <select
             id="transactionCategory"
-            required
+            required={!(editingId && isInternalTransfer)}
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
             className="w-full rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
@@ -542,6 +562,18 @@ export default function Home() {
             ))}
           </select>
         </div>
+
+        {editingId && (
+          <label className="flex items-center gap-2 text-sm text-gray-200">
+            <input
+              type="checkbox"
+              checked={isInternalTransfer}
+              onChange={(e) => setIsInternalTransfer(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-700 bg-transparent text-brand-500 focus:ring-brand-500"
+            />
+            This is an internal transfer between my own accounts
+          </label>
+        )}
 
         {formError && <p className="text-sm text-red-600">{formError}</p>}
 
@@ -660,7 +692,9 @@ export default function Home() {
                     <span className="shrink-0 text-gray-400">{transaction.date}</span>
                     <span className="flex-1 truncate px-3">{transaction.description}</span>
                     <span className="shrink-0 text-xs text-gray-500">
-                      {transaction.categoryName ?? "Uncategorized"}
+                      {transaction.isInternalTransfer
+                        ? "Internal transfer"
+                        : (transaction.categoryName ?? "Uncategorized")}
                     </span>
                     <span
                       className={`shrink-0 font-medium ${
