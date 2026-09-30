@@ -272,6 +272,174 @@ public class TransactionEndpointsTests
         Assert.False(result.HasMore);
     }
 
+    private static async Task SeedCategorizedTransactionAsync(
+        AuthApiFactory factory, Guid userId, Guid accountId, DateOnly date, Guid? categoryId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Transactions.Add(new Transaction
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            AccountId = accountId,
+            Date = date,
+            Description = "txn",
+            Amount = -10m,
+            Hash = Guid.NewGuid().ToString(),
+            CategoryId = categoryId,
+        });
+        await db.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task List_WithCategoryId_ReturnsOnlyThatCategoryAndFilteredHasMore()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        var categories = await (await client.GetAsync("/api/categorization/categories"))
+            .Content.ReadFromJsonAsync<List<CategoryDto>>(JsonOptions);
+        var target = categories![0].Id;
+        var other = categories[1].Id;
+        var date = CurrentMonthRange.Get().Start;
+        for (var i = 0; i < 3; i++)
+        {
+            await SeedCategorizedTransactionAsync(factory, userId, account.Id, date, target);
+        }
+
+        await SeedCategorizedTransactionAsync(factory, userId, account.Id, date, other);
+        await SeedCategorizedTransactionAsync(factory, userId, account.Id, date, null);
+
+        var page = await (await client.GetAsync($"/api/transactions?categoryId={target}&skip=0&take=2")).Content
+            .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
+        var lastPage = await (await client.GetAsync($"/api/transactions?categoryId={target}&skip=2&take=2")).Content
+            .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
+
+        Assert.Equal(2, page!.Items.Count);
+        Assert.All(page.Items, i => Assert.Equal(target, i.CategoryId));
+        Assert.True(page.HasMore);
+        Assert.Single(lastPage!.Items);
+        Assert.False(lastPage.HasMore);
+    }
+
+    [Fact]
+    public async Task List_WithCurrentMonthTrue_ExcludesTransactionsOutsideCurrentMonth()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        var (start, end) = CurrentMonthRange.Get();
+        await SeedCategorizedTransactionAsync(factory, userId, account.Id, start, null);
+        await SeedCategorizedTransactionAsync(factory, userId, account.Id, end, null);
+        await SeedCategorizedTransactionAsync(factory, userId, account.Id, start.AddDays(-1), null);
+        await SeedCategorizedTransactionAsync(factory, userId, account.Id, end.AddDays(1), null);
+
+        var filtered = await (await client.GetAsync("/api/transactions?currentMonth=true&take=100")).Content
+            .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
+        var unfiltered = await (await client.GetAsync("/api/transactions?take=100")).Content
+            .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
+
+        Assert.Equal(2, filtered!.Items.Count);
+        Assert.All(filtered.Items, i => Assert.InRange(i.Date, start, end));
+        Assert.Equal(4, unfiltered!.Items.Count);
+    }
+
+    [Fact]
+    public async Task List_WithCategoryIdAndCurrentMonth_AppliesBothFilters()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        var categories = await (await client.GetAsync("/api/categorization/categories"))
+            .Content.ReadFromJsonAsync<List<CategoryDto>>(JsonOptions);
+        var target = categories![0].Id;
+        var other = categories[1].Id;
+        var start = CurrentMonthRange.Get().Start;
+        await SeedCategorizedTransactionAsync(factory, userId, account.Id, start, target);
+        await SeedCategorizedTransactionAsync(factory, userId, account.Id, start.AddDays(-1), target);
+        await SeedCategorizedTransactionAsync(factory, userId, account.Id, start, other);
+
+        var result = await (await client.GetAsync($"/api/transactions?categoryId={target}&currentMonth=true&take=100")).Content
+            .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
+
+        var item = Assert.Single(result!.Items);
+        Assert.Equal(target, item.CategoryId);
+        Assert.Equal(start, item.Date);
+        Assert.False(result.HasMore);
+    }
+
+    [Fact]
+    public async Task List_WithCategoryIdAndCurrentMonth_ExcludesIncomeAndInternalTransfersLikeTheChart()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        var categories = await (await client.GetAsync("/api/categorization/categories"))
+            .Content.ReadFromJsonAsync<List<CategoryDto>>(JsonOptions);
+        var target = categories![0].Id;
+        var start = CurrentMonthRange.Get().Start;
+        await SeedCategorizedTransactionAsync(factory, userId, account.Id, start, target);
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.Transactions.Add(new Transaction
+            {
+                Id = Guid.NewGuid(), UserId = userId, AccountId = account.Id, Date = start,
+                Description = "refund", Amount = 25m, Hash = Guid.NewGuid().ToString(), CategoryId = target,
+            });
+            db.Transactions.Add(new Transaction
+            {
+                Id = Guid.NewGuid(), UserId = userId, AccountId = account.Id, Date = start,
+                Description = "transfer", Amount = -40m, Hash = Guid.NewGuid().ToString(), CategoryId = target,
+                IsInternalTransfer = true,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var slice = await (await client.GetAsync($"/api/transactions?categoryId={target}&currentMonth=true&take=100")).Content
+            .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
+        var categoryOnly = await (await client.GetAsync($"/api/transactions?categoryId={target}&take=100")).Content
+            .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
+
+        var item = Assert.Single(slice!.Items);
+        Assert.Equal(-10m, item.Amount);
+        Assert.Equal(3, categoryOnly!.Items.Count);
+    }
+
+    [Fact]
+    public async Task List_WithCategoryIdCurrentMonthAndKindIncome_ReturnsOnlyPositiveNonTransferRows()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        var categories = await (await client.GetAsync("/api/categorization/categories"))
+            .Content.ReadFromJsonAsync<List<CategoryDto>>(JsonOptions);
+        var target = categories![0].Id;
+        var start = CurrentMonthRange.Get().Start;
+        await SeedCategorizedTransactionAsync(factory, userId, account.Id, start, target); // -10, spend
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.Transactions.Add(new Transaction
+            {
+                Id = Guid.NewGuid(), UserId = userId, AccountId = account.Id, Date = start,
+                Description = "salary", Amount = 25m, Hash = Guid.NewGuid().ToString(), CategoryId = target,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var income = await (await client.GetAsync($"/api/transactions?categoryId={target}&currentMonth=true&kind=income&take=100")).Content
+            .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
+
+        var item = Assert.Single(income!.Items);
+        Assert.Equal(25m, item.Amount);
+    }
+
     [Fact]
     public async Task Post_WithoutAuthCookie_ReturnsUnauthorized()
     {

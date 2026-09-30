@@ -213,28 +213,28 @@ Category-spend aggregation itself runs over at most one user's one month of tran
 
 #### Automated
 
-- [ ] 1.1 Backend builds: `dotnet build`
-- [ ] 1.2 Existing tests still pass: `dotnet test`
-- [ ] 1.3 New `DashboardEndpointsTests.cs` covers aggregation correctness, exclusions, zero-omission, per-user scoping, unauthenticated 401
-- [ ] 1.4 `TransactionEndpointsTests.cs` gains `categoryId`/`currentMonth` filter tests, including combined and pagination-metadata cases
+- [x] 1.1 Backend builds: `dotnet build` — d1fcb36
+- [x] 1.2 Existing tests still pass: `dotnet test` — d1fcb36
+- [x] 1.3 New `DashboardEndpointsTests.cs` covers aggregation correctness, exclusions, zero-omission, per-user scoping, unauthenticated 401 — d1fcb36
+- [x] 1.4 `TransactionEndpointsTests.cs` gains `categoryId`/`currentMonth` filter tests, including combined and pagination-metadata cases — d1fcb36
 
 #### Manual
 
-- [ ] 1.5 `GET /api/dashboard/category-spend` returns sensible totals against real data via Swagger UI
-- [ ] 1.6 `GET /api/transactions?categoryId=<id>&currentMonth=true` returns only that category's current-month transactions
+- [x] 1.5 `GET /api/dashboard/category-spend` returns sensible totals against real data via Swagger UI — d1fcb36
+- [x] 1.6 `GET /api/transactions?categoryId=<id>&currentMonth=true` returns only that category's current-month transactions — d1fcb36
 
 ### Phase 2: Frontend — donut chart and dashboard filter wiring
 
 #### Automated
 
-- [ ] 2.1 Frontend type-checks: `npm run typecheck`
-- [ ] 2.2 Frontend builds: `npm run build`
+- [x] 2.1 Frontend type-checks: `npm run typecheck` — f83d7ad
+- [x] 2.2 Frontend builds: `npm run build` — f83d7ad
 
 #### Manual
 
-- [ ] 2.3 Donut chart renders with distinct colors, working legend/tooltip, above the transaction list
-- [ ] 2.4 Clicking a slice filters the list to that category/current month; clicking again clears it
-- [ ] 2.5 "Filtering by: X · Clear" affordance appears and works correctly
-- [ ] 2.6 Empty state (zero categorized current-month spend) shows message + working `/categorize` link
-- [ ] 2.7 Uncategorized/internal-transfer transactions confirmed absent from chart totals
-- [ ] 2.8 Dark-theme contrast of chart colors/legend/tooltip is acceptable
+- [x] 2.3 Donut chart renders with distinct colors, working legend/tooltip, above the transaction list — f83d7ad
+- [x] 2.4 Clicking a slice filters the list to that category/current month; clicking again clears it — f83d7ad
+- [x] 2.5 "Filtering by: X · Clear" affordance appears and works correctly — f83d7ad
+- [x] 2.6 Empty state (zero categorized current-month spend) shows message + working `/categorize` link — f83d7ad
+- [x] 2.7 Uncategorized/internal-transfer transactions confirmed absent from chart totals — f83d7ad
+- [x] 2.8 Dark-theme contrast of chart colors/legend/tooltip is acceptable — f83d7ad

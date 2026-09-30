@@ -24,6 +24,9 @@ public static class TransactionEndpoints
         transactions.MapGet("/", async (
             int? skip,
             int? take,
+            Guid? categoryId,
+            bool? currentMonth,
+            string? kind,
             AppDbContext db,
             UserManager<AppUser> userManager,
             ClaimsPrincipal principal) =>
@@ -34,6 +37,27 @@ public static class TransactionEndpoints
             var effectiveTake = Math.Clamp(take ?? DefaultTake, 1, MaxTake);
 
             var query = db.Transactions.Where(t => t.UserId == userId);
+
+            if (categoryId is not null)
+            {
+                query = query.Where(t => t.CategoryId == categoryId);
+            }
+
+            if (currentMonth == true)
+            {
+                var range = CurrentMonthRange.Get();
+                query = query.Where(t => t.Date >= range.Start && t.Date <= range.End);
+            }
+
+            // Drilling into a chart slice (category + current month) must list exactly what the
+            // slice summed (see DashboardEndpoints): non-transfer rows of the matching sign —
+            // positive for the income chart (kind=income), negative otherwise.
+            if (categoryId is not null && currentMonth == true)
+            {
+                query = string.Equals(kind, "income", StringComparison.OrdinalIgnoreCase)
+                    ? query.Where(t => t.Amount > 0 && !t.IsInternalTransfer)
+                    : query.Where(t => t.Amount < 0 && !t.IsInternalTransfer);
+            }
 
             // No CreatedAt field exists, and Date alone isn't unique per user, so Id is the
             // deterministic tiebreak for a stable newest-first ordering across pages.
