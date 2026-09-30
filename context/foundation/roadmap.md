@@ -129,6 +129,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:** —
 - **Risk:** Internal-transfer auto-detection heuristic needs the user's known accounts to be identifiable across banks — worth confirming the heuristic's accuracy against real data early, since it directly affects chart totals (S-04).
 - **Status:** done
+- **Follow-up (2026-09-30, `categorize-queue-only`):** `/categorize` now lists only uncategorized transactions ("Yay, all done!" when empty); the "Handled" list was removed. Category re-editing lives on the dashboard; toggling the internal-transfer flag on handled transactions has no UI right now (known gap). See `context/archive/2026-09-30-categorize-queue-only/`.
 
 ### S-04: Category spend donut chart
 
@@ -263,5 +264,6 @@ No cross-cutting open questions at this time — PRD's own `## Open Questions` s
 - **S-01: user can import an mBank CSV export, see any detected duplicate shown side-by-side (existing vs. incoming) to decide skip/keep, and see an import summary (imported count / skipped-duplicate count).** — Archived 2026-09-28 → `context/archive/2026-09-25-mbank-import-with-dedup/`. Lesson: —.
 - **S-04: user sees a donut chart of spend share per category for the current month (uncategorized and internal-transfer transactions excluded), filterable by category.** — Archived 2026-09-30 → `context/archive/2026-09-28-category-spend-donut-chart/`. Lesson: —.
 - **S-03: user can select a category for each transaction in the queue (no auto-suggestion); internal transfers are auto-flagged by default (overridable by hand); the user can re-categorize any transaction at any time.** — Archived 2026-09-28 → `context/archive/2026-09-25-categorization-queue/`. Lesson: —.
+- **categorize-queue-only (S-03 follow-up): the categorize page lists only uncategorized transactions and shows a "Yay, all done!" placeholder when none are left; the Handled list was removed.** — Archived 2026-09-30 → `context/archive/2026-09-30-categorize-queue-only/`. Lesson: —.
 - **S-09: user sees a chronological list of their imported and manually-entered transactions on the dashboard (date, description, amount, category), replacing the current static "you haven't imported anything yet" placeholder once data exists.** — Archived 2026-09-28 → `context/archive/2026-09-25-transaction-history-view/`. Lesson: —.
 - **S-10: user can add, edit, and remove their own bank accounts (account number + bank name) via a settings page, and pick from their own accounts when manually entering a transaction, instead of a generic bank-name dropdown.** — Archived 2026-09-28 → `context/archive/2026-09-25-account-management/`. Lesson: —.
