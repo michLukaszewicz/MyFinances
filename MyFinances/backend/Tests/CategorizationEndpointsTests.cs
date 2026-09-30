@@ -104,8 +104,12 @@ public class CategorizationEndpointsTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var categories = await response.Content.ReadFromJsonAsync<List<CategoryDto>>(JsonOptions);
         Assert.NotNull(categories);
-        Assert.Equal(12, categories!.Count);
+        Assert.Equal(14, categories!.Count);
         Assert.Equal("Groceries", categories[0].Name);
+        Assert.Equal("expense", categories[0].Kind);
+        Assert.Equal(
+            new[] { "Income", "Refunds & Reimbursements", "Other income" },
+            categories.Where(c => c.Kind == "income").Select(c => c.Name));
     }
 
     [Fact]
