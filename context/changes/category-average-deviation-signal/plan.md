@@ -181,12 +181,12 @@ The spend endpoint now reads all of a user's earlier categorized spend rows (sin
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npm run typecheck` (from `MyFinances/frontend`)
-- [x] 2.2 Production build succeeds: `npm run build` (from `MyFinances/frontend`)
+- [x] 2.1 Type checking passes: `npm run typecheck` (from `MyFinances/frontend`) — c8e3828
+- [x] 2.2 Production build succeeds: `npm run build` (from `MyFinances/frontend`) — c8e3828
 
 #### Manual
 
-- [x] 2.3 Spend donut shows the list with correct colour dots, names and amounts; rows with prior-month history show the right badge and average, rows without history show no badge
-- [x] 2.4 Clicking a list row filters the transaction list like clicking its slice, and clicking it again clears the filter
-- [x] 2.5 Income donut renders and behaves exactly as before
-- [x] 2.6 Adding/editing/deleting a transaction refreshes the list and badges
+- [x] 2.3 Spend donut shows the list with correct colour dots, names and amounts; rows with prior-month history show the right badge and average, rows without history show no badge — c8e3828
+- [x] 2.4 Clicking a list row filters the transaction list like clicking its slice, and clicking it again clears the filter — c8e3828
+- [x] 2.5 Income donut renders and behaves exactly as before — c8e3828
+- [x] 2.6 Adding/editing/deleting a transaction refreshes the list and badges — c8e3828
