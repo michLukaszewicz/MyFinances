@@ -18,7 +18,7 @@ public static class CategorizationEndpoints
         {
             var categories = await db.Categories
                 .OrderBy(c => c.SortOrder)
-                .Select(c => new CategoryDto(c.Id, c.Name))
+                .Select(c => new CategoryDto(c.Id, c.Name, c.Kind == CategoryKind.Income ? "income" : "expense"))
                 .ToListAsync();
 
             return Results.Ok(categories);
