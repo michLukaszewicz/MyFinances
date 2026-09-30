@@ -14,32 +14,6 @@ public static class DashboardEndpoints
     {
         var dashboard = api.MapGroup("/dashboard");
 
-        // TEMPORARY diagnostic (Development only, aggregates only): shows how the current user's
-        // transactions split by month / sign / category / transfer flag, to explain empty charts.
-        dashboard.MapGet("/debug", async (
-            AppDbContext db,
-            IWebHostEnvironment env,
-            UserManager<AppUser> userManager,
-            ClaimsPrincipal principal) =>
-        {
-            if (!env.IsDevelopment()) return Results.NotFound();
-            var userId = principal.GetUserId(userManager);
-            var rows = await db.Transactions.AsNoTracking().Include(t => t.Category)
-                .Where(t => t.UserId == userId).ToListAsync();
-            var range = CurrentMonthRange.Get();
-            var summary = rows
-                .GroupBy(t => new
-                {
-                    Month = $"{t.Date.Year}-{t.Date.Month:00}",
-                    Sign = t.Amount < 0 ? "negative" : "positive",
-                    Category = t.Category?.Name ?? "(uncategorized)",
-                    t.IsInternalTransfer,
-                })
-                .OrderByDescending(g => g.Key.Month)
-                .Select(g => new { g.Key.Month, g.Key.Sign, g.Key.Category, g.Key.IsInternalTransfer, Count = g.Count(), Sum = g.Sum(t => t.Amount) });
-            return Results.Ok(new { currentMonth = new { range.Start, range.End }, summary });
-        });
-
         // Spend: negative amounts, reported as positive magnitudes.
         dashboard.MapGet("/category-spend", (
             AppDbContext db,
