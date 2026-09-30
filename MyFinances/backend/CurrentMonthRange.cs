@@ -10,11 +10,17 @@ public static class CurrentMonthRange
 
     public static (DateOnly Start, DateOnly End) Get(TimeProvider? clock = null)
     {
-        var now = (clock ?? TimeProvider.System).GetUtcNow();
-        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now, ResolveTimeZone()).DateTime);
+        var today = Today(clock);
         var start = new DateOnly(today.Year, today.Month, 1);
         var end = start.AddMonths(1).AddDays(-1);
         return (start, end);
+    }
+
+    // Today's date in the user's time zone, so day-of-month comparisons agree with Get()'s month boundary.
+    public static DateOnly Today(TimeProvider? clock = null)
+    {
+        var now = (clock ?? TimeProvider.System).GetUtcNow();
+        return DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now, ResolveTimeZone()).DateTime);
     }
 
     private static TimeZoneInfo ResolveTimeZone()

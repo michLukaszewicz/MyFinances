@@ -5,11 +5,6 @@ namespace MyFinances.Api.Tests;
 
 public class CurrentMonthRangeTests
 {
-    private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
-    {
-        public override DateTimeOffset GetUtcNow() => utcNow;
-    }
-
     [Fact]
     public void Get_MidMonth_ReturnsFirstAndLastDayOfThatMonth()
     {
