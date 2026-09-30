@@ -1,7 +1,7 @@
 ---
 change_id: category-average-deviation-signal
 title: Category average-deviation signal (S-06)
-status: implemented
+status: impl_reviewed
 created: 2026-09-30
 updated: 2026-09-30
 archived_at: null

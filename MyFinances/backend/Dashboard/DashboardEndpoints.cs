@@ -47,7 +47,9 @@ public static class DashboardEndpoints
         // CategorizationEndpoints), so IsInternalTransfer is current when we exclude it.
         await transferDetection.DetectAsync(userId, db);
 
-        var range = CurrentMonthRange.Get(clock);
+        // Read the clock once so `today` and the month range can never straddle a boundary.
+        var today = CurrentMonthRange.Today(clock);
+        var range = CurrentMonthRange.MonthOf(today);
 
         var rows = await db.Transactions
             .AsNoTracking()
@@ -79,20 +81,23 @@ public static class DashboardEndpoints
 
         // Spend signal: compare spend-to-date against the same day-of-month window in prior
         // months. History only decorates categories that already have current-month spend.
-        var today = CurrentMonthRange.Today(clock);
-        var history = (await db.Transactions
-            .AsNoTracking()
-            .Where(t => t.UserId == userId
-                && t.CategoryId != null
-                && !t.IsInternalTransfer
-                && t.Amount < 0
-                && t.Date < range.Start)
-            .Select(t => new { CategoryId = t.CategoryId!.Value, t.Date, t.Amount })
-            .ToListAsync())
-            .GroupBy(t => t.CategoryId)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Select(t => (t.Date, -t.Amount)).ToList());
+        var categoryIds = groups.Select(g => g.First().Category!.Id).ToList();
+        var history = categoryIds.Count == 0
+            ? new Dictionary<Guid, List<(DateOnly Date, decimal Amount)>>()
+            : (await db.Transactions
+                .AsNoTracking()
+                .Where(t => t.UserId == userId
+                    && t.CategoryId != null
+                    && categoryIds.Contains(t.CategoryId.Value)
+                    && !t.IsInternalTransfer
+                    && t.Amount < 0
+                    && t.Date < range.Start)
+                .Select(t => new { CategoryId = t.CategoryId!.Value, t.Date, t.Amount })
+                .ToListAsync())
+                .GroupBy(t => t.CategoryId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(t => (t.Date, Amount: -t.Amount)).ToList());
 
         var spendResult = groups
             .Select(g =>
