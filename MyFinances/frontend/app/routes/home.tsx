@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLoaderData } from "react-router";
 import type { Route } from "./+types/home";
 import { AppHeader } from "../components/AppHeader";
-import { CategorySpendDonut } from "../components/CategorySpendDonut";
+import { CategorySpendDonut, type FlowKind } from "../components/CategorySpendDonut";
 import { apiFetch, ApiError } from "../lib/api";
+import { categoriesForAmount, type CategoryDto } from "../lib/categories";
 
 const valueProps = [
   {
@@ -65,12 +66,6 @@ interface AccountDto {
   accountNumber: string;
 }
 
-// Mirrors the backend's CategorizationContracts.cs CategoryDto.
-interface CategoryDto {
-  id: string;
-  name: string;
-}
-
 interface ExistingTransaction {
   date: string;
   description: string;
@@ -92,8 +87,10 @@ function todayDateInputValue(): string {
 }
 
 // Query-string suffix restricting the transaction list to one category in the current month.
-function categoryFilterQuery(categoryId: string | null): string {
-  return categoryId ? `&categoryId=${encodeURIComponent(categoryId)}&currentMonth=true` : "";
+function categoryFilterQuery(categoryId: string | null, kind: FlowKind): string {
+  return categoryId
+    ? `&categoryId=${encodeURIComponent(categoryId)}&currentMonth=true&kind=${kind}`
+    : "";
 }
 
 async function parseErrorBody(
@@ -167,12 +164,18 @@ export default function Home() {
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedCategoryName, setSelectedCategoryName] = useState<string | null>(null);
+  const [selectedKind, setSelectedKind] = useState<FlowKind>("spend");
   const [filterLoading, setFilterLoading] = useState(false);
   const isFirstFilterRun = useRef(true);
+  // Bumped on every filter change so in-flight load-more/refresh responses fetched under the
+  // previous filter are discarded instead of landing on the new list.
+  const listGeneration = useRef(0);
+  const [chartRefreshKey, setChartRefreshKey] = useState(0);
 
   // Re-fetch page 1 when the donut selection changes. The first run is skipped: the
   // clientLoader already provided the unfiltered page 1.
   useEffect(() => {
+    listGeneration.current += 1;
     if (isFirstFilterRun.current) {
       isFirstFilterRun.current = false;
       return;
@@ -184,13 +187,16 @@ export default function Home() {
       setFilterLoading(true);
       try {
         const response = await apiFetch<TransactionListResponseDto>(
-          `/transactions?skip=0&take=${TRANSACTIONS_PAGE_SIZE}${categoryFilterQuery(selectedCategoryId)}`,
+          `/transactions?skip=0&take=${TRANSACTIONS_PAGE_SIZE}${categoryFilterQuery(selectedCategoryId, selectedKind)}`,
         );
         if (cancelled) return;
         setItems(response.items);
         setHasMore(response.hasMore);
       } catch {
         if (!cancelled) {
+          // Don't leave the previous view's rows sitting under the new filter.
+          setItems([]);
+          setHasMore(false);
           setLoadMoreError("Something went wrong loading transactions. Please try again.");
         }
       } finally {
@@ -202,7 +208,7 @@ export default function Home() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategoryId]);
+  }, [selectedCategoryId, selectedKind]);
 
   useEffect(() => {
     if (!user) return;
@@ -295,18 +301,21 @@ export default function Home() {
   // A filter that matches nothing must still show the list branch (with the Clear affordance).
   const hasTransactions = items.length > 0 || selectedCategoryId !== null;
 
-  function handleSelectCategory(id: string | null, name: string | null) {
+  function handleSelectCategory(id: string | null, name: string | null, kind: FlowKind = "spend") {
     setSelectedCategoryId(id);
     setSelectedCategoryName(name);
+    setSelectedKind(kind);
   }
 
   async function handleLoadMore() {
     setLoadMoreError(null);
     setLoadingMore(true);
+    const generation = listGeneration.current;
     try {
       const response = await apiFetch<TransactionListResponseDto>(
-        `/transactions?skip=${items.length}&take=${TRANSACTIONS_PAGE_SIZE}${categoryFilterQuery(selectedCategoryId)}`,
+        `/transactions?skip=${items.length}&take=${TRANSACTIONS_PAGE_SIZE}${categoryFilterQuery(selectedCategoryId, selectedKind)}`,
       );
+      if (generation !== listGeneration.current) return;
       setItems((prev) => [...prev, ...response.items]);
       setHasMore(response.hasMore);
     } catch {
@@ -317,11 +326,14 @@ export default function Home() {
   }
 
   async function refreshTransactions() {
+    setChartRefreshKey((key) => key + 1);
+    const generation = listGeneration.current;
     try {
       const take = Math.max(items.length, TRANSACTIONS_PAGE_SIZE);
       const response = await apiFetch<TransactionListResponseDto>(
-        `/transactions?skip=0&take=${take}${categoryFilterQuery(selectedCategoryId)}`,
+        `/transactions?skip=0&take=${take}${categoryFilterQuery(selectedCategoryId, selectedKind)}`,
       );
+      if (generation !== listGeneration.current) return;
       setItems(response.items);
       setHasMore(response.hasMore);
     } catch {
@@ -523,7 +535,7 @@ export default function Home() {
             className="w-full rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           >
             <option value="">Select a category…</option>
-            {categories.map((category) => (
+            {categoriesForAmount(categories, amount.trim() === "" ? null : Number(amount.replace(",", ".")), categoryId).map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
               </option>
@@ -587,7 +599,7 @@ export default function Home() {
           aria-hidden="true"
         />
         <div
-          className="w-full max-w-2xl space-y-6 px-4 text-center"
+          className="w-full max-w-4xl space-y-6 px-4 text-center"
         >
           <h1
             className="text-lg font-semibold text-gray-200 animate-[fade-slide-in_600ms_ease-out_both]"
@@ -596,10 +608,20 @@ export default function Home() {
             Welcome back, {user.email}
           </h1>
 
-          <CategorySpendDonut
-            selectedCategoryId={selectedCategoryId}
-            onSelectCategory={handleSelectCategory}
-          />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <CategorySpendDonut
+              kind="spend"
+              selectedCategoryId={selectedKind === "spend" ? selectedCategoryId : null}
+              refreshKey={chartRefreshKey}
+              onSelectCategory={(id, name) => handleSelectCategory(id, name, "spend")}
+            />
+            <CategorySpendDonut
+              kind="income"
+              selectedCategoryId={selectedKind === "income" ? selectedCategoryId : null}
+              refreshKey={chartRefreshKey}
+              onSelectCategory={(id, name) => handleSelectCategory(id, name, "income")}
+            />
+          </div>
 
           {hasTransactions ? (
             <div
@@ -611,7 +633,7 @@ export default function Home() {
               {selectedCategoryId && (
                 <div className="flex items-center gap-2 text-sm text-gray-400">
                   <span>
-                    Filtering by: <span className="text-gray-200">{selectedCategoryName}</span> · this month
+                    Filtering by: <span className="text-gray-200">{selectedCategoryName}</span> ({selectedKind}) · this month
                   </span>
                   <button
                     type="button"
