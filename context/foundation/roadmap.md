@@ -3,7 +3,7 @@ project: "MyFinances"
 version: 1
 status: draft
 created: 2026-09-22
-updated: 2026-09-29
+updated: 2026-09-30
 prd_version: 3
 main_goal: market-feedback
 top_blocker: time
@@ -44,7 +44,7 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | S-01  | mbank-import-with-dedup          | import an mBank CSV, resolve flagged duplicates, and see an import summary          | F-01           | FR-002, FR-004, US-01, Guardrail (dedup) | done |
 | S-02  | manual-transaction-entry         | manually add, edit, and delete transactions without creating import duplicates      | S-01           | FR-010                        | done |
 | S-03  | categorization-queue             | categorize queued transactions, with internal transfers auto-flagged (overridable)  | S-01, S-10     | FR-007, FR-009, FR-015, US-01 | done |
-| S-04  | category-spend-donut-chart       | see a donut chart of category spend for the current month, filterable by category   | S-03           | FR-011, FR-012, US-01         | in-progress |
+| S-04  | category-spend-donut-chart       | see a donut chart of category spend for the current month, filterable by category   | S-03           | FR-011, FR-012, US-01         | done |
 | S-05  | category-budget-vs-actual        | optionally set a per-category budget and see actual-vs-budget alongside the chart   | S-04           | FR-017                        | proposed |
 | S-06  | category-average-deviation-signal| see a category's spend flagged as above/below/in line with its historical average   | S-04           | FR-013                        | proposed |
 | S-07  | revolut-import                   | import a Revolut CSV statement through the same import/dedup/categorize/chart loop  | S-01           | FR-003                        | proposed |
@@ -140,7 +140,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** — (S-09, transaction-history-view, has landed and resolved the static empty-state gap this used to track.)
 - **Risk:** This is the slice the PRD's Primary Success Criterion is built around — correctness here depends entirely on S-03's categorization and internal-transfer flagging being right first.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-05: Category budget vs. actual
 
@@ -261,6 +261,7 @@ No cross-cutting open questions at this time — PRD's own `## Open Questions` s
 - **S-02: user can manually add, edit, and delete transactions; a manually-entered transaction is recognized as the same one if it later appears in an imported statement, so it's never duplicated.** — Archived 2026-09-28 → `context/archive/2026-09-25-manual-transaction-entry/`. Lesson: —.
 - **F-01: (foundation) user can register and log in with email/password; the session persists across visits; every API endpoint requires auth and scopes data to the logged-in user.** — Archived 2026-09-28 → `context/archive/2026-09-22-minimal-auth-scaffold/`. Lesson: —.
 - **S-01: user can import an mBank CSV export, see any detected duplicate shown side-by-side (existing vs. incoming) to decide skip/keep, and see an import summary (imported count / skipped-duplicate count).** — Archived 2026-09-28 → `context/archive/2026-09-25-mbank-import-with-dedup/`. Lesson: —.
+- **S-04: user sees a donut chart of spend share per category for the current month (uncategorized and internal-transfer transactions excluded), filterable by category.** — Archived 2026-09-30 → `context/archive/2026-09-28-category-spend-donut-chart/`. Lesson: —.
 - **S-03: user can select a category for each transaction in the queue (no auto-suggestion); internal transfers are auto-flagged by default (overridable by hand); the user can re-categorize any transaction at any time.** — Archived 2026-09-28 → `context/archive/2026-09-25-categorization-queue/`. Lesson: —.
 - **S-09: user sees a chronological list of their imported and manually-entered transactions on the dashboard (date, description, amount, category), replacing the current static "you haven't imported anything yet" placeholder once data exists.** — Archived 2026-09-28 → `context/archive/2026-09-25-transaction-history-view/`. Lesson: —.
 - **S-10: user can add, edit, and remove their own bank accounts (account number + bank name) via a settings page, and pick from their own accounts when manually entering a transaction, instead of a generic bank-name dropdown.** — Archived 2026-09-28 → `context/archive/2026-09-25-account-management/`. Lesson: —.
