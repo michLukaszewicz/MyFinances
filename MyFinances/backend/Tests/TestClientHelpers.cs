@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Mvc.Testing;
 using MyFinances.Api.Auth;
 using Xunit;
 
@@ -10,7 +11,7 @@ namespace MyFinances.Api.Tests;
 // duplicating the register-and-return-client boilerplate.
 internal static class TestClientHelpers
 {
-    public static async Task<HttpClient> CreateAuthenticatedClientAsync(AuthApiFactory factory)
+    public static async Task<HttpClient> CreateAuthenticatedClientAsync(WebApplicationFactory<Program> factory)
     {
         var client = factory.CreateClient();
         var registerResponse = await client.PostAsJsonAsync("/api/auth/register",
