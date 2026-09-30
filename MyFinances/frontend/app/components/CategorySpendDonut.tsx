@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { apiFetch } from "../lib/api";
@@ -10,8 +10,26 @@ interface CategorySpendDto {
   amount: number;
 }
 
+export type FlowKind = "spend" | "income";
+
+const FLOW_COPY: Record<FlowKind, { endpoint: string; title: string; empty: string }> = {
+  spend: {
+    endpoint: "/dashboard/category-spend",
+    title: "Spend by category — this month",
+    empty: "No categorized spend for this month yet.",
+  },
+  income: {
+    endpoint: "/dashboard/category-income",
+    title: "Income by category — this month",
+    empty: "No categorized income for this month yet.",
+  },
+};
+
 interface CategorySpendDonutProps {
+  kind: FlowKind;
   selectedCategoryId: string | null;
+  // Bump to re-fetch the chart (e.g. after a transaction is added, edited or deleted).
+  refreshKey: number;
   // categoryName is passed alongside the id so the parent can label the active filter.
   onSelectCategory: (categoryId: string | null, categoryName: string | null) => void;
 }
@@ -36,19 +54,29 @@ function formatAmount(amount: number): string {
   return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-export function CategorySpendDonut({ selectedCategoryId, onSelectCategory }: CategorySpendDonutProps) {
+export function CategorySpendDonut({ kind, selectedCategoryId, refreshKey, onSelectCategory }: CategorySpendDonutProps) {
+  const copy = FLOW_COPY[kind];
   const [data, setData] = useState<CategorySpendDto[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Read inside the fetch effect without making a selection change re-fetch the chart.
+  const selectedRef = useRef(selectedCategoryId);
+  selectedRef.current = selectedCategoryId;
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       try {
-        const result = await apiFetch<CategorySpendDto[]>("/dashboard/category-spend");
-        if (!cancelled) setData(result);
+        const result = await apiFetch<CategorySpendDto[]>(copy.endpoint);
+        if (cancelled) return;
+        setData(result);
+        setLoadError(null);
+        // A write can remove the selected category from this month's spend; drop the stale filter.
+        if (selectedRef.current !== null && !result.some((e) => e.categoryId === selectedRef.current)) {
+          onSelectCategory(null, null);
+        }
       } catch {
-        if (!cancelled) setLoadError("Something went wrong loading category spend. Please try again.");
+        if (!cancelled) setLoadError("Something went wrong loading this chart. Please try again.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -57,10 +85,11 @@ export function CategorySpendDonut({ selectedCategoryId, onSelectCategory }: Cat
     return () => {
       cancelled = true;
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]);
 
   if (loading) {
-    return <p className="text-sm text-gray-400">Loading category spend…</p>;
+    return <p className="text-sm text-gray-400">Loading…</p>;
   }
 
   if (loadError) {
@@ -70,7 +99,7 @@ export function CategorySpendDonut({ selectedCategoryId, onSelectCategory }: Cat
   if (!data || data.length === 0) {
     return (
       <p className="text-center text-sm text-gray-400">
-        No categorized spend for this month yet.{" "}
+        {copy.empty}{" "}
         <Link to="/categorize" className="text-brand-400 hover:text-brand-300">
           Categorize transactions
         </Link>
@@ -96,7 +125,7 @@ export function CategorySpendDonut({ selectedCategoryId, onSelectCategory }: Cat
 
   return (
     <div className="space-y-2">
-      <h2 className="text-center text-sm font-medium text-gray-200">Spend by category — this month</h2>
+      <h2 className="text-center text-sm font-medium text-gray-200">{copy.title}</h2>
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>

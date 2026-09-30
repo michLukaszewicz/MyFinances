@@ -1,7 +1,7 @@
 ---
 change_id: category-spend-donut-chart
 title: Donut chart of category spend for the current month, filterable by category
-status: implemented
+status: impl_reviewed
 created: 2026-09-28
 updated: 2026-09-29
 archived_at: null

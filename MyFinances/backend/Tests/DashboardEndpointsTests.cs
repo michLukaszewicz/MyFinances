@@ -192,4 +192,39 @@ public class DashboardEndpointsTests
         var item = Assert.Single(result);
         Assert.Equal(12m, item.Amount);
     }
+
+    [Fact]
+    public async Task CategoryIncome_SumsOnlyPositiveNonTransferCategorizedCurrentMonthRows()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var userId = await GetUserIdAsync(factory);
+        var accountId = await SeedAccountAsync(factory, userId, "111");
+        var (start, end) = CurrentMonthRange.Get();
+        await SeedAsync(factory, userId, accountId, start, 100m, GroceriesId);
+        await SeedAsync(factory, userId, accountId, end, 50m, GroceriesId);
+        await SeedAsync(factory, userId, accountId, start, -30m, GroceriesId);
+        await SeedAsync(factory, userId, accountId, start, 70m, null);
+        await SeedAsync(factory, userId, accountId, start, 80m, DiningId, isInternalTransfer: true);
+        await SeedAsync(factory, userId, accountId, start.AddDays(-1), 90m, TransportId);
+
+        var response = await client.GetAsync("/api/dashboard/category-income");
+        var result = await response.Content.ReadFromJsonAsync<List<CategorySpendDto>>(JsonOptions);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var item = Assert.Single(result!);
+        Assert.Equal(GroceriesId, item.CategoryId);
+        Assert.Equal(150m, item.Amount);
+    }
+
+    [Fact]
+    public async Task CategoryIncome_WithoutAuthCookie_ReturnsUnauthorized()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/dashboard/category-income");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
 }
