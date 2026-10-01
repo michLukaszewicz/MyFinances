@@ -69,8 +69,8 @@ Deliver `ErsteCsvParser` and prove it against a redacted real-format fixture, in
 
 **Contract**:
 - `BankName` = `"Erste"` (the string stored on `Account.BankName` and offered by `/accounts/banks`).
-- `CanParse`: decode as UTF-8 (strip BOM if present), take the first non-empty line and, for each candidate delimiter in `;`, `,`, tab, `|`, split it with CsvHelper (so quoted fields in the `,` variant are honoured); true when for some delimiter it has at least 8 fields, field 0 parses as `yyyy-MM-dd`, field 1 parses as `dd-MM-yyyy`, field 2 starts with `'`, and field 4 is a 3-letter currency code. Restore the stream position afterwards when seekable (same contract as `MBankCsvParser.CanParse`). The detection logic is shared with `Parse` (one private helper returning the matching delimiter or none).
-- `Parse`: detect the delimiter as above, skip line 1 (summary), read currency from it; for each following non-blank line (split with the detected delimiter) take Date = field 1 (`dd-MM-yyyy`), Description = field 2, Amount = field 5 parsed with `pl-PL`. Rows with an unparseable date or amount increment `SkippedErrorCount` and parsing continues. Non-`PLN` currency → empty transaction list and `SkippedErrorCount` = number of data rows.
+- `CanParse`: decode leniently as UTF-8 (strip BOM if present; invalid bytes become replacement characters and `CanParse` must never throw — every registered parser's `CanParse` runs on every upload, including cp1250 mBank files), take the first non-empty line and, for each candidate delimiter in `;`, `,`, tab, `|`, split it with CsvHelper (so quoted fields in the `,` variant are honoured); true when for some delimiter it has at least 8 fields, field 0 parses as `yyyy-MM-dd`, field 1 parses as `dd-MM-yyyy`, field 2 starts with `'`, and field 4 is a 3-letter currency code. Restore the stream position afterwards when seekable (same contract as `MBankCsvParser.CanParse`). The detection logic is shared with `Parse` (one private helper returning the matching delimiter or none).
+- `Parse`: detect the delimiter as above, skip line 1 (summary), read currency from it; for each following non-blank line (split with the detected delimiter) take Date = field 1 (`dd-MM-yyyy`), Description = field 2, Amount = field 5 parsed with `pl-PL`. Rows with an unparseable date or amount increment `SkippedErrorCount` and parsing continues. Non-`PLN` currency → empty transaction list and `SkippedErrorCount` = number of data rows. If no delimiter matches (the endpoint calls `Parse` on a manually chosen bank even when `CanParse` rejected the file), return an empty list with `SkippedErrorCount` 0 rather than throwing — mirrors `MBankCsvParser`.
 - Use CsvHelper configured like `MBankCsvParser` (`HasHeaderRecord = false`, `MissingFieldFound = null`, `BadDataFound = null`) with `Delimiter` set to the detected delimiter.
 
 #### 2. Redacted fixtures
@@ -88,7 +88,8 @@ Deliver `ErsteCsvParser` and prove it against a redacted real-format fixture, in
 **Intent**: Pin the parser's behaviour, following `MBankCsvParserTests` (xUnit `[Fact]`, fixture opened from `AppContext.BaseDirectory/Fixtures`).
 
 **Contract**: tests for —
-- `CanParse` true for each of the four Erste fixtures (`;`, tab, pipe, comma) and false for the mBank fixture (and mBank's `CanParse` false for the Erste fixtures);
+- `CanParse` true for each of the four Erste fixtures (`;`, tab, pipe, comma) and false, without throwing, for the cp1250 mBank fixture (`mbank-sample-redacted.csv`) and the UTF-8 remojibake one (and mBank's `CanParse` false for the Erste fixtures);
+- `Parse` on a non-Erste file (e.g. the mBank fixture) returns zero transactions and zero skipped;
 - `Parse` returns 29 transactions, 0 skipped, for the `;` fixture, and 21 transactions, 0 skipped, for each of the tab/pipe/comma fixtures with identical dates, descriptions and amounts across the three (including the quoted `"-261,54"`-style amounts in the comma variant);
 - Date is the transaction date (row booked 03-09-2026, paid 02-09-2026 → 2026-09-02; row booked 06-09 / paid 04-09 → 2026-09-04; row booked 01-09 / paid 31-08 in the August files → 2026-08-31) and the summary line is not parsed as a transaction;
 - amounts are signed pl-PL decimals (e.g. `-69,98` → `-69.98m`, `+45,00` refund → `45.00m`);
@@ -148,15 +149,23 @@ Register the parser, expose "Erste" in the frontend manual picker, verify the fu
 - the same file with an "mBank" account → `BankMismatch == true`;
 - commit then re-parse the same file → every previously committed row (including all three identical +500 rows) is flagged `IsDuplicate`;
 - parse of the tab, pipe and comma fixtures through the HTTP endpoint → 200, `Bank == "Erste"`, 21 rows;
-- manual `bank=Erste` fallback path resolves the parser when detection is bypassed (e.g. a file CanParse rejects).
+- manual `bank=Erste` fallback path resolves the Erste parser for a file `CanParse` rejects (e.g. `bank=Erste` with the mBank-format or unrecognised content) → 200 with 0 rows, not an error.
 
-#### 4. Roadmap sync
+#### 4. Bank-list test
+
+**File**: `MyFinances/backend/Tests/AccountEndpointsTests.cs`
+
+**Intent**: Keep the existing `GET /accounts/banks` test green now that a second parser is registered.
+
+**Contract**: the assertion at line 92 changes from `["mBank", "Other"]` to `["mBank", "Erste", "Other"]` (order follows parser registration, "Other" last).
+
+#### 5. Roadmap sync
 
 **File**: `context/foundation/roadmap.md`
 
 **Intent**: Reflect that S-08 no longer waits for S-07.
 
-**Contract**: set S-08's prerequisite to `S-01` in the `At a glance` table and the S-08 block, with a one-line note that the PRD FR-003 sequencing gate was waived by the user on 2026-10-01; leave S-07 `proposed`. (Status flips to `in-progress`/`done` are handled by `/10x-implement` and `/10x-archive`; per `lessons.md`, sync the matching GitHub issue after each commit/PR that changes roadmap status.)
+**Contract**: set S-08's prerequisite to `S-01` in the `At a glance` table (`roadmap.md:51`), the S-08 block (`:188`) and the dependency table (`:232`, "Depends on S-07"), and reword the stream C row (`:63`, "sequentially gated … Erste only after Revolut") so it no longer says Erste waits for Revolut; add a one-line note that the PRD FR-003 sequencing gate was waived by the user on 2026-10-01; leave S-07 `proposed`. (Status flips to `in-progress`/`done` are handled by `/10x-implement` and `/10x-archive`; per `lessons.md`, sync the matching GitHub issue after each commit/PR that changes roadmap status.)
 
 ### Success Criteria:
 
