@@ -413,28 +413,28 @@ No schema or data changes. Existing mBank and Erste transactions and their hashe
 
 #### Automated
 
-- [x] 1.1 PRD contains the new requirement: `grep -n "FR-018" context/foundation/prd.md` (from repo root)
-- [x] 1.2 Roadmap has the three new slice blocks: `grep -c "^### S-1[123]:" context/foundation/roadmap.md` prints 3 (from repo root)
-- [x] 1.3 Roadmap indexes the change: `grep -n "pdf-statement-import" context/foundation/roadmap.md` shows the At a glance row and the slice block (from repo root)
+- [x] 1.1 PRD contains the new requirement: `grep -n "FR-018" context/foundation/prd.md` (from repo root) — 335a453
+- [x] 1.2 Roadmap has the three new slice blocks: `grep -c "^### S-1[123]:" context/foundation/roadmap.md` prints 3 (from repo root) — 335a453
+- [x] 1.3 Roadmap indexes the change: `grep -n "pdf-statement-import" context/foundation/roadmap.md` shows the At a glance row and the slice block (from repo root) — 335a453
 
 #### Manual
 
-- [x] 1.4 You reviewed the PRD and roadmap diffs and approve the wording (FR-018, non-goal line, S-11 to S-13, M-1 note).
-- [x] 1.5 GitHub issues for S-11 (`status: planning`), S-12 and S-13 (`status: proposed`) exist with the `slice` label and carry the matching roadmap status (per `context/foundation/lessons.md`).
+- [x] 1.4 You reviewed the PRD and roadmap diffs and approve the wording (FR-018, non-goal line, S-11 to S-13, M-1 note). — 335a453
+- [x] 1.5 GitHub issues for S-11 (`status: planning`), S-12 and S-13 (`status: proposed`) exist with the `slice` label and carry the matching roadmap status (per `context/foundation/lessons.md`). — 335a453
 
 ### Phase 2: Format-aware import pipeline
 
 #### Automated
 
-- [ ] 2.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 2.2 Sniffer tests pass: `dotnet test --filter StatementFormatSnifferTests` (from `MyFinances/backend`)
-- [ ] 2.3 Import endpoint tests pass: `dotnet test --filter ImportEndpointsTests` (from `MyFinances/backend`)
-- [ ] 2.4 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 2.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
+- [x] 2.2 Sniffer tests pass: `dotnet test --filter StatementFormatSnifferTests` (from `MyFinances/backend`)
+- [x] 2.3 Import endpoint tests pass: `dotnet test --filter ImportEndpointsTests` (from `MyFinances/backend`)
+- [x] 2.4 Full suite passes: `dotnet test` (from `MyFinances/backend`)
 
 #### Manual
 
-- [ ] 2.5 With both servers running, importing an existing mBank CSV and an Erste CSV on the import page behaves as before (auto-detect, rows, duplicates on re-import).
-- [ ] 2.6 Selecting any PDF through the file dialog's "All files" filter shows the existing "could not recognize" message, and choosing "mBank" in the revealed picker then shows "mBank import does not support PDF files."
+- [x] 2.5 With both servers running, importing an existing mBank CSV and an Erste CSV on the import page behaves as before (auto-detect, rows, duplicates on re-import).
+- [x] 2.6 Selecting any PDF through the file dialog's "All files" filter shows the existing "could not recognize" message, and choosing "mBank" in the revealed picker then shows "mBank import does not support PDF files."
 
 ### Phase 3: Synthetic VeloBank PDF fixtures
 
