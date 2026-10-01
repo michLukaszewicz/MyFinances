@@ -212,4 +212,18 @@ public class ErsteCsvParserTests
         Assert.Empty(result.Transactions);
         Assert.Equal(29, result.SkippedErrorCount);
     }
+
+    [Fact]
+    public void Parse_SkipsWhitespaceOnlyLeadingLine_BeforeTheSummary()
+    {
+        var parser = new ErsteCsvParser();
+        using var stream = SemicolonFixtureWith(text => "   \n" + text);
+
+        Assert.True(parser.CanParse(stream));
+
+        var result = parser.Parse(stream);
+
+        Assert.Equal(29, result.Transactions.Count);
+        Assert.Equal(0, result.SkippedErrorCount);
+    }
 }
