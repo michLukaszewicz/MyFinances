@@ -426,28 +426,28 @@ No schema or data changes. Existing mBank and Erste transactions and their hashe
 
 #### Automated
 
-- [x] 2.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [x] 2.2 Sniffer tests pass: `dotnet test --filter StatementFormatSnifferTests` (from `MyFinances/backend`)
-- [x] 2.3 Import endpoint tests pass: `dotnet test --filter ImportEndpointsTests` (from `MyFinances/backend`)
-- [x] 2.4 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 2.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — 8b20218
+- [x] 2.2 Sniffer tests pass: `dotnet test --filter StatementFormatSnifferTests` (from `MyFinances/backend`) — 8b20218
+- [x] 2.3 Import endpoint tests pass: `dotnet test --filter ImportEndpointsTests` (from `MyFinances/backend`) — 8b20218
+- [x] 2.4 Full suite passes: `dotnet test` (from `MyFinances/backend`) — 8b20218
 
 #### Manual
 
-- [x] 2.5 With both servers running, importing an existing mBank CSV and an Erste CSV on the import page behaves as before (auto-detect, rows, duplicates on re-import).
-- [x] 2.6 Selecting any PDF through the file dialog's "All files" filter shows the existing "could not recognize" message, and choosing "mBank" in the revealed picker then shows "mBank import does not support PDF files."
+- [x] 2.5 With both servers running, importing an existing mBank CSV and an Erste CSV on the import page behaves as before (auto-detect, rows, duplicates on re-import). — 8b20218
+- [x] 2.6 Selecting any PDF through the file dialog's "All files" filter shows the existing "could not recognize" message, and choosing "mBank" in the revealed picker then shows "mBank import does not support PDF files." — 8b20218
 
 ### Phase 3: Synthetic VeloBank PDF fixtures
 
 #### Automated
 
-- [ ] 3.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 3.2 Fixture tests pass: `dotnet test --filter VeloBankPdfFixtureTests` (from `MyFinances/backend`)
-- [ ] 3.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 3.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
+- [x] 3.2 Fixture tests pass: `dotnet test --filter VeloBankPdfFixtureTests` (from `MyFinances/backend`)
+- [x] 3.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
 
 #### Manual
 
-- [ ] 3.4 Both fixture PDFs open in a PDF viewer and look like the real VeloBank statement in shape (header, grid, vertically centred date/amount/balance, repeated header block, boilerplate footer).
-- [ ] 3.5 The fixtures and generator contain no real name, address, account number, card number or counterparty from the original samples, and the committed font is OFL-licensed with its license file beside it.
+- [x] 3.4 Both fixture PDFs open in a PDF viewer and look like the real VeloBank statement in shape (header, grid, vertically centred date/amount/balance, repeated header block, boilerplate footer).
+- [x] 3.5 The fixtures and generator contain no real name, address, account number, card number or counterparty from the original samples, and the committed font is OFL-licensed with its license file beside it.
 
 ### Phase 4: VeloBank PDF parser
 
