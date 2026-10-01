@@ -1,7 +1,7 @@
 ---
 change_id: erste-import
 title: Import an Erste Bank Polska CSV statement through the existing import loop
-status: plan_reviewed
+status: implementing
 created: 2026-10-01
 updated: 2026-10-01
 archived_at: null
