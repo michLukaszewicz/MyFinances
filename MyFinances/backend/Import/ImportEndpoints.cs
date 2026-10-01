@@ -36,24 +36,50 @@ public static class ImportEndpoints
             await file.CopyToAsync(stream);
             stream.Position = 0;
 
+            // The format is decided once from the first bytes; only parsers reading that format
+            // are candidates, for both auto-detection and the manual-bank fallback below.
+            var format = StatementFormatSniffer.Detect(stream);
+            var allParsers = parsers.ToList();
+            var candidates = allParsers.Where(p => p.Format == format).ToList();
+
             // CanParse resets a seekable stream's position after scanning, so trying every
-            // registered parser in turn is safe — each gets to inspect the same fresh bytes.
-            var parser = parsers.FirstOrDefault(p => p.CanParse(stream));
+            // candidate parser in turn is safe — each gets to inspect the same fresh bytes.
+            var parser = candidates.FirstOrDefault(p => p.CanParse(stream));
 
             if (parser is null && !string.IsNullOrWhiteSpace(bank))
             {
                 // Manual-selection fallback: auto-detection failed, but the caller told us
                 // which bank this is. Trust the explicit choice instead of erroring.
-                parser = parsers.FirstOrDefault(p => string.Equals(p.BankName, bank, StringComparison.OrdinalIgnoreCase));
+                parser = candidates.FirstOrDefault(p => string.Equals(p.BankName, bank, StringComparison.OrdinalIgnoreCase));
             }
 
             if (parser is null)
             {
+                // A known bank that simply has no parser for this format gets a precise message;
+                // any other failure keeps the generic text that makes the frontend show its bank picker.
+                var knownBank = string.IsNullOrWhiteSpace(bank)
+                    ? null
+                    : allParsers.FirstOrDefault(p => string.Equals(p.BankName, bank, StringComparison.OrdinalIgnoreCase))?.BankName;
+                if (knownBank is not null)
+                {
+                    return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: $"{knownBank} import does not support {format.ToString().ToUpperInvariant()} files.");
+                }
+
                 return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: "Could not recognize this file's bank format. Select a bank manually and retry.");
             }
 
             stream.Position = 0;
-            var parseResult = parser.Parse(stream);
+            ParseResult parseResult;
+            try
+            {
+                parseResult = parser.Parse(stream);
+            }
+            catch (StatementIntegrityException ex)
+            {
+                // 422, not 400: the frontend treats any 400 from this endpoint as "show the bank
+                // picker", which would be wrong for a recognised statement that failed its checks.
+                return Results.Problem(statusCode: StatusCodes.Status422UnprocessableEntity, title: ex.Message);
+            }
 
             var hashes = parseResult.Transactions
                 .Select(t => DedupHash.ComputeHash(userId, t.Date, t.Amount, t.Description, account.Id))

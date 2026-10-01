@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MyFinances.Api;
@@ -66,13 +67,19 @@ public class ImportEndpointsTests
     // middleware (app.UseAntiforgery()) validate this request automatically, even though the
     // endpoint itself has no manual AddEndpointFilter check (that's only needed for JSON-body
     // endpoints like /import/commit) — so every multipart POST here needs a real token.
-    private static async Task<HttpRequestMessage> BuildUploadRequestAsync(HttpClient client, byte[] fileBytes, Guid accountId, string? bank = null)
+    private static async Task<HttpRequestMessage> BuildUploadRequestAsync(
+        HttpClient client,
+        byte[] fileBytes,
+        Guid accountId,
+        string? bank = null,
+        string fileName = "export.csv",
+        string contentType = "text/csv")
     {
         var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
         var content = new MultipartFormDataContent();
         var fileContent = new ByteArrayContent(fileBytes);
-        fileContent.Headers.ContentType = new MediaTypeHeaderValue("text/csv");
-        content.Add(fileContent, "file", "export.csv");
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+        content.Add(fileContent, "file", fileName);
         content.Add(new StringContent(accountId.ToString()), "accountId");
         if (bank is not null)
         {
@@ -451,6 +458,130 @@ public class ImportEndpointsTests
         Assert.NotNull(parsed);
         Assert.Equal("Erste", parsed!.Bank);
         Assert.Empty(parsed.Rows);
+    }
+
+    private const string UnrecognizedFormatTitle = "Could not recognize this file's bank format. Select a bank manually and retry.";
+
+    // Only the first bytes matter to the format sniffer; the rest need not be a valid PDF.
+    private static readonly byte[] PdfBytes = Encoding.ASCII.GetBytes("%PDF-1.7\n%not a real statement\n");
+
+    private static async Task<string?> ReadProblemTitleAsync(HttpResponseMessage response)
+    {
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        return document.RootElement.GetProperty("title").GetString();
+    }
+
+    // Stands in for the future PDF parsers: claims every file and fails its integrity check.
+    private sealed class IntegrityFailingPdfParser : IBankStatementParser
+    {
+        public const string Title = "Balance check failed on page 2 near 2026-08-01.";
+
+        public string BankName => "StubPdfBank";
+
+        public StatementFormat Format => StatementFormat.Pdf;
+
+        public bool CanParse(Stream fileStream) => true;
+
+        public ParseResult Parse(Stream fileStream) => throw new StatementIntegrityException(Title);
+    }
+
+    private static WebApplicationFactory<Program> WithIntegrityFailingPdfParser(AuthApiFactory factory) =>
+        factory.WithWebHostBuilder(b => b.ConfigureServices(services =>
+            services.AddScoped<IBankStatementParser>(_ => new IntegrityFailingPdfParser())));
+
+    [Fact]
+    public async Task Parse_PdfWithBankThatHasNoPdfParser_ReturnsBadRequestNamingBankAndFormat()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        using var request = await BuildUploadRequestAsync(client, PdfBytes, account.Id, bank: "mBank", fileName: "statement.pdf", contentType: "application/pdf");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("mBank import does not support PDF files.", await ReadProblemTitleAsync(response));
+    }
+
+    [Fact]
+    public async Task Parse_PdfWithoutBank_ReturnsTheGenericUnrecognizedBadRequest()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        using var request = await BuildUploadRequestAsync(client, PdfBytes, account.Id, fileName: "statement.pdf", contentType: "application/pdf");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(UnrecognizedFormatTitle, await ReadProblemTitleAsync(response));
+    }
+
+    [Fact]
+    public async Task Parse_PdfWithUnknownBank_ReturnsTheGenericUnrecognizedBadRequest()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        using var request = await BuildUploadRequestAsync(client, PdfBytes, account.Id, bank: "NoSuchBank", fileName: "statement.pdf", contentType: "application/pdf");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(UnrecognizedFormatTitle, await ReadProblemTitleAsync(response));
+    }
+
+    [Fact]
+    public async Task Parse_PdfParserThrowsIntegrityException_Returns422WithItsMessageAndNoRows()
+    {
+        using var baseFactory = new AuthApiFactory();
+        var factory = WithIntegrityFailingPdfParser(baseFactory);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "StubPdfBank", "111");
+
+        using var request = await BuildUploadRequestAsync(client, PdfBytes, account.Id, fileName: "statement.pdf", contentType: "application/pdf");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        using var document = JsonDocument.Parse(body);
+        Assert.Equal(IntegrityFailingPdfParser.Title, document.RootElement.GetProperty("title").GetString());
+        Assert.False(document.RootElement.TryGetProperty("rows", out _));
+    }
+
+    // Candidates are filtered by the sniffed format: a registered PDF parser that claims every
+    // file must not intercept a CSV upload, and CSV flows must resolve exactly as before.
+    [Fact]
+    public async Task Parse_CsvUploadWithPdfParserRegistered_StillResolvesTheCsvParser()
+    {
+        using var baseFactory = new AuthApiFactory();
+        var factory = WithIntegrityFailingPdfParser(baseFactory);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.NotNull(parsed);
+        Assert.Equal("mBank", parsed!.Bank);
+        Assert.Equal(4, parsed.Rows.Count);
+    }
+
+    [Fact]
+    public async Task Parse_CsvWithBankThatHasOnlyAPdfParser_ReturnsBadRequestNamingBankAndFormat()
+    {
+        using var baseFactory = new AuthApiFactory();
+        var factory = WithIntegrityFailingPdfParser(baseFactory);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "StubPdfBank", "111");
+
+        using var request = await BuildUploadRequestAsync(client, Encoding.UTF8.GetBytes("not,a,recognizable,export\r\n1,2,3,4\r\n"), account.Id, bank: "StubPdfBank");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("StubPdfBank import does not support CSV files.", await ReadProblemTitleAsync(response));
     }
 
     [Fact]
