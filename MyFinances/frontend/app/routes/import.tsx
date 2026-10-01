@@ -50,8 +50,8 @@ interface ImportSummaryDto {
   skippedErrorCount: number;
 }
 
-// Only mBank is supported today — extend this list as more parsers ship.
-const SUPPORTED_BANKS = ["mBank"];
+// mBank and Erste are supported today — extend this list as more parsers ship.
+const SUPPORTED_BANKS = ["mBank", "Erste"];
 
 // Mirrors the backend's RowDecision enum (ImportContracts.cs) — the value Phase 6
 // will send per duplicate row in the /import/commit request.

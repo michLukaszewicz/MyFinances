@@ -228,25 +228,25 @@ No schema or data changes. Existing mBank imports are unaffected; dedup hashes a
 
 #### Automated
 
-- [x] 1.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [x] 1.2 Parser tests pass: `dotnet test --filter ErsteCsvParserTests` (from `MyFinances/backend`)
-- [x] 1.3 Existing suite still passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 1.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — a736348
+- [x] 1.2 Parser tests pass: `dotnet test --filter ErsteCsvParserTests` (from `MyFinances/backend`) — a736348
+- [x] 1.3 Existing suite still passes: `dotnet test` (from `MyFinances/backend`) — a736348
 
 #### Manual
 
-- [x] 1.4 The fixtures contain no real IBAN, holder name, address, phone number or counterparty name from the original samples.
+- [x] 1.4 The fixtures contain no real IBAN, holder name, address, phone number or counterparty name from the original samples. — a736348
 
 ### Phase 2: Wire into the app and update the roadmap
 
 #### Automated
 
-- [ ] 2.1 Backend builds and the full suite passes: `dotnet test` (from `MyFinances/backend`)
-- [ ] 2.2 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`)
-- [ ] 2.3 Frontend builds: `npm run build` (from `MyFinances/frontend`)
+- [x] 2.1 Backend builds and the full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 2.2 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`)
+- [x] 2.3 Frontend builds: `npm run build` (from `MyFinances/frontend`)
 
 #### Manual
 
-- [ ] 2.4 With both servers running, creating an "Erste" account in settings works (Erste is offered in the bank dropdown).
-- [ ] 2.5 Uploading a redacted Erste file on the import page auto-detects Erste and shows 29 rows; committing and re-uploading shows duplicates for every row.
-- [ ] 2.6 The imported rows appear in the categorization queue and dashboard history with the transaction dates (e.g. the 03-09 booked / 02-09 paid row shows 2026-09-02).
-- [ ] 2.7 Uploading an mBank file to an Erste account still works and shows the bank-mismatch notice.
+- [x] 2.4 With both servers running, creating an "Erste" account in settings works (Erste is offered in the bank dropdown).
+- [x] 2.5 Uploading a redacted Erste file on the import page auto-detects Erste and shows 29 rows; committing and re-uploading shows duplicates for every row.
+- [x] 2.6 The imported rows appear in the categorization queue and dashboard history with the transaction dates (e.g. the 03-09 booked / 02-09 paid row shows 2026-09-02).
+- [x] 2.7 Uploading an mBank file to an Erste account still works and shows the bank-mismatch notice.
