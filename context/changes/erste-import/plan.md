@@ -228,13 +228,13 @@ No schema or data changes. Existing mBank imports are unaffected; dedup hashes a
 
 #### Automated
 
-- [ ] 1.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 1.2 Parser tests pass: `dotnet test --filter ErsteCsvParserTests` (from `MyFinances/backend`)
-- [ ] 1.3 Existing suite still passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 1.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
+- [x] 1.2 Parser tests pass: `dotnet test --filter ErsteCsvParserTests` (from `MyFinances/backend`)
+- [x] 1.3 Existing suite still passes: `dotnet test` (from `MyFinances/backend`)
 
 #### Manual
 
-- [ ] 1.4 The fixtures contain no real IBAN, holder name, address, phone number or counterparty name from the original samples.
+- [x] 1.4 The fixtures contain no real IBAN, holder name, address, phone number or counterparty name from the original samples.
 
 ### Phase 2: Wire into the app and update the roadmap
 
