@@ -1,7 +1,7 @@
 ---
 change_id: pdf-statement-import
 title: Import bank statements from PDF (VeloBank, mBank, Erste)
-status: plan_reviewed
+status: implementing
 created: 2026-10-01
 updated: 2026-10-01
 archived_at: null
