@@ -338,6 +338,121 @@ public class ImportEndpointsTests
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    private static string ErsteFixturePath(string fileName = "erste-sample-redacted.csv") =>
+        Path.Combine(AppContext.BaseDirectory, "Fixtures", fileName);
+
+    private static async Task<ImportParseResponse> ParseErsteFixtureAsync(HttpClient client, string bankName, string fileName = "erste-sample-redacted.csv")
+    {
+        var account = await CreateAccountAsync(client, bankName, "111");
+        using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(ErsteFixturePath(fileName)), account.Id);
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.NotNull(parsed);
+        return parsed!;
+    }
+
+    [Fact]
+    public async Task Parse_RecognizedErsteFile_ReturnsErsteRowsWithoutBankMismatch()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+
+        var parsed = await ParseErsteFixtureAsync(client, "Erste");
+
+        Assert.Equal("Erste", parsed.Bank);
+        Assert.Equal(29, parsed.Rows.Count);
+        Assert.False(parsed.BankMismatch);
+    }
+
+    [Fact]
+    public async Task Parse_ErsteFileWithMBankAccount_BankMismatchIsTrue()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+
+        var parsed = await ParseErsteFixtureAsync(client, "mBank");
+
+        Assert.Equal("Erste", parsed.Bank);
+        Assert.True(parsed.BankMismatch);
+    }
+
+    [Theory]
+    [InlineData("erste-sample-redacted-tab.csv")]
+    [InlineData("erste-sample-redacted-pipe.csv")]
+    [InlineData("erste-sample-redacted-comma.csv")]
+    public async Task Parse_ErsteDelimiterVariants_AreRecognizedThroughTheEndpoint(string fileName)
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+
+        var parsed = await ParseErsteFixtureAsync(client, "Erste", fileName);
+
+        Assert.Equal("Erste", parsed.Bank);
+        Assert.Equal(21, parsed.Rows.Count);
+    }
+
+    // The fixture holds three identical +500,00 "PRZELEW ŚRODKÓW" rows on the same day. After
+    // committing all of them, re-parsing the same file must flag every row as a duplicate —
+    // including all three identical ones, which share a single dedup hash.
+    [Fact]
+    public async Task Parse_ErsteFileAfterCommit_FlagsEveryCommittedRowAsDuplicate()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "Erste", "111");
+        var fileBytes = await File.ReadAllBytesAsync(ErsteFixturePath());
+
+        using var firstRequest = await BuildUploadRequestAsync(client, fileBytes, account.Id);
+        var firstResponse = await client.SendAsync(firstRequest);
+        Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
+        var firstParsed = await firstResponse.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.All(firstParsed!.Rows, row => Assert.False(row.IsDuplicate));
+
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+        using var commitRequest = new HttpRequestMessage(HttpMethod.Post, "/api/import/commit");
+        commitRequest.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
+        commitRequest.Content = JsonContent.Create(new
+        {
+            AccountId = account.Id,
+            SkippedErrorCount = firstParsed.SkippedErrorCount,
+            Rows = firstParsed.Rows.Select(r => new { r.Date, r.Description, r.Amount, Decision = "Keep" }),
+        });
+        var commitResponse = await client.SendAsync(commitRequest);
+        Assert.Equal(HttpStatusCode.OK, commitResponse.StatusCode);
+
+        using var secondRequest = await BuildUploadRequestAsync(client, fileBytes, account.Id);
+        var secondResponse = await client.SendAsync(secondRequest);
+
+        Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode);
+        var secondParsed = await secondResponse.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.NotNull(secondParsed);
+        Assert.Equal(29, secondParsed!.Rows.Count);
+        Assert.All(secondParsed.Rows, row => Assert.True(row.IsDuplicate));
+        Assert.Equal(3, secondParsed.Rows.Count(r => r.Amount == 500.00m && r.Description == "PRZELEW ŚRODKÓW"));
+    }
+
+    // No parser recognizes this content, but an explicit bank=Erste choice must still
+    // resolve the Erste parser (no 400) — which then finds nothing to parse and returns zero rows.
+    // (mBank-format content would not do: mBank auto-detection wins over the manual choice.)
+    [Fact]
+    public async Task Parse_ManualErsteFallbackOnNonErsteFile_ReturnsOkWithZeroRows()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "Erste", "111");
+
+        using var request = await BuildUploadRequestAsync(client, Encoding.UTF8.GetBytes("not,a,recognizable,export\r\n1,2,3,4\r\n"), account.Id, bank: "Erste");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.NotNull(parsed);
+        Assert.Equal("Erste", parsed!.Bank);
+        Assert.Empty(parsed.Rows);
+    }
+
     [Fact]
     public async Task Commit_WithoutAntiforgeryToken_ReturnsBadRequest()
     {
