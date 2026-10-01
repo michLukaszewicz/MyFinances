@@ -89,7 +89,7 @@ public class AccountEndpointsTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var payload = await response.Content.ReadFromJsonAsync<BankOptionsResponse>(JsonOptions);
         Assert.NotNull(payload);
-        Assert.Equal(new[] { "mBank", "Other" }, payload!.BankNames);
+        Assert.Equal(new[] { "mBank", "Erste", "Other" }, payload!.BankNames);
     }
 
     [Fact]
