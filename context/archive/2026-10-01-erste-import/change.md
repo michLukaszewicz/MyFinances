@@ -1,10 +1,10 @@
 ---
 change_id: erste-import
 title: Import an Erste Bank Polska CSV statement through the existing import loop
-status: impl_reviewed
+status: archived
 created: 2026-10-01
 updated: 2026-10-01
-archived_at: null
+archived_at: 2026-10-01T09:16:11Z
 ---
 
 ## Notes
