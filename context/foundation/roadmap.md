@@ -48,7 +48,7 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | S-05  | category-budget-vs-actual        | optionally set a per-category budget and see actual-vs-budget alongside the chart   | S-04           | FR-017                        | proposed |
 | S-06  | category-average-deviation-signal| see a category's spend flagged as above/below/in line with its historical average   | S-04           | FR-013                        | done |
 | S-07  | revolut-import                   | import a Revolut CSV statement through the same import/dedup/categorize/chart loop  | S-01           | FR-003                        | proposed |
-| S-08  | erste-import                     | import an Erste Bank Polska CSV statement through the same loop                     | S-01           | FR-003                        | in-progress |
+| S-08  | erste-import                     | import an Erste Bank Polska CSV statement through the same loop                     | S-01           | FR-003                        | done |
 | S-09  | transaction-history-view         | see a chronological list of their imported/manually-entered transactions on the dashboard (date, description, amount, category) | S-01           | FR-011 (partial)              | done |
 | S-10  | account-management                | add/edit/remove their own bank accounts (account number + bank name) via a settings page, and pick from them when manually entering a transaction | F-01           | FR-009, FR-010                | done |
 
@@ -191,7 +191,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Exact Erste CSV export format ("Historia → export", semicolon separator per shape-notes) — Owner: user. Block: no.
 - **Risk:** Third and final parser — lowest risk of the three bank slices since the abstraction is validated twice already by this point.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-09: Transaction history view
 
@@ -268,3 +268,4 @@ No cross-cutting open questions at this time — PRD's own `## Open Questions` s
 - **S-09: user sees a chronological list of their imported and manually-entered transactions on the dashboard (date, description, amount, category), replacing the current static "you haven't imported anything yet" placeholder once data exists.** — Archived 2026-09-28 → `context/archive/2026-09-25-transaction-history-view/`. Lesson: —.
 - **S-10: user can add, edit, and remove their own bank accounts (account number + bank name) via a settings page, and pick from their own accounts when manually entering a transaction, instead of a generic bank-name dropdown.** — Archived 2026-09-28 → `context/archive/2026-09-25-account-management/`. Lesson: —.
 - **S-06: user sees, per category, whether current spend is above, below, or in line with that category's historical average — once at least 1 prior month of history exists; before that, the category shows actual spend with no deviation signal.** — Archived 2026-09-30 → `context/archive/2026-09-30-category-average-deviation-signal/`. Lesson: —.
+- **S-08: user can import an Erste Bank Polska CSV statement through the same loop, completing PLN-only coverage of all three target banks.** — Archived 2026-10-01 → `context/archive/2026-10-01-erste-import/`. Lesson: —.
