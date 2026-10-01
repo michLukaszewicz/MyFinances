@@ -32,7 +32,7 @@ A user with a VeloBank account uploads a "Historia rachunku" PDF on the import p
 - Only `ImportEndpoints` needs logic changes; `AccountEndpoints` already tolerates several parsers per bank name via `Distinct()` — `Transactions/AccountEndpoints.cs:19-22`.
 - A recognised-but-inconsistent file needs a different HTTP status from "not recognised": the frontend treats every 400 as "show the bank picker" (`import.tsx:135-137`), which would mislead after an integrity rejection. Use 422 for integrity failures; only 400 keeps meaning "not recognised / format unsupported for the chosen bank".
 - The existing manual-fallback contract (explicit bank + unreadable content → 200 with zero rows, `Tests/ImportEndpointsTests.cs:436-454`) must hold for the PDF parser too.
-- PdfPig's package id is `PdfPig`; `UglyToad.PdfPig` on nuget.org is a different package. A PdfPig-generated PDF round-trips Polish diacritics with an embedded TrueType font and supports filled thin rectangles (spike on 0.1.16), although the library's README still claims ASCII-only writing; words drawn closer than about one space width merge (`1` + `014,84` became `1014,84`), so the generator must leave a gap.
+- PdfPig's package id is `PdfPig`; `UglyToad.PdfPig` on nuget.org is a different package. A PdfPig-generated PDF round-trips Polish diacritics with an embedded TrueType font and supports filled thin rectangles (spike on 0.1.16), although the library's README still claims ASCII-only writing; words drawn with a gap of about one space width or less merge (`1` + `014,84` became `1014,84`), so the generator should use real space characters or a gap clearly above one space width.
 - Pending and booked rows share a description template in both samples, but no pending-to-booked pair has been observed.
 
 ## What We're NOT Doing
@@ -57,8 +57,8 @@ Decisions taken during planning (research settled the approach; the rest decided
 - **Parser per bank and format**, all of a bank's parsers sharing one `BankName`; `IBankStatementParser` gains a `Format`. The endpoint sniffs the upload's format once from its first bytes (`%PDF-` → PDF, anything else → CSV, so today's behaviour is unchanged) and considers only parsers of that format.
 - **Manual fallback** resolves by `bank` within the sniffed format. If the bank exists but has no parser for that format, return 400 `"<bank> import does not support <PDF|CSV> files."`; if nothing is recognised and no bank is given, keep the existing 400 text. Explicit bank + unreadable content keeps returning 200 with zero rows.
 - **Date** = transaction date, because pending rows have no booking date and the hash must not change when a row is booked. **Description** = the description cell's lines joined top to bottom with a single space. **Amount** = the amount cell parsed with `pl-PL`.
-- **Pending rows are imported** (user decision, overriding the skip recommendation): they carry the transaction date and are excluded from the balance check. Risk: if a booked description ever differs from its pending one, that payment would be counted twice; verified after the fact (see Manual Testing Steps).
-- **Integrity**: the parser throws `StatementIntegrityException`; the endpoint returns 422 with its message and imports nothing. Checks (the user chose rejection for the balance check; the two sibling checks use the same policy by assumption): (1) balance chain across consecutive booked PLN rows in list order (newest first: `older.Balance == newer.Balance − newer.Amount`); (2) for PLN card rows the amount printed in the description equals the absolute amount column; (3) a row in a recognised table that cannot be read is an integrity failure, not a skipped row.
+- **Pending rows are imported** (user decision, overriding the skip recommendation): they carry the transaction date and are excluded from the balance check. Risk: if a booked description or amount ever differs from its pending one (a card hold may settle for a different amount), that payment would be counted twice; verified after the fact (see Manual Testing Steps).
+- **Integrity**: the parser throws `StatementIntegrityException`; the endpoint returns 422 with its message and imports nothing. Checks (the user chose rejection for the balance check; the two sibling checks use the same policy by assumption): (1) balance chain across consecutive booked PLN rows in list order (newest first: `older.Balance == newer.Balance − newer.Amount`), where pending rows are ignored and a skipped non-PLN row breaks the chain — nothing is compared across it, because its effect on the printed balance is unverified; (2) for PLN card rows whose description also names PLN, the amount printed in the description equals the absolute amount column (a description naming another currency skips this check for that row, the row is still imported); (3) a row in a recognised table that cannot be read is an integrity failure, not a skipped row. The 422 title names the failing check, the page and, when readable, the row's transaction date (so a false reject can be located), and still contains no amounts, descriptions or names.
 - **Non-PLN rows** are skipped, counted in `SkippedErrorCount`, and excluded from checks.
 - **Limits**: PDFs over 200 pages are treated as unreadable; the 5 MB upload cap stays.
 - **Fixtures** are synthetic: a generator in the test project (PdfPig builder + an OFL-licensed font) writes two committed PDFs; edge cases (foreign currency, tampered balance, unreadable cell, non-VeloBank PDF) are generated in memory. Real samples are only used in manual verification.
@@ -71,7 +71,8 @@ Decisions taken during planning (research settled the approach; the rest decided
 - Build rows from separator bands, never from text baselines; assign words to bands and columns by their centres, and tolerate sub-point shifts of column edges between header blocks on one page.
 - Assemble amounts and balances per cell: PdfPig returns `1 014,84 PLN` as separate words.
 - Open the PDF from a copy of the bytes so the caller's stream position is never disturbed, and never let `CanParse` throw.
-- The synthetic generator must draw each word separately with a gap of at least about one space width, or PdfPig merges `1` and `014,84`; a fixture test asserts the split balance parses correctly.
+- The synthetic generator writes each cell line as one string containing real space characters (those split into separate words in every probe, NBSP included); first confirm on a letter dump of a real sample that its thousands separator is a space glyph. If it is only a positional gap, draw the parts separately with a gap of at least 1.1 space widths: exactly one space width (0.278 em) still merged `1` and `014,84` into `1014,84`, and PdfPig's adaptive gap rule makes the outcome depend on the other text on the page. A fixture test asserts the split balance parses correctly.
+- `PdfPageBuilder.DrawRectangle(fill: true)` strokes as well as fills (`IsStroked` stays true even at line width 0), unlike the real files; the parser therefore selects rectangles by `IsFilled` and bounding box only and never filters on `IsStroked`.
 
 ## Phase 1: Record the scope change in PRD and roadmap
 
@@ -95,7 +96,13 @@ Make the documents say what is being built, so the roadmap item exists under Cha
 
 **Intent**: Add the slices and keep the index tables, streams, handoff table and parked list consistent.
 
-**Contract**: add S-11 (`Change ID: pdf-statement-import`, outcome: import a VeloBank PDF statement through the same loop; PRD refs FR-018; prerequisite S-01; status `planning`), S-12 (`mbank-pdf-import`) and S-13 (`erste-pdf-import`), both `proposed`, prerequisite S-11, flagged optional, with their known unknowns (cross-format dedup, lossy Erste PDF) as slice blocks after S-10; add matching rows to "At a glance" (`:41-53`) and "Backlog Handoff" (`:222-234`); extend stream C (`:63`) to `S-07 → S-08 → S-11 (→ S-12, S-13 optional)`; add VeloBank to the M-1 title and intent and note that S-12/S-13 are optional and excluded from M-1's "Done when" (`:23-27`); update the parked "Banks other than …" line (`:251`). `updated:` stays today's date.
+**Contract**: add S-11 (`Change ID: pdf-statement-import`, outcome: import a VeloBank PDF statement through the same loop; PRD refs FR-018; prerequisite S-01; status `planning`), S-12 (`mbank-pdf-import`) and S-13 (`erste-pdf-import`), both `proposed`, prerequisite S-11, flagged optional, with their known unknowns (cross-format dedup, lossy Erste PDF) as slice blocks after S-10; add matching rows to "At a glance" (`:41-53`) and "Backlog Handoff" (`:222-234`); extend stream C (`:63`) to `S-07 → S-08 → S-11 (→ S-12, S-13 optional)`; add VeloBank to the M-1 title and intent and note that S-12/S-13 are optional and excluded from M-1's "Done when" (`:23-27`); update the parked "Banks other than …" line (`:251`). S-11's block lists the post-merge pending-row check as an open follow-up (Manual Testing Steps, step 5). `updated:` stays today's date.
+
+#### 3. GitHub issues
+
+**Intent**: Keep the issue tracker in step with the roadmap, one issue per slice as for S-01 to S-10 (per `context/foundation/lessons.md`).
+
+**Contract**: after the roadmap edit is approved, ask the user, then create issues titled in the existing style ("S-11: Import a VeloBank PDF statement", "S-12: Import an mBank PDF statement", "S-13: Import an Erste Bank Polska PDF statement") with labels `slice` plus `status: planning` (S-11) or `status: proposed` (S-12, S-13). The S-11 issue body carries the post-merge pending-row check as an open follow-up.
 
 ### Success Criteria:
 
@@ -108,7 +115,7 @@ Make the documents say what is being built, so the roadmap item exists under Cha
 #### Manual Verification:
 
 - You reviewed the PRD and roadmap diffs and approve the wording (FR-018, non-goal line, S-11 to S-13, M-1 note).
-- A GitHub issue for S-11 exists and carries the matching roadmap status (per `context/foundation/lessons.md`).
+- GitHub issues for S-11 (`status: planning`), S-12 and S-13 (`status: proposed`) exist with the `slice` label and carry the matching roadmap status (per `context/foundation/lessons.md`).
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase. Phase blocks use plain bullets — the corresponding `- [ ]` checkboxes for these items live in the `## Progress` section at the bottom of the plan.
 
@@ -152,7 +159,7 @@ Teach the import endpoint to tell CSV from PDF and to select parsers per format,
 
 **Intent**: Carry a user-facing reason when a recognised statement cannot be trusted.
 
-**Contract**: `StatementIntegrityException(string message) : Exception(message)`; messages must not contain amounts, descriptions or names.
+**Contract**: `StatementIntegrityException(string message) : Exception(message)`; messages must not contain amounts, descriptions or names; they may name the failing check, the page and a transaction date.
 
 #### 5. Endpoint selection and error mapping
 
@@ -210,7 +217,7 @@ Build a generator that reproduces the measured VeloBank layout from invented dat
 
 **Intent**: Produce a VeloBank-style "Historia rachunku" PDF from a row model so tests and fixtures never need real data.
 
-**Contract**: input = header text (fake holder/account), rows (`TransactionDate`, `BookingDate?` where null means pending and prints `-`, description lines, `Amount`, `Currency`, `Balance?`) and layout options (rows per page, mid-page repeated header block, tamper hooks for tests). Output reproduces the measured geometry: A4 595×842 pt, column edges 26.2 / 89.2 / 153.9 / 440.2 / 504.4 / 567.9, 28 pt filled header cells with header texts, one filled ~1.2 pt separator per row spanning the first column, date/amount/balance vertically centred in the row band, description lines from the top, header repeated per page and a boilerplate footer after each page's table. Every word is drawn separately with a gap of at least about one space width so `1` and `014,84` stay two words as in the real files. Row pitch and font size are measured from the real samples (PdfPig `page.Paths`/`GetWords()` dump; research.md section 2a gives the edges); numbers beyond those above are the implementer's to measure.
+**Contract**: input = header text (fake holder/account), rows (`TransactionDate`, `BookingDate?` where null means pending and prints `-`, description lines, `Amount`, `Currency`, `Balance?`) and layout options (rows per page, mid-page repeated header block, tamper hooks for tests). Output reproduces the measured geometry: A4 595×842 pt, column edges 26.2 / 89.2 / 153.9 / 440.2 / 504.4 / 567.9, 28 pt filled header cells with header texts, one filled ~1.2 pt separator per row spanning the first column, date/amount/balance vertically centred in the row band, description lines from the top, header repeated per page and a boilerplate footer after each page's table. Each cell line is written as one string with real space characters (see Critical Implementation Details) so `1` and `014,84` stay two words as in the real files. Row pitch and font size are measured from the real samples (PdfPig `page.Paths`/`GetWords()` dump; research.md section 2a gives the edges); numbers beyond those above are the implementer's to measure.
 
 #### 3. Committed fixtures
 
@@ -269,11 +276,11 @@ Implement `VeloBankPdfParser` behind the existing interface and prove it on the 
 
 **Contract**:
 - `BankName = "VeloBank"`, `Format = StatementFormat.Pdf`; constructor takes an optional `maxPages` (default 200) so the limit is testable.
-- `CanParse`: restores a seekable stream's position; false unless the bytes start with `%PDF-`, the PDF opens (from a byte copy), is not encrypted and has at most `maxPages` pages, and page 1 shows the title "Historia rachunku", "VeloBank" and the table header words; never throws.
-- `Parse`: for each page read the header-cell rectangles (column edges, header intervals) and the thin first-column separators, build row bands between consecutive separators and the header bottom, assign each word to a band and column by its centre, drop words inside header intervals and below the last separator, and join each cell's lines top to bottom with single spaces. Row fields: transaction date `dd.MM.yyyy` → `Date`; booking date `-` or a date (only used to recognise pending); description cell → `Description`; amount cell `-82,30 PLN` → signed decimal (`pl-PL`) plus currency; balance cell `-` or an amount.
+- `CanParse`: restores a seekable stream's position; false unless the bytes start with `%PDF-`, the PDF opens (from a byte copy) and has at most `maxPages` pages, and page 1 shows the title "Historia rachunku", "VeloBank" and the table header words; never throws. No `IsEncrypted` check: it is also true for owner-restricted files that read fine, and a password-protected file already fails in `Open` (`PdfDocumentEncryptedException`). Open, page read and word/path extraction all sit inside one catch-all, because `GetPage`/`GetWords` can throw too (`InvalidOperationException` for a missing font, `InvalidFontFormatException`), not only `Open` (`PdfDocumentFormatException`).
+- `Parse`: for each page read the header-cell rectangles (column edges, header intervals) and the thin first-column separators (filled paths selected by `IsFilled` and bounding box only, never by `IsStroked`), build row bands between consecutive separators and the header bottom, assign each word to a band and column by its centre, drop words inside header intervals and below the last separator, and join each cell's lines top to bottom with single spaces. Row fields: transaction date `dd.MM.yyyy` → `Date`; booking date `-` or a date (only used to recognise pending); description cell → `Description`; amount cell `-82,30 PLN` → signed decimal (`pl-PL`) plus currency; balance cell `-` or an amount.
 - Pending rows (booking date `-`, balance `-`) are returned like any row and take no part in the balance check. Non-PLN rows are not returned, add one to `SkippedErrorCount`, and take no part in the checks. Rows keep the file's newest-first order.
-- Integrity (throw `StatementIntegrityException` with a PII-free message naming only the page): balance chain across consecutive booked PLN rows (`older.Balance == newer.Balance − newer.Amount`); for PLN card rows the amount after "na kwotę" in the description equals the absolute amount column; a row in a recognised table whose date or amount cannot be read.
-- Content that is not a VeloBank statement, or an unreadable/over-limit/corrupt PDF, yields an empty `ParseResult` with `SkippedErrorCount` 0 (the manual-fallback contract), never an exception.
+- Integrity (throw `StatementIntegrityException` with a PII-free message naming the failing check, the page and, when readable, the row's transaction date — no amounts, descriptions or names): balance chain across consecutive booked PLN rows (`older.Balance == newer.Balance − newer.Amount`), pending rows ignored and a skipped non-PLN row breaking the chain so nothing is compared across it; for PLN card rows whose description names PLN after "na kwotę", that amount equals the absolute amount column (a description naming another currency skips this check for that row, the row is still imported); a row in a recognised table whose date or amount cannot be read.
+- Content that is not a VeloBank statement, or an unreadable/over-limit/corrupt PDF, yields an empty `ParseResult` with `SkippedErrorCount` 0 (the manual-fallback contract), never an exception. The same catch-all as in `CanParse` turns any PdfPig failure (open, page read, extraction) into "unreadable"; only `StatementIntegrityException` is allowed to escape it.
 
 #### 2. Parser tests
 
@@ -281,7 +288,7 @@ Implement `VeloBankPdfParser` behind the existing interface and prove it on the 
 
 **Intent**: Pin recognition, parsing, pending and foreign-currency handling and the integrity policy.
 
-**Contract**: `CanParse` true for both fixtures and false for the mBank and Erste CSV fixtures, a valid non-VeloBank PDF, `%PDF-` plus garbage, and a PDF over a small `maxPages`; position restored. One-page fixture → 17 rows, 2 pending, dates are transaction dates, amounts signed, 1-5-line descriptions joined with single spaces, a balance of 1 000+ does not disturb parsing, Polish diacritics intact. Multi-page fixture → 40 rows, repeated headers and footers produce no rows, order preserved. Overlap stability — the same rows laid out on different page breaks yield identical date/amount/description keys. Variants generated in memory: a EUR row → skipped count 1, row absent, checks still pass around it; a tampered balance, a tampered card amount in a description, and an unreadable amount cell each throw `StatementIntegrityException`; a pending-only statement parses without error. `Parse` on a non-VeloBank PDF or corrupt PDF → empty result, skipped 0.
+**Contract**: `CanParse` true for both fixtures and false for the mBank and Erste CSV fixtures, a valid non-VeloBank PDF, `%PDF-` plus garbage, and a PDF over a small `maxPages`; position restored. One-page fixture → 17 rows, 2 pending, dates are transaction dates, amounts signed, 1-5-line descriptions joined with single spaces, a balance of 1 000+ does not disturb parsing, Polish diacritics intact. Multi-page fixture → 40 rows, repeated headers and footers produce no rows, order preserved. Overlap stability — the same rows laid out on different page breaks yield identical date/amount/description keys. Variants generated in memory: a EUR row → skipped count 1, row absent, no balance comparison across it (the generator lets the printed balance jump at that row); a PLN-booked card row whose description names EUR → imported, card-amount check skipped; a tampered balance, a tampered card amount in a description, and an unreadable amount cell each throw `StatementIntegrityException` whose message names the failing check, the page and (when readable) the row's transaction date and contains no amount, description or name; a pending-only statement parses without error. `Parse` on a non-VeloBank PDF or corrupt PDF → empty result, skipped 0.
 
 ### Success Criteria:
 
@@ -379,11 +386,11 @@ Register the parser, expose VeloBank and PDF upload in the frontend, and verify 
 2. Import the real 90-day PDF (`D:\repos\michLukaszewicz\Przykładowe pliki\veloBank\Historia rachunku 01-10-2026 09_56_04.pdf`); check 17 rows, dates and amounts against the PDF; commit; re-import and confirm all rows are duplicates.
 3. Import the real one-year PDF (`…\veloBank\velobank long.pdf`); confirm 62 rows and that the 17 known rows are duplicates.
 4. Import an mBank and an Erste CSV to confirm no regression.
-5. Post-merge check (cannot be done in-phase): once the bank has booked the two payments that were pending on 2026-10-01 (a few days later), export again and import — both payments should be flagged as duplicates. If they are not, reopen the pending-row decision.
+5. Post-merge check (cannot be done in-phase; tracked as an open follow-up in S-11's roadmap block and GitHub issue): once the bank has booked the two payments that were pending on 2026-10-01 (a few days later), export again and import — both payments should be flagged as duplicates. If either is not (its description or amount differs once booked), reopen the pending-row decision.
 
 ## Performance Considerations
 
-Statements are tens to low hundreds of rows over a few pages, parsed fully in memory; PdfPig runs in managed code. The 5 MB upload cap and the 200-page limit bound the work. Synthetic fixture PDFs embed the full font and are therefore larger than the real files (hundreds of KB), which is acceptable.
+Statements are tens to low hundreds of rows over a few pages, parsed fully in memory; PdfPig runs in managed code. The 5 MB upload cap and the 200-page limit bound the work in practice, but PdfPig has no decompressed-size limit (a probe decoded a ~1000:1 Flate stream to 64 MB, peaking near 284 MB), so memory is not strictly bounded; accepted because only the allow-listed user can upload. Synthetic fixture PDFs embed the full font and are therefore larger than the real files (hundreds of KB), which is acceptable.
 
 ## Migration Notes
 
@@ -413,7 +420,7 @@ No schema or data changes. Existing mBank and Erste transactions and their hashe
 #### Manual
 
 - [ ] 1.4 You reviewed the PRD and roadmap diffs and approve the wording (FR-018, non-goal line, S-11 to S-13, M-1 note).
-- [ ] 1.5 A GitHub issue for S-11 exists and carries the matching roadmap status (per `context/foundation/lessons.md`).
+- [ ] 1.5 GitHub issues for S-11 (`status: planning`), S-12 and S-13 (`status: proposed`) exist with the `slice` label and carry the matching roadmap status (per `context/foundation/lessons.md`).
 
 ### Phase 2: Format-aware import pipeline
 

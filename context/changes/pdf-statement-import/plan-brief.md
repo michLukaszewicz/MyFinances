@@ -25,7 +25,7 @@ A VeloBank account holder uploads a "Historia rachunku" PDF, sees every transact
 | Order | VeloBank first, others optionally later | VeloBank has no CSV alternative | Research (user decision) |
 | Date semantics | Transaction date | Pending rows have no booking date; the hash must not change when a row is booked | Research |
 | Pending rows | Imported with their transaction date | User choice over the skip recommendation; checked after the fact against the bank's booked version | Plan |
-| Integrity failure | Reject the file with HTTP 422 and a PII-free message | Wrong amounts must not reach the database; 422 (not 400) because the frontend shows the bank picker on every 400 | Plan |
+| Integrity failure | Reject the file with HTTP 422 and a PII-free message naming the check, page and row date | Wrong amounts must not reach the database; 422 (not 400) because the frontend shows the bank picker on every 400 | Plan |
 | Non-PLN rows | Skipped and counted | PRD FR-003 | Research / PRD |
 | Page limit | 200 pages, otherwise unreadable | Bounds work on top of the 5 MB cap | Plan |
 | Fixtures | Synthetic generator (PdfPig builder + OFL font) with two committed PDFs; edge cases generated in memory | No personal data by construction, and edge cases the real files lack | Plan |
@@ -56,8 +56,8 @@ The endpoint sniffs the upload once (`%PDF-` → PDF, else CSV) and only conside
 
 ## Open Risks & Assumptions
 
-- Pending rows are imported on the assumption that a booked row keeps the same description; no pending-to-booked pair has been observed. If a booked description differs, the payment is counted twice. Check by re-exporting after the 2026-10-01 pending payments book (post-merge step in the plan).
-- Foreign-currency, refund, BLIK, ATM and fee rows have never appeared in a VeloBank sample; their layout is unverified, and the balance check is skipped around non-PLN rows.
+- Pending rows are imported on the assumption that a booked row keeps the same description and amount; no pending-to-booked pair has been observed. If either differs once booked (a card hold may settle for another amount), the payment is counted twice. The check is tracked as an open follow-up on S-11. Check by re-exporting after the 2026-10-01 pending payments book (post-merge step in the plan).
+- Foreign-currency, refund, BLIK, ATM and fee rows have never appeared in a VeloBank sample; their layout is unverified, the balance chain is not compared across a skipped non-PLN row, and the card-amount check is skipped when the description names another currency.
 - The sibling integrity checks (card amount, unreadable row) use the same reject policy by assumption; you chose it explicitly only for the balance check.
 - Synthetic fixtures test the generator's copy of the layout; only the manual real-file checks cover the real PDFs.
 - The generator needs an OFL font file, so the implementer must ask for your approval to download it; the fixture PDFs embed the full font and are larger than the real files.
