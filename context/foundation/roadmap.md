@@ -3,7 +3,7 @@ project: "MyFinances"
 version: 1
 status: draft
 created: 2026-09-22
-updated: 2026-09-30
+updated: 2026-10-01
 prd_version: 3
 main_goal: market-feedback
 top_blocker: time
@@ -48,7 +48,7 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | S-05  | category-budget-vs-actual        | optionally set a per-category budget and see actual-vs-budget alongside the chart   | S-04           | FR-017                        | proposed |
 | S-06  | category-average-deviation-signal| see a category's spend flagged as above/below/in line with its historical average   | S-04           | FR-013                        | done |
 | S-07  | revolut-import                   | import a Revolut CSV statement through the same import/dedup/categorize/chart loop  | S-01           | FR-003                        | proposed |
-| S-08  | erste-import                     | import an Erste Bank Polska CSV statement through the same loop                     | S-07           | FR-003                        | proposed |
+| S-08  | erste-import                     | import an Erste Bank Polska CSV statement through the same loop                     | S-01           | FR-003                        | done |
 | S-09  | transaction-history-view         | see a chronological list of their imported/manually-entered transactions on the dashboard (date, description, amount, category) | S-01           | FR-011 (partial)              | done |
 | S-10  | account-management                | add/edit/remove their own bank accounts (account number + bank name) via a settings page, and pick from them when manually entering a transaction | F-01           | FR-009, FR-010                | done |
 
@@ -60,7 +60,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | ------ | ------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------- |
 | A      | Core spend-insight loop         | `F-01` → `S-01` → `S-03` → `S-04` → `S-05` → `S-06` | The main validation path for `main_goal: market-feedback` — auth, import, categorize, chart, then the two comparison signals. |
 | B      | Manual transaction entry        | `S-02`                                          | Joins Stream A at `S-01` — independent of categorization/chart work, can run in parallel. |
-| C      | Bank coverage expansion         | `S-07` → `S-08`                                 | Joins Stream A at `S-01` — Revolut/Erste import, sequentially gated per PRD FR-003 (Erste only after Revolut works end-to-end). |
+| C      | Bank coverage expansion         | `S-07` → `S-08`                                 | Joins Stream A at `S-01` — Revolut/Erste import. `S-08` no longer waits for `S-07` — the PRD FR-003 sequencing gate was waived by the user on 2026-10-01. |
 | D      | Transaction visibility           | `S-09`                                          | Joins Stream A at `S-01` — closes the "no history view" gap flagged during S-01 manual testing (2026-09-25); independent of categorization/chart work, can run in parallel. |
 | E      | Account management              | `S-10`                                          | Joins Stream A at `S-03` — S-03's internal-transfer heuristic (FR-009) consumes S-10's account list; only needs F-01, so it can be built in parallel with S-01/S-02/S-07/S-09. |
 
@@ -185,13 +185,13 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Outcome:** user can import an Erste Bank Polska CSV statement through the same loop, completing PLN-only coverage of all three target banks.
 - **Change ID:** erste-import
 - **PRD refs:** FR-003 (Erste portion)
-- **Prerequisites:** S-07 (PRD: gated on Revolut import working end-to-end)
+- **Prerequisites:** S-01 (the PRD FR-003 gate on Revolut working first was waived by the user on 2026-10-01)
 - **Parallel with:** S-05, S-06
 - **Blockers:** —
 - **Unknowns:**
   - Exact Erste CSV export format ("Historia → export", semicolon separator per shape-notes) — Owner: user. Block: no.
 - **Risk:** Third and final parser — lowest risk of the three bank slices since the abstraction is validated twice already by this point.
-- **Status:** proposed
+- **Status:** done
 
 ### S-09: Transaction history view
 
@@ -229,7 +229,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-05       | category-budget-vs-actual          | Optional per-category budget vs. actual                            | no                     | Depends on S-04 |
 | S-06       | category-average-deviation-signal  | Historical-average deviation signal per category                   | no                     | Depends on S-04 |
 | S-07       | revolut-import                     | Import Revolut CSV through the existing loop                       | no                     | Depends on S-01 |
-| S-08       | erste-import                       | Import Erste Bank Polska CSV through the existing loop             | no                     | Depends on S-07 |
+| S-08       | erste-import                       | Import Erste Bank Polska CSV through the existing loop             | no                     | Depends on S-01 (FR-003 gate on S-07 waived 2026-10-01) |
 | S-09       | transaction-history-view           | Show transaction history list on the dashboard                     | no                     | Depends on S-01 |
 | S-10       | account-management                 | Add/edit/remove user's own bank accounts, use in manual entry       | yes                    | Depends on F-01 only; unblocks S-03's internal-transfer detection |
 
@@ -268,3 +268,4 @@ No cross-cutting open questions at this time — PRD's own `## Open Questions` s
 - **S-09: user sees a chronological list of their imported and manually-entered transactions on the dashboard (date, description, amount, category), replacing the current static "you haven't imported anything yet" placeholder once data exists.** — Archived 2026-09-28 → `context/archive/2026-09-25-transaction-history-view/`. Lesson: —.
 - **S-10: user can add, edit, and remove their own bank accounts (account number + bank name) via a settings page, and pick from their own accounts when manually entering a transaction, instead of a generic bank-name dropdown.** — Archived 2026-09-28 → `context/archive/2026-09-25-account-management/`. Lesson: —.
 - **S-06: user sees, per category, whether current spend is above, below, or in line with that category's historical average — once at least 1 prior month of history exists; before that, the category shows actual spend with no deviation signal.** — Archived 2026-09-30 → `context/archive/2026-09-30-category-average-deviation-signal/`. Lesson: —.
+- **S-08: user can import an Erste Bank Polska CSV statement through the same loop, completing PLN-only coverage of all three target banks.** — Archived 2026-10-01 → `context/archive/2026-10-01-erste-import/`. Lesson: —.
