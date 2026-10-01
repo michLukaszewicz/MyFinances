@@ -440,27 +440,27 @@ No schema or data changes. Existing mBank and Erste transactions and their hashe
 
 #### Automated
 
-- [x] 3.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [x] 3.2 Fixture tests pass: `dotnet test --filter VeloBankPdfFixtureTests` (from `MyFinances/backend`)
-- [x] 3.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 3.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — bd5c417
+- [x] 3.2 Fixture tests pass: `dotnet test --filter VeloBankPdfFixtureTests` (from `MyFinances/backend`) — bd5c417
+- [x] 3.3 Full suite passes: `dotnet test` (from `MyFinances/backend`) — bd5c417
 
 #### Manual
 
-- [x] 3.4 Both fixture PDFs open in a PDF viewer and look like the real VeloBank statement in shape (header, grid, vertically centred date/amount/balance, repeated header block, boilerplate footer).
-- [x] 3.5 The fixtures and generator contain no real name, address, account number, card number or counterparty from the original samples, and the committed font is OFL-licensed with its license file beside it.
+- [x] 3.4 Both fixture PDFs open in a PDF viewer and look like the real VeloBank statement in shape (header, grid, vertically centred date/amount/balance, repeated header block, boilerplate footer). — bd5c417
+- [x] 3.5 The fixtures and generator contain no real name, address, account number, card number or counterparty from the original samples, and the committed font is OFL-licensed with its license file beside it. — bd5c417
 
 ### Phase 4: VeloBank PDF parser
 
 #### Automated
 
-- [ ] 4.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 4.2 Parser tests pass: `dotnet test --filter VeloBankPdfParserTests` (from `MyFinances/backend`)
-- [ ] 4.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 4.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
+- [x] 4.2 Parser tests pass: `dotnet test --filter VeloBankPdfParserTests` (from `MyFinances/backend`)
+- [x] 4.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
 
 #### Manual
 
-- [ ] 4.4 Running the parser (through a temporary local test that is not committed) on the real 90-day and one-year VeloBank PDFs returns 17 and 62 rows with no integrity exception, and the 17 shared rows have identical date, amount and description in both.
-- [ ] 4.5 No real personal data was added to the repository by this phase (fixtures, tests, exception messages).
+- [x] 4.4 Running the parser (through a temporary local test that is not committed) on the real 90-day and one-year VeloBank PDFs returns 17 and 62 rows with no integrity exception, and the 17 shared rows have identical date, amount and description in both.
+- [x] 4.5 No real personal data was added to the repository by this phase (fixtures, tests, exception messages).
 
 ### Phase 5: Wire into the app
 
