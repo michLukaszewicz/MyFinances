@@ -413,14 +413,14 @@ No schema or data changes. Existing mBank and Erste transactions and their hashe
 
 #### Automated
 
-- [ ] 1.1 PRD contains the new requirement: `grep -n "FR-018" context/foundation/prd.md` (from repo root)
-- [ ] 1.2 Roadmap has the three new slice blocks: `grep -c "^### S-1[123]:" context/foundation/roadmap.md` prints 3 (from repo root)
-- [ ] 1.3 Roadmap indexes the change: `grep -n "pdf-statement-import" context/foundation/roadmap.md` shows the At a glance row and the slice block (from repo root)
+- [x] 1.1 PRD contains the new requirement: `grep -n "FR-018" context/foundation/prd.md` (from repo root)
+- [x] 1.2 Roadmap has the three new slice blocks: `grep -c "^### S-1[123]:" context/foundation/roadmap.md` prints 3 (from repo root)
+- [x] 1.3 Roadmap indexes the change: `grep -n "pdf-statement-import" context/foundation/roadmap.md` shows the At a glance row and the slice block (from repo root)
 
 #### Manual
 
-- [ ] 1.4 You reviewed the PRD and roadmap diffs and approve the wording (FR-018, non-goal line, S-11 to S-13, M-1 note).
-- [ ] 1.5 GitHub issues for S-11 (`status: planning`), S-12 and S-13 (`status: proposed`) exist with the `slice` label and carry the matching roadmap status (per `context/foundation/lessons.md`).
+- [x] 1.4 You reviewed the PRD and roadmap diffs and approve the wording (FR-018, non-goal line, S-11 to S-13, M-1 note).
+- [x] 1.5 GitHub issues for S-11 (`status: planning`), S-12 and S-13 (`status: proposed`) exist with the `slice` label and carry the matching roadmap status (per `context/foundation/lessons.md`).
 
 ### Phase 2: Format-aware import pipeline
 

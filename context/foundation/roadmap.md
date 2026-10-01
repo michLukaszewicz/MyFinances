@@ -20,15 +20,15 @@ milestone_status: open
 
 ## Milestone
 
-**M-1: Full MVP spend-insight loop (mBank, Revolut, Erste)** — Status: open
+**M-1: Full MVP spend-insight loop (mBank, Revolut, Erste, VeloBank)** — Status: open
 
-- **Intent:** Deliver the entire MVP scope in `prd.md` v3 — the full import → dedup → categorize → chart → budget/average-deviation loop, across all three banks — as one outcome-scoped milestone. The PRD carries no staged "Etap" split (that framing lived only in the earlier shape-notes draft), so all must-have FRs belong to this single milestone.
+- **Intent:** Deliver the entire MVP scope in `prd.md` v3 — the full import → dedup → categorize → chart → budget/average-deviation loop, across all four banks (VeloBank via PDF statements, the others via CSV) — as one outcome-scoped milestone. The PRD carries no staged "Etap" split (that framing lived only in the earlier shape-notes draft), so all must-have FRs belong to this single milestone. S-12 and S-13 (mBank and Erste PDF import) are optional follow-ups to S-11 and sit outside this milestone's done criterion.
 - **Source materials:** `context/foundation/prd.md` (v3), supplemented by `context/foundation/shape-notes.md`'s `## Forward: technical-roadmap` notes (parser architecture, dedup-hash shape, CSV formats to verify).
-- **Done when:** every F-NN and S-NN below is `done`.
+- **Done when:** every F-NN and S-NN below is `done`, except the optional S-12 and S-13.
 
 ## Vision recap
 
-An individual manages personal finances across several bank accounts (mBank, Revolut, Erste Bank Polska) and has no visibility into what they actually spend, per category, without manual spreadsheet work or trusting a bank's own shallow categorization. The product's core bet — its **wedge**, the one trait that, if removed, makes it just another expense tracker — is that categorization quality comes from the user's own deliberate, correctable decisions rather than a black-box auto-categorizer, and spend gets compared against the user's own historical average so "is this normal for me" works without ever requiring a budget to be set up front.
+An individual manages personal finances across several bank accounts (mBank, Revolut, Erste Bank Polska, VeloBank) and has no visibility into what they actually spend, per category, without manual spreadsheet work or trusting a bank's own shallow categorization. The product's core bet — its **wedge**, the one trait that, if removed, makes it just another expense tracker — is that categorization quality comes from the user's own deliberate, correctable decisions rather than a black-box auto-categorizer, and spend gets compared against the user's own historical average so "is this normal for me" works without ever requiring a budget to be set up front.
 
 ## North star
 
@@ -51,6 +51,9 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | S-08  | erste-import                     | import an Erste Bank Polska CSV statement through the same loop                     | S-01           | FR-003                        | done |
 | S-09  | transaction-history-view         | see a chronological list of their imported/manually-entered transactions on the dashboard (date, description, amount, category) | S-01           | FR-011 (partial)              | done |
 | S-10  | account-management                | add/edit/remove their own bank accounts (account number + bank name) via a settings page, and pick from them when manually entering a transaction | F-01           | FR-009, FR-010                | done |
+| S-11  | pdf-statement-import              | import a VeloBank PDF statement through the same import/dedup/categorize/chart loop | S-01           | FR-018                        | in-progress |
+| S-12  | mbank-pdf-import                  | (optional) import an mBank PDF statement as a second format next to the CSV         | S-11           | FR-018 (PDF format)           | proposed |
+| S-13  | erste-pdf-import                  | (optional) import an Erste Bank Polska PDF statement as a second format next to the CSV | S-11       | FR-018 (PDF format)           | proposed |
 
 ## Streams
 
@@ -60,7 +63,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | ------ | ------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------- |
 | A      | Core spend-insight loop         | `F-01` → `S-01` → `S-03` → `S-04` → `S-05` → `S-06` | The main validation path for `main_goal: market-feedback` — auth, import, categorize, chart, then the two comparison signals. |
 | B      | Manual transaction entry        | `S-02`                                          | Joins Stream A at `S-01` — independent of categorization/chart work, can run in parallel. |
-| C      | Bank coverage expansion         | `S-07` → `S-08`                                 | Joins Stream A at `S-01` — Revolut/Erste import. `S-08` no longer waits for `S-07` — the PRD FR-003 sequencing gate was waived by the user on 2026-10-01. |
+| C      | Bank coverage expansion         | `S-07` → `S-08` → `S-11` (→ `S-12`, `S-13` optional) | Joins Stream A at `S-01` — Revolut/Erste import, then VeloBank PDF import (`S-11`, which replaces Revolut as the next bank to add — no Revolut sample available). `S-08` no longer waits for `S-07` — the PRD FR-003 sequencing gate was waived by the user on 2026-10-01. `S-12`/`S-13` add the PDF format for mBank/Erste and are optional. |
 | D      | Transaction visibility           | `S-09`                                          | Joins Stream A at `S-01` — closes the "no history view" gap flagged during S-01 manual testing (2026-09-25); independent of categorization/chart work, can run in parallel. |
 | E      | Account management              | `S-10`                                          | Joins Stream A at `S-03` — S-03's internal-transfer heuristic (FR-009) consumes S-10's account list; only needs F-01, so it can be built in parallel with S-01/S-02/S-07/S-09. |
 
@@ -217,6 +220,46 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Deferred out of S-02's `/10x-plan` scope (S-02 shipped with a minimal bank-name dropdown instead); sequenced ahead of S-03 because S-03's internal-transfer heuristic (FR-009) needs a stable list of the user's own accounts to match transfers against. S-02 can optionally be revisited later to consume this account list instead of its original dropdown, but that's not required for S-10 to land.
 - **Status:** done
 
+### S-11: VeloBank PDF import
+
+- **Outcome:** user can import a VeloBank "Historia rachunku" PDF statement (the bank offers no CSV export) through the same import → dedup → categorize → chart loop; pending payments are included, dated by transaction date, and a statement whose printed running balances do not add up is rejected with an explanation instead of being imported.
+- **Change ID:** pdf-statement-import
+- **PRD refs:** FR-018
+- **Prerequisites:** S-01 (reuses the import and dedup pipeline; adds a format-aware parser selection)
+- **Parallel with:** S-05, S-07
+- **Blockers:** —
+- **Unknowns:**
+  - Whether a pending payment and its later booked row carry the same description and amount (a card hold may settle for a different amount) — if not, a payment imported while pending would be counted twice. **Open follow-up (post-merge):** once the bank has booked the two payments that were pending on 2026-10-01, export again and import; both should be flagged as duplicates. If either is not, reopen the pending-row decision — Owner: user. Block: no.
+- **Risk:** First bank imported only through PDF — row boundaries come from the table geometry rather than a delimiter, so a misread row would silently skew totals; mitigated by checking the statement's own running balances and rejecting an inconsistent file. Replaces Revolut as the next bank to add because no Revolut sample is available (S-07 stays `proposed`).
+- **Status:** in-progress
+
+### S-12: mBank PDF import (optional)
+
+- **Outcome:** user can import an mBank PDF statement as a second input format next to the existing CSV import.
+- **Change ID:** mbank-pdf-import
+- **PRD refs:** FR-018 (PDF format; mBank-specific wording to be added to the PRD when planned)
+- **Prerequisites:** S-11 (reuses the format-aware import pipeline and the PDF fixture approach)
+- **Parallel with:** S-13
+- **Blockers:** —
+- **Unknowns:**
+  - Cross-format dedup — a bank with both a CSV and a PDF parser needs a policy for the same transaction arriving through either format (descriptions and therefore dedup hashes differ between the two) — Owner: user. Block: no (decide in `/10x-plan`).
+- **Risk:** Optional and outside M-1's done criterion; the risk is double-counting transactions already imported from CSV.
+- **Status:** proposed
+
+### S-13: Erste Bank Polska PDF import (optional)
+
+- **Outcome:** user can import an Erste Bank Polska PDF statement as a second input format next to the existing CSV import.
+- **Change ID:** erste-pdf-import
+- **PRD refs:** FR-018 (PDF format; Erste-specific wording to be added to the PRD when planned)
+- **Prerequisites:** S-11 (reuses the format-aware import pipeline and the PDF fixture approach)
+- **Parallel with:** S-12
+- **Blockers:** —
+- **Unknowns:**
+  - Cross-format dedup (see S-12) — Owner: user. Block: no (decide in `/10x-plan`).
+  - The Erste PDF is lossy versus its CSV (no booking date, counterparty-only description), so the same transaction hashes differently from the CSV import — Owner: user. Block: no.
+- **Risk:** Optional and outside M-1's done criterion; lossy source data makes cross-format duplicate detection the main risk.
+- **Status:** proposed
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID                        | Suggested issue title                                          | Ready for `/10x-plan` | Notes |
@@ -232,6 +275,9 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-08       | erste-import                       | Import Erste Bank Polska CSV through the existing loop             | no                     | Depends on S-01 (FR-003 gate on S-07 waived 2026-10-01) |
 | S-09       | transaction-history-view           | Show transaction history list on the dashboard                     | no                     | Depends on S-01 |
 | S-10       | account-management                 | Add/edit/remove user's own bank accounts, use in manual entry       | yes                    | Depends on F-01 only; unblocks S-03's internal-transfer detection |
+| S-11       | pdf-statement-import               | Import a VeloBank PDF statement through the existing loop           | yes                    | Depends on S-01 (done); already planned |
+| S-12       | mbank-pdf-import                   | Import an mBank PDF statement (optional)                            | no                     | Depends on S-11; optional, outside M-1's done criterion |
+| S-13       | erste-pdf-import                   | Import an Erste Bank Polska PDF statement (optional)                | no                     | Depends on S-11; optional, outside M-1's done criterion |
 
 ## Open Roadmap Questions
 
@@ -248,7 +294,7 @@ No cross-cutting open questions at this time — PRD's own `## Open Questions` s
 - **Data sharing between users** — Why parked: PRD Non-Goal; strictly single-user data.
 - **Email/push notifications** — Why parked: PRD Non-Goal; no notification system.
 - **Mobile app** — Why parked: PRD Non-Goal; web only.
-- **Banks other than mBank, Revolut, Erste** — Why parked: PRD Non-Goal; no other bank CSV formats supported.
+- **Banks other than mBank, Revolut, Erste, VeloBank** — Why parked: PRD Non-Goal; no other bank statement formats supported (VeloBank: PDF only).
 - **Login via Google/OAuth** — Why parked: PRD Non-Goal; email+password only.
 
 ## Milestone History
