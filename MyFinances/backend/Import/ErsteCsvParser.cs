@@ -108,9 +108,13 @@ public class ErsteCsvParser : IBankStatementParser
         using var reader = new StringReader(text);
         using var csv = new CsvReader(reader, CreateConfig(delimiter));
 
-        // Line 1 is the statement summary (CsvHelper skips leading blank lines itself); it carries
-        // the account currency but is never a transaction.
-        csv.Read();
+        // The first non-blank record is the statement summary; it carries the account currency but
+        // is never a transaction. Skip blank records the same way DetectDelimiter does — CsvHelper
+        // itself only skips truly empty lines, not whitespace-only ones.
+        while (csv.Read() && IsBlankRecord(csv))
+        {
+        }
+
         var isPln = string.Equals(csv.GetField(SummaryCurrencyField), "PLN", StringComparison.OrdinalIgnoreCase);
 
         var skippedErrorCount = 0;
