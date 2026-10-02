@@ -243,9 +243,9 @@ None. No schema change; `currentMonth` on `/api/transactions` is removed and its
 
 #### Automated
 
-- [x] 1.1 Backend builds and all tests pass: `dotnet test` (from `MyFinances/backend`)
-- [x] 1.2 New period/validation tests present and passing in the dashboard, transaction and period-helper test classes
-- [x] 1.3 Frontend still typechecks (it does not use the changed endpoints yet): `npm run typecheck` (from `MyFinances/frontend`)
+- [x] 1.1 Backend builds and all tests pass: `dotnet test` (from `MyFinances/backend`) — 9fe16a9
+- [x] 1.2 New period/validation tests present and passing in the dashboard, transaction and period-helper test classes — 9fe16a9
+- [x] 1.3 Frontend still typechecks (it does not use the changed endpoints yet): `npm run typecheck` (from `MyFinances/frontend`) — 9fe16a9
 
 #### Manual
 
@@ -256,9 +256,9 @@ None. No schema change; `currentMonth` on `/api/transactions` is removed and its
 
 #### Automated
 
-- [ ] 2.1 All backend tests pass: `dotnet test` (from `MyFinances/backend`)
-- [ ] 2.2 Existing current-month signal tests in `CategoryDeviationTests` and `DashboardEndpointsTests` pass unchanged
-- [ ] 2.3 New past-month and window-mode tests pass
+- [x] 2.1 All backend tests pass: `dotnet test` (from `MyFinances/backend`)
+- [x] 2.2 Existing current-month signal tests in `CategoryDeviationTests` and `DashboardEndpointsTests` pass unchanged
+- [x] 2.3 New past-month and window-mode tests pass
 
 #### Manual
 

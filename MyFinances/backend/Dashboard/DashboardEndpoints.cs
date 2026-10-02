@@ -88,8 +88,10 @@ public static class DashboardEndpoints
                 .ToList());
         }
 
-        // Spend signal: compare spend-to-date against the same day-of-month window in prior
-        // months. History only decorates categories that already have current-month spend.
+        // Spend signal. A whole calendar month compares spend-to-date (full month for a past one)
+        // against the same day-of-month window in prior months; any other period compares its
+        // total against preceding windows of equal length. History only decorates categories
+        // that already have spend in the period.
         var categoryIds = groups.Select(g => g.First().Category!.Id).ToList();
         var history = categoryIds.Count == 0
             ? new Dictionary<Guid, List<(DateOnly Date, decimal Amount)>>()
@@ -112,14 +114,27 @@ public static class DashboardEndpoints
             .Select(g =>
             {
                 var categoryId = g.First().Category!.Id;
-                var toDate = g.Where(t => t.Date <= today).Sum(t => -t.Amount);
-                var signal = history.TryGetValue(categoryId, out var prior)
-                    ? CategoryDeviation.Calculate(prior, toDate, today)
-                    : null;
+                var total = g.Sum(t => -t.Amount);
+                (decimal AverageToDate, string Deviation)? signal = null;
+                if (history.TryGetValue(categoryId, out var prior))
+                {
+                    if (range.IsFullCalendarMonth)
+                    {
+                        // As-of day is the month end for a past month, today for the current one.
+                        var asOf = today < range.End ? today : range.End;
+                        var toDate = g.Where(t => t.Date <= asOf).Sum(t => -t.Amount);
+                        signal = CategoryDeviation.Calculate(prior, toDate, asOf, fullMonth: asOf == range.End);
+                    }
+                    else
+                    {
+                        signal = CategoryDeviation.CalculateWindow(prior, total, range.Start, range.DayCount);
+                    }
+                }
+
                 return new CategorySpendSignalDto(
                     categoryId,
                     g.First().Category!.Name,
-                    g.Sum(t => -t.Amount),
+                    total,
                     signal?.AverageToDate,
                     signal?.Deviation);
             })
