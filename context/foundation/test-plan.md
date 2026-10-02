@@ -67,7 +67,7 @@ orchestrator updates Status as artifacts appear on disk.
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|----------------|------------|--------|---------------|
 | 1 | Import integrity and dedup | Re-imports and CSV-vs-PDF overlaps never double-count and always surface duplicates | #1, #4 | integration | complete | context/changes/testing-import-integrity-dedup/ |
-| 2 | Parser correctness | Parsed amounts and dates equal an independent source, independent of culture | #2 | unit with fixtures | researched | context/changes/testing-parser-correctness/ |
+| 2 | Parser correctness | Parsed amounts and dates equal an independent source, independent of culture | #2 | unit with fixtures | shipped (limitations: CSV parsers stop silently at the first unparseable date row, pinned as current behavior; PDF fixtures are still synthetic, no real statements; ICU is only guarded by a pl-PL separator test, not provided; NBSP is read as a plain space by PdfPig, so only U+2212 is mutation-sensitive for PDF rejection; VeloBank pairwise balance-check blind spots pinned; mBank offsetting errors accepted) | context/changes/testing-parser-correctness/ |
 | 3 | Data ownership | A user can never read or change another user's data | #3 | integration (two users) | not started | — |
 | 4 | Quality-gates wiring | Lock the floor: run the suite automatically in the agent loop and in CI (none exists today) | cross-cutting | gates (hook, CI) | not started | — |
 
@@ -109,7 +109,7 @@ How to add new tests in this project. Sub-sections fill in as phases ship.
 
 ### 6.1 Adding a parser unit test
 
-- TBD — see §3 Phase 2 (independent-oracle fixtures, culture-independence pattern).
+- Independent-oracle fixtures: see §3 Phase 2. Culture independence: wrap the parse in `CultureMatrix.Run(() => parser.Parse(...))` (en-US, de-DE, tr-TR, pl-PL, Invariant) and assert every result against authored date/amount literals, including a decimal comma and a thousands-separated amount; see `CultureIndependenceTests`. A guard test pins that pl-PL uses a decimal comma, so an ICU-less runtime fails by name.
 - **Reference test (existing)**: `MyFinances/backend/Tests/MBankCsvParserTests.cs`.
 - **Run locally**: `dotnet test` from `MyFinances/backend`.
 
