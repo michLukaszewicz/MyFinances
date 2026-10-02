@@ -52,7 +52,7 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | S-11  | pdf-statement-import              | import a VeloBank PDF statement through the same import/dedup/categorize/chart loop | S-01           | FR-018                        | in-progress |
 | S-12  | mbank-pdf-import                  | (optional) import an mBank PDF statement as a second format next to the CSV         | S-11           | FR-018 (PDF format)           | proposed |
 | S-13  | erste-pdf-import                  | (optional) import an Erste Bank Polska PDF statement as a second format next to the CSV | S-11       | FR-018 (PDF format)           | proposed |
-| S-14  | chart-period-selector             | pick the period (last 30/90 days, a month, a custom range) shown by both donut charts, the slice drilldown list and the deviation badge | S-04, S-06 | FR-011, FR-012, FR-013, FR-016 | in-progress |
+| S-14  | chart-period-selector             | pick the period (last 30/90 days, a month, a custom range) shown by both donut charts, the slice drilldown list and the deviation badge | S-04, S-06 | FR-011, FR-012, FR-013, FR-016 | done |
 | S-15  | category-trend-line-chart         | see a line chart of per-category spend/income over time, bucketed by week, month or year | S-04          | FR-011 (data exploration)     | in-progress |
 
 ## Streams
@@ -246,7 +246,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Replaces the `currentMonth` flag on `/api/transactions` with `from`/`to` and generalises the deviation calculator beyond the current month; the backend and UI phases should land in one PR.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-15: Category trend line chart
 
