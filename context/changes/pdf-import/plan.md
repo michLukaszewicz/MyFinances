@@ -485,30 +485,30 @@ One additive migration: `ImportBatches.SourceFormat`, non-null, default `Csv`, b
 
 #### Automated
 
-- [x] 2.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [x] 2.2 VeloBank tests pass unchanged: `dotnet test --filter "VeloBankPdfParserTests|VeloBankPdfFixtureTests"` (from `MyFinances/backend`)
-- [x] 2.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 2.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — 0d6a918
+- [x] 2.2 VeloBank tests pass unchanged: `dotnet test --filter "VeloBankPdfParserTests|VeloBankPdfFixtureTests"` (from `MyFinances/backend`) — 0d6a918
+- [x] 2.3 Full suite passes: `dotnet test` (from `MyFinances/backend`) — 0d6a918
 
 #### Manual
 
-- [x] 2.4 A temporary local test (not committed) run on the real 90-day and one-year VeloBank PDFs still returns 17 and 62 rows with no integrity exception and identical date, amount and description for the 17 shared rows.
-- [x] 2.5 The refactor did not add any real personal data to the repository.
+- [x] 2.4 A temporary local test (not committed) run on the real 90-day and one-year VeloBank PDFs still returns 17 and 62 rows with no integrity exception and identical date, amount and description for the 17 shared rows. — 0d6a918
+- [x] 2.5 The refactor did not add any real personal data to the repository. — 0d6a918
 
 ### Phase 3: Source format on import batches and the overlap warning
 
 #### Automated
 
-- [ ] 3.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 3.2 Import endpoint tests pass: `dotnet test --filter ImportEndpointsTests` (from `MyFinances/backend`)
-- [ ] 3.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
-- [ ] 3.4 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`)
-- [ ] 3.5 Frontend builds: `npm run build` (from `MyFinances/frontend`)
+- [x] 3.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
+- [x] 3.2 Import endpoint tests pass: `dotnet test --filter ImportEndpointsTests` (from `MyFinances/backend`)
+- [x] 3.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 3.4 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`)
+- [x] 3.5 Frontend builds: `npm run build` (from `MyFinances/frontend`)
 
 #### Manual
 
-- [ ] 3.6 After the migration on the dev database, existing batches on VeloBank accounts show `Pdf` and all others `Csv`.
-- [ ] 3.7 With a dev batch's `SourceFormat` flipped to `Pdf` by SQL, re-uploading the same mBank CSV into that account shows the amber overlap banner with the right count and the import can still be committed; with the original value restored the banner is gone.
-- [ ] 3.8 Importing an mBank CSV, a VeloBank PDF and re-importing both behaves as before apart from the banner.
+- [x] 3.6 After the migration on the dev database, existing batches on VeloBank accounts show `Pdf` and all others `Csv`.
+- [x] 3.7 With a dev batch's `SourceFormat` flipped to `Pdf` by SQL, re-uploading the same mBank CSV into that account shows the amber overlap banner with the right count and the import can still be committed; with the original value restored the banner is gone.
+- [x] 3.8 Importing an mBank CSV, a VeloBank PDF and re-importing both behaves as before apart from the banner.
 
 ### Phase 4: mBank synthetic PDF fixtures
 
