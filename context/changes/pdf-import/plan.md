@@ -498,25 +498,25 @@ One additive migration: `ImportBatches.SourceFormat`, non-null, default `Csv`, b
 
 #### Automated
 
-- [x] 3.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [x] 3.2 Import endpoint tests pass: `dotnet test --filter ImportEndpointsTests` (from `MyFinances/backend`)
-- [x] 3.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
-- [x] 3.4 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`)
-- [x] 3.5 Frontend builds: `npm run build` (from `MyFinances/frontend`)
+- [x] 3.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — 333b83c
+- [x] 3.2 Import endpoint tests pass: `dotnet test --filter ImportEndpointsTests` (from `MyFinances/backend`) — 333b83c
+- [x] 3.3 Full suite passes: `dotnet test` (from `MyFinances/backend`) — 333b83c
+- [x] 3.4 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`) — 333b83c
+- [x] 3.5 Frontend builds: `npm run build` (from `MyFinances/frontend`) — 333b83c
 
 #### Manual
 
-- [x] 3.6 After the migration on the dev database, existing batches on VeloBank accounts show `Pdf` and all others `Csv`.
-- [x] 3.7 With a dev batch's `SourceFormat` flipped to `Pdf` by SQL, re-uploading the same mBank CSV into that account shows the amber overlap banner with the right count and the import can still be committed; with the original value restored the banner is gone.
-- [x] 3.8 Importing an mBank CSV, a VeloBank PDF and re-importing both behaves as before apart from the banner.
+- [x] 3.6 After the migration on the dev database, existing batches on VeloBank accounts show `Pdf` and all others `Csv`. — 333b83c
+- [x] 3.7 With a dev batch's `SourceFormat` flipped to `Pdf` by SQL, re-uploading the same mBank CSV into that account shows the amber overlap banner with the right count and the import can still be committed; with the original value restored the banner is gone. — 333b83c
+- [x] 3.8 Importing an mBank CSV, a VeloBank PDF and re-importing both behaves as before apart from the banner. — 333b83c
 
 ### Phase 4: mBank synthetic PDF fixtures
 
 #### Automated
 
-- [ ] 4.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 4.2 Fixture tests pass: `dotnet test --filter MBankPdfFixtureTests` (from `MyFinances/backend`)
-- [ ] 4.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 4.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
+- [x] 4.2 Fixture tests pass: `dotnet test --filter MBankPdfFixtureTests` (from `MyFinances/backend`)
+- [x] 4.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
 
 #### Manual
 
