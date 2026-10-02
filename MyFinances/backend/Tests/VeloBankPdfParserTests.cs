@@ -464,6 +464,29 @@ public class VeloBankPdfParserTests
         AssertRejected(BuildOnePagePdf(WithRow(BalanceTamperRow, unreadable)), UnreadableRowCheck, page: 1, transactionDate: "24.09.2026");
     }
 
+    // Far beyond decimal range: must be an unreadable cell (422), not an OverflowException (500).
+    [Theory]
+    [InlineData("99999999999999999999999999999,99 PLN")]
+    [InlineData("12345678901234567,89 PLN")]
+    public void Parse_Rejects_AnAbsurdlyLargeAmountCell_AsUnreadable(string amountText)
+    {
+        var unreadable = OnePage[BalanceTamperRow] with { AmountText = amountText };
+
+        AssertRejected(BuildOnePagePdf(WithRow(BalanceTamperRow, unreadable)), UnreadableRowCheck, page: 1, transactionDate: "24.09.2026");
+    }
+
+    // A later page whose table cannot be found would silently lose its rows.
+    [Theory]
+    [InlineData(2)]
+    [InlineData(3)]
+    public void Parse_Rejects_ALaterPageWithoutATableHeader_NamingThatPage(int page)
+    {
+        var layout = VeloBankSampleData.MultiPageLayout with { OmitHeaderOnPage = page };
+        var pdf = VeloBankPdfBuilder.Build(VeloBankSampleData.Header, VeloBankSampleData.MultiPageRows, layout);
+
+        AssertRejected(pdf, UnreadableRowCheck, page, transactionDate: null);
+    }
+
     [Fact]
     public void Parse_Rejects_AnUnreadableTransactionDate_WithoutADate()
     {
