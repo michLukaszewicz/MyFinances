@@ -215,13 +215,13 @@ None.
 
 #### Automated
 
-- [x] 3.1 New class passes: `dotnet test --filter "FullyQualifiedName~ImportCrossFormatOverlapTests"` from `MyFinances/backend`
-- [x] 3.2 Whole suite passes: `dotnet test` from `MyFinances/backend`
+- [x] 3.1 New class passes: `dotnet test --filter "FullyQualifiedName~ImportCrossFormatOverlapTests"` from `MyFinances/backend` — ca21cf2
+- [x] 3.2 Whole suite passes: `dotnet test` from `MyFinances/backend` — ca21cf2
 
 #### Manual
 
-- [x] 3.3 Temporarily making the overlap query ignore `SourceFormat` makes the cross-format tests fail; revert afterwards
-- [x] 3.4 §6.2 in `context/foundation/test-plan.md` reads correctly and references the new test files
+- [x] 3.3 Temporarily making the overlap query ignore `SourceFormat` makes the cross-format tests fail; revert afterwards — ca21cf2
+- [x] 3.4 §6.2 in `context/foundation/test-plan.md` reads correctly and references the new test files — ca21cf2
 
 ## Amendments (during Phase 2)
 
