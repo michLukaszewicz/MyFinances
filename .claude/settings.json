@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/end-of-turn.mjs\"", "timeout": 240 }
+        ]
+      }
+    ]
+  }
+}
