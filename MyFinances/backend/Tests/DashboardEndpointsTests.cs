@@ -487,6 +487,62 @@ public class DashboardEndpointsTests
     }
 
     [Fact]
+    public async Task CategorySpend_PastMonth_ComparesFullMonthAgainstEarlierMonths()
+    {
+        using var baseFactory = new AuthApiFactory();
+        var factory = WithClock(baseFactory, March10);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var userId = await GetUserIdAsync(factory);
+        var accountId = await SeedAccountAsync(factory, userId, "111");
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 1, 25), -100m, GroceriesId);
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 2, 27), -300m, GroceriesId);
+
+        var response = await GetPeriodAsync(client, "spend", "2099-02-01", "2099-02-28");
+
+        var item = Assert.Single((await response.Content.ReadFromJsonAsync<List<CategorySpendSignalDto>>(JsonOptions))!);
+        Assert.Equal(300m, item.Amount);
+        Assert.Equal(100m, item.AverageToDate);
+        Assert.Equal("above", item.Deviation);
+    }
+
+    [Fact]
+    public async Task CategorySpend_Last30Days_ComparesAgainstPrecedingThirtyDayWindows()
+    {
+        using var baseFactory = new AuthApiFactory();
+        var factory = WithClock(baseFactory, March10);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var userId = await GetUserIdAsync(factory);
+        var accountId = await SeedAccountAsync(factory, userId, "111");
+        // Window is 2099-02-09 .. 2099-03-10; one earlier window starting 2099-01-10.
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 1, 10), -100m, GroceriesId);
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 2, 9), -150m, GroceriesId);
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 3, 10), -150m, GroceriesId);
+
+        var response = await GetPeriodAsync(client, "spend", "2099-02-09", "2099-03-10");
+
+        var item = Assert.Single((await response.Content.ReadFromJsonAsync<List<CategorySpendSignalDto>>(JsonOptions))!);
+        Assert.Equal(300m, item.Amount);
+        Assert.Equal(100m, item.AverageToDate);
+        Assert.Equal("above", item.Deviation);
+    }
+
+    [Fact]
+    public async Task CategorySpend_CustomRangeWithoutPriorSpend_HasNullSignal()
+    {
+        using var baseFactory = new AuthApiFactory();
+        var factory = WithClock(baseFactory, March10);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var userId = await GetUserIdAsync(factory);
+        var accountId = await SeedAccountAsync(factory, userId, "111");
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 2, 12), -50m, GroceriesId);
+
+        var response = await GetPeriodAsync(client, "spend", "2099-02-10", "2099-02-14");
+
+        var item = Assert.Single((await response.Content.ReadFromJsonAsync<List<CategorySpendSignalDto>>(JsonOptions))!);
+        Assert.Null(item.Deviation);
+    }
+
+    [Fact]
     public async Task CategorySpend_PeriodIsolatedPerUser()
     {
         using var baseFactory = new AuthApiFactory();
