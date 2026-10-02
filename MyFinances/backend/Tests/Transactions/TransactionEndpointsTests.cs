@@ -162,22 +162,28 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task List_WithoutAuthCookie_ReturnsUnauthorized()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = factory.CreateClient();
 
+        // Act
         var response = await client.GetAsync("/api/transactions");
 
+        // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
     public async Task List_UserHasNoTransactions_ReturnsEmptyItemsAndHasMoreFalse()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
 
+        // Act
         var response = await client.GetAsync("/api/transactions");
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var result = await response.Content.ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
         Assert.NotNull(result);
@@ -188,6 +194,7 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task List_OnlyReturnsCurrentUsersTransactions()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -205,8 +212,10 @@ public class TransactionEndpointsTests
             await SeedTransactionsAsync(factory, otherUserId, otherAccount.Id, 5, new DateOnly(2026, 1, 1));
         }
 
+        // Act
         var response = await client.GetAsync("/api/transactions?skip=0&take=100");
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var result = await response.Content.ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
         Assert.NotNull(result);
@@ -216,14 +225,17 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task List_ReturnsTransactionsNewestFirst()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
         var userId = await GetUserIdAsync(factory);
         await SeedTransactionsAsync(factory, userId, account.Id, 5, new DateOnly(2026, 1, 1));
 
+        // Act
         var response = await client.GetAsync("/api/transactions?skip=0&take=100");
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var result = await response.Content.ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
         Assert.NotNull(result);
@@ -235,13 +247,17 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task List_SkipAndTake_PaginateCorrectly()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
         var userId = await GetUserIdAsync(factory);
         await SeedTransactionsAsync(factory, userId, account.Id, 25, new DateOnly(2026, 1, 1));
 
+        // Act
         var firstPageResponse = await client.GetAsync("/api/transactions?skip=0&take=20");
+
+        // Assert
         Assert.Equal(HttpStatusCode.OK, firstPageResponse.StatusCode);
         var firstPage = await firstPageResponse.Content.ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
         Assert.NotNull(firstPage);
@@ -263,14 +279,17 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task List_LastPage_HasMoreIsFalse()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
         var userId = await GetUserIdAsync(factory);
         await SeedTransactionsAsync(factory, userId, account.Id, 10, new DateOnly(2026, 1, 1));
 
+        // Act
         var response = await client.GetAsync("/api/transactions?skip=0&take=10");
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var result = await response.Content.ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
         Assert.NotNull(result);
@@ -300,6 +319,7 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task List_WithCategoryId_ReturnsOnlyThatCategoryAndFilteredHasMore()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -317,11 +337,13 @@ public class TransactionEndpointsTests
         await SeedCategorizedTransactionAsync(factory, userId, account.Id, date, other);
         await SeedCategorizedTransactionAsync(factory, userId, account.Id, date, null);
 
+        // Act
         var page = await (await client.GetAsync($"/api/transactions?categoryId={target}&skip=0&take=2")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
         var lastPage = await (await client.GetAsync($"/api/transactions?categoryId={target}&skip=2&take=2")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
 
+        // Assert
         Assert.Equal(2, page!.Items.Count);
         Assert.All(page.Items, i => Assert.Equal(target, i.CategoryId));
         Assert.True(page.HasMore);
@@ -332,6 +354,7 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task List_WithCurrentMonthTrue_ExcludesTransactionsOutsideCurrentMonth()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -342,11 +365,13 @@ public class TransactionEndpointsTests
         await SeedCategorizedTransactionAsync(factory, userId, account.Id, start.AddDays(-1), null);
         await SeedCategorizedTransactionAsync(factory, userId, account.Id, end.AddDays(1), null);
 
+        // Act
         var filtered = await (await client.GetAsync($"/api/transactions?{MonthQuery()}&take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
         var unfiltered = await (await client.GetAsync("/api/transactions?take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
 
+        // Assert
         Assert.Equal(2, filtered!.Items.Count);
         Assert.All(filtered.Items, i => Assert.InRange(i.Date, start, end));
         Assert.Equal(4, unfiltered!.Items.Count);
@@ -355,6 +380,7 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task List_WithCategoryIdAndCurrentMonth_AppliesBothFilters()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -368,9 +394,11 @@ public class TransactionEndpointsTests
         await SeedCategorizedTransactionAsync(factory, userId, account.Id, start.AddDays(-1), target);
         await SeedCategorizedTransactionAsync(factory, userId, account.Id, start, other);
 
+        // Act
         var result = await (await client.GetAsync($"/api/transactions?categoryId={target}&{MonthQuery()}&take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
 
+        // Assert
         var item = Assert.Single(result!.Items);
         Assert.Equal(target, item.CategoryId);
         Assert.Equal(start, item.Date);
@@ -380,6 +408,7 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task List_WithCategoryIdAndCurrentMonth_ExcludesIncomeAndInternalTransfersLikeTheChart()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -406,11 +435,13 @@ public class TransactionEndpointsTests
             await db.SaveChangesAsync();
         }
 
+        // Act
         var slice = await (await client.GetAsync($"/api/transactions?categoryId={target}&{MonthQuery()}&take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
         var categoryOnly = await (await client.GetAsync($"/api/transactions?categoryId={target}&take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
 
+        // Assert
         var item = Assert.Single(slice!.Items);
         Assert.Equal(-10m, item.Amount);
         Assert.Equal(3, categoryOnly!.Items.Count);
@@ -419,6 +450,7 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task List_WithFromAndTo_IncludesBothEndsAndExcludesOutside()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -428,9 +460,11 @@ public class TransactionEndpointsTests
             await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2020, 3, day), -5m);
         }
 
+        // Act
         var result = await (await client.GetAsync("/api/transactions?from=2020-03-10&to=2020-03-11&take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
 
+        // Assert
         Assert.Equal(2, result!.Items.Count);
         Assert.All(result.Items, i => Assert.InRange(i.Date, new DateOnly(2020, 3, 10), new DateOnly(2020, 3, 11)));
     }
@@ -438,6 +472,7 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task List_WithRangeAcrossYearBoundary_ReturnsRowsFromBothYears()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -447,19 +482,23 @@ public class TransactionEndpointsTests
             await InsertTransactionAsync(factory, userId, account.Id, date, -5m);
         }
 
+        // Act
         var result = await (await client.GetAsync("/api/transactions?from=2019-12-30&to=2020-01-02&take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
 
+        // Assert
         Assert.Equal(2, result!.Items.Count);
     }
 
     [Fact]
     public async Task List_WithInvalidPeriod_ReturnsBadRequest()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var future = CurrentMonthRange.Get().Start.AddMonths(2);
 
+        // Act & Assert
         Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/transactions?from=2020-03-10")).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/transactions?to=2020-03-10")).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/transactions?from=2020-03-11&to=2020-03-10")).StatusCode);
@@ -470,6 +509,7 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task List_WithCategoryIdAndCustomPeriod_AppliesSliceRule()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -490,15 +530,18 @@ public class TransactionEndpointsTests
             await db.SaveChangesAsync();
         }
 
+        // Act
         var spend = await (await client.GetAsync($"/api/transactions?categoryId={target}&from=2020-03-01&to=2020-03-31&take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
 
+        // Assert
         Assert.Equal(-10m, Assert.Single(spend!.Items).Amount);
     }
 
     [Fact]
     public async Task List_ExposesIsInternalTransferFlag()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -515,15 +558,18 @@ public class TransactionEndpointsTests
             await db.SaveChangesAsync();
         }
 
+        // Act
         var result = await (await client.GetAsync("/api/transactions?take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
 
+        // Assert
         Assert.True(Assert.Single(result!.Items).IsInternalTransfer);
     }
 
     [Fact]
     public async Task List_WithCategoryIdCurrentMonthAndKindIncome_ReturnsOnlyPositiveNonTransferRows()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -544,9 +590,11 @@ public class TransactionEndpointsTests
             await db.SaveChangesAsync();
         }
 
+        // Act
         var income = await (await client.GetAsync($"/api/transactions?categoryId={target}&{MonthQuery()}&kind=income&take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
 
+        // Assert
         var item = Assert.Single(income!.Items);
         Assert.Equal(25m, item.Amount);
     }
@@ -554,34 +602,41 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task Post_WithoutAuthCookie_ReturnsUnauthorized()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = factory.CreateClient();
 
+        // Act
         var response = await client.PostAsJsonAsync(
             "/api/transactions/",
             new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, Guid.NewGuid(), Guid.NewGuid(), false));
 
+        // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
     public async Task Post_WithoutValidAntiforgeryToken_ReturnsBadRequest()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
         var categoryId = await GetFirstCategoryIdAsync(client);
 
+        // Act
         var response = await client.PostAsJsonAsync(
             "/api/transactions/",
             new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, account.Id, categoryId, false));
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task Post_CreatesTransaction_WithNullImportBatchIdAndMatchingHash()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -589,8 +644,10 @@ public class TransactionEndpointsTests
         var userId = await GetUserIdAsync(factory);
         var request = new TransactionWriteRequest(new DateOnly(2026, 1, 1), "Groceries run", 42.50m, account.Id, categoryId, false);
 
+        // Act
         var response = await PostTransactionAsync(client, request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var dto = await response.Content.ReadFromJsonAsync<TransactionDetailDto>(JsonOptions);
         Assert.NotNull(dto);
@@ -608,6 +665,7 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task Post_WithoutForce_AgainstExistingHash_ReturnsConflictWithExistingSnapshot()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -617,8 +675,10 @@ public class TransactionEndpointsTests
         var first = await PostTransactionAsync(client, request);
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
 
+        // Act
         var second = await PostTransactionAsync(client, request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
         var body = await second.Content.ReadFromJsonAsync<DuplicateTransactionResponse>(JsonOptions);
         Assert.NotNull(body);
@@ -630,6 +690,7 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task Post_WithForce_AgainstExistingHash_InsertsAnyway()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -639,9 +700,11 @@ public class TransactionEndpointsTests
         var first = await PostTransactionAsync(client, request);
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
 
+        // Act
         var forced = request with { Force = true };
         var second = await PostTransactionAsync(client, forced);
 
+        // Assert
         Assert.Equal(HttpStatusCode.Created, second.StatusCode);
 
         var list = await (await client.GetAsync("/api/transactions?skip=0&take=100")).Content
@@ -652,48 +715,58 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task Post_WithAccountNotOwnedByCaller_ReturnsBadRequest()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var categoryId = await GetFirstCategoryIdAsync(client);
         var otherAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "999");
 
+        // Act
         var response = await PostTransactionAsync(
             client,
             new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, otherAccount.Id, categoryId, false));
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task Post_WithUnknownCategoryId_ReturnsBadRequest()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
+        // Act
         var response = await PostTransactionAsync(
             client,
             new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, account.Id, Guid.NewGuid(), false));
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task Put_WithoutAuthCookie_ReturnsUnauthorized()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = factory.CreateClient();
 
+        // Act
         var response = await client.PutAsJsonAsync(
             $"/api/transactions/{Guid.NewGuid()}",
             new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, Guid.NewGuid(), Guid.NewGuid(), false));
 
+        // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
     public async Task Put_WithoutValidAntiforgeryToken_ReturnsBadRequest()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -701,16 +774,19 @@ public class TransactionEndpointsTests
         var userId = await GetUserIdAsync(factory);
         var transaction = await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2026, 1, 1), 10m);
 
+        // Act
         var response = await client.PutAsJsonAsync(
             $"/api/transactions/{transaction.Id}",
             new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, account.Id, categoryId, false));
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task Put_RecomputesHash_LeavesImportBatchIdUnchanged()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -735,8 +811,11 @@ public class TransactionEndpointsTests
             factory, userId, account.Id, new DateOnly(2026, 1, 1), 10m, "original", importBatchId, "original-hash");
 
         var updateRequest = new TransactionWriteRequest(new DateOnly(2026, 2, 2), "updated desc", 55m, account.Id, categoryId, false);
+
+        // Act
         var response = await PutTransactionAsync(client, seeded.Id, updateRequest);
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         using var verifyScope = factory.Services.CreateScope();
@@ -750,6 +829,7 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task Put_WithoutForce_AgainstAnotherRowsHash_ReturnsConflict()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -761,13 +841,17 @@ public class TransactionEndpointsTests
         var userId = await GetUserIdAsync(factory);
         var toEdit = await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2026, 3, 3), 99m, "to edit");
 
+        // Act
         var response = await PutTransactionAsync(client, toEdit.Id, otherRequest);
 
+        // Assert
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
     [Fact]
     public async Task Put_SameRowUnchanged_WithoutForce_DoesNotConflictWithItself()
+
+        // Arrange
     {
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
@@ -778,13 +862,17 @@ public class TransactionEndpointsTests
         var created = await PostTransactionAsync(client, request);
         var dto = await created.Content.ReadFromJsonAsync<TransactionDetailDto>(JsonOptions);
 
+        // Act
         var response = await PutTransactionAsync(client, dto!.Id, request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task Put_ForTransactionNotOwnedByCaller_ReturnsNotFound()
+
+        // Arrange
     {
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
@@ -793,15 +881,18 @@ public class TransactionEndpointsTests
         var otherAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "222");
         var otherTransaction = await InsertTransactionAsync(factory, otherAccount.UserId, otherAccount.Id, new DateOnly(2026, 1, 1), 5m);
 
+        // Act
         var response = await PutTransactionAsync(
             client, otherTransaction.Id, new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 5m, account.Id, categoryId, false));
 
+        // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
     public async Task Put_WithAccountNotOwnedByCaller_ReturnsBadRequest()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -810,54 +901,67 @@ public class TransactionEndpointsTests
         var transaction = await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2026, 1, 1), 10m);
         var otherAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "999");
 
+        // Act
         var response = await PutTransactionAsync(
             client, transaction.Id, new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, otherAccount.Id, categoryId, false));
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task Put_WithUnknownCategoryId_ReturnsBadRequest()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
         var userId = await GetUserIdAsync(factory);
         var transaction = await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2026, 1, 1), 10m);
 
+        // Act
         var response = await PutTransactionAsync(
             client, transaction.Id, new TransactionWriteRequest(new DateOnly(2026, 1, 1), "desc", 10m, account.Id, Guid.NewGuid(), false));
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task Delete_WithoutAuthCookie_ReturnsUnauthorized()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = factory.CreateClient();
 
+        // Act
         var response = await client.DeleteAsync($"/api/transactions/{Guid.NewGuid()}");
 
+        // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
     public async Task Delete_WithoutValidAntiforgeryToken_ReturnsBadRequest()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
         var userId = await GetUserIdAsync(factory);
         var transaction = await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2026, 1, 1), 10m);
 
+        // Act
         var response = await client.DeleteAsync($"/api/transactions/{transaction.Id}");
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task Delete_RemovesTransaction_RegardlessOfImportBatchId()
+
+        // Arrange
     {
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
@@ -881,9 +985,11 @@ public class TransactionEndpointsTests
         var imported = await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2026, 1, 1), 10m, "imported", importBatchId);
         var manual = await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2026, 1, 2), 20m, "manual");
 
+        // Act
         var deleteImported = await DeleteTransactionAsync(client, imported.Id);
         var deleteManual = await DeleteTransactionAsync(client, manual.Id);
 
+        // Assert
         Assert.Equal(HttpStatusCode.NoContent, deleteImported.StatusCode);
         Assert.Equal(HttpStatusCode.NoContent, deleteManual.StatusCode);
 
@@ -895,13 +1001,16 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task Delete_ForTransactionNotOwnedByCaller_ReturnsNotFound()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var otherAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "999");
         var otherTransaction = await InsertTransactionAsync(factory, otherAccount.UserId, otherAccount.Id, new DateOnly(2026, 1, 1), 5m);
 
+        // Act
         var response = await DeleteTransactionAsync(client, otherTransaction.Id);
 
+        // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 }

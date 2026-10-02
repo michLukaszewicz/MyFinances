@@ -81,11 +81,14 @@ public class AccountEndpointsTests
     [Fact]
     public async Task GetBanks_ReturnsPolishBanksThenOther_IncludingEveryParserBank()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
 
+        // Act
         var response = await client.GetAsync("/api/accounts/banks");
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var payload = await response.Content.ReadFromJsonAsync<BankOptionsResponse>(JsonOptions);
         Assert.NotNull(payload);
@@ -104,11 +107,14 @@ public class AccountEndpointsTests
     [Fact]
     public async Task Create_WithBankFromTheList_StoresItAndKeepsTheFreeTextLabel()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
 
+        // Act
         var response = await PostAccountAsync(client, "Konto na codzień", "111", "velobank");
 
+        // Assert
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var dto = await response.Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
         Assert.Equal("Konto na codzień", dto!.BankName);
@@ -118,23 +124,29 @@ public class AccountEndpointsTests
     [Fact]
     public async Task Create_WithBankNotInTheList_ReturnsBadRequest()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
 
+        // Act
         var response = await PostAccountAsync(client, "My account", "111", "velobandk");
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task Create_WithoutBank_DerivesItFromTheNameWhenItIsAKnownBank_ElseOther()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
 
+        // Act
         var known = await (await PostAccountAsync(client, "mbank", "111")).Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
         var unknown = await (await PostAccountAsync(client, "velobandk", "222")).Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
 
+        // Assert
         Assert.Equal("mBank", known!.Bank);
         Assert.Equal("Other", unknown!.Bank);
     }
@@ -142,13 +154,16 @@ public class AccountEndpointsTests
     [Fact]
     public async Task Update_ChangesTheBank_AndRejectsOneNotInTheList()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
         var created = await (await PostAccountAsync(client, "velobandk", "111")).Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
 
+        // Act
         var bad = await PutAccountAsync(client, created!.Id, "velobandk", "111", "nope");
         var ok = await PutAccountAsync(client, created.Id, "velobandk", "111", "VeloBank");
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, bad.StatusCode);
         Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
         var updated = await ok.Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
@@ -159,11 +174,14 @@ public class AccountEndpointsTests
     [Fact]
     public async Task Create_WithNewBankAndNumber_Inserts()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
 
+        // Act
         var response = await PostAccountAsync(client, "mBank", "12345678901234567890123456");
 
+        // Assert
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var dto = await response.Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
         Assert.NotNull(dto);
@@ -173,13 +191,17 @@ public class AccountEndpointsTests
     [Fact]
     public async Task Create_WithDuplicateBankAndNumberForSameUser_ReturnsConflictWithoutInserting()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
 
         var first = await PostAccountAsync(client, "mBank", "111");
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
 
+        // Act
         var second = await PostAccountAsync(client, "mBank", "111");
+
+        // Assert
         Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
 
         var list = await (await client.GetAsync("/api/accounts/")).Content.ReadFromJsonAsync<List<AccountDto>>(JsonOptions);
@@ -189,25 +211,32 @@ public class AccountEndpointsTests
     [Fact]
     public async Task Create_WithSameBankAndNumberForDifferentUser_Succeeds()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
         await InsertAccountForOtherUserAsync(factory, "mBank", "999");
 
+        // Act
         var response = await PostAccountAsync(client, "mBank", "999");
 
+        // Assert
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
 
     [Fact]
     public async Task List_ScopedToCurrentUserOnly()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
 
         await PostAccountAsync(client, "mBank", "111");
         await InsertAccountForOtherUserAsync(factory, "mBank", "222");
 
+        // Act
         var list = await (await client.GetAsync("/api/accounts/")).Content.ReadFromJsonAsync<List<AccountDto>>(JsonOptions);
+
+        // Assert
         Assert.Single(list!);
         Assert.Equal("111", list![0].AccountNumber);
     }
@@ -215,12 +244,16 @@ public class AccountEndpointsTests
     [Fact]
     public async Task Update_RecomputesFieldsAndExcludesSelfFromDuplicateCheck()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
 
         var created = await (await PostAccountAsync(client, "mBank", "111")).Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
 
+        // Act
         var updateResponse = await PutAccountAsync(client, created!.Id, "mBank", "111");
+
+        // Assert
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
 
         var updateResponse2 = await PutAccountAsync(client, created.Id, "Other", "222");
@@ -233,38 +266,48 @@ public class AccountEndpointsTests
     [Fact]
     public async Task Update_CollidingWithDifferentAccount_ReturnsConflict()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
 
         var first = await (await PostAccountAsync(client, "mBank", "111")).Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
         var second = await (await PostAccountAsync(client, "mBank", "222")).Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
 
+        // Act
         var response = await PutAccountAsync(client, second!.Id, "mBank", "111");
 
+        // Assert
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
     [Fact]
     public async Task Update_ForAnotherUsersAccountId_ReturnsNotFound()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
         var otherUsersAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "111");
 
+        // Act
         var response = await PutAccountAsync(client, otherUsersAccount.Id, "mBank", "222");
 
+        // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
     public async Task Delete_RemovesRow()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
 
         var created = await (await PostAccountAsync(client, "mBank", "111")).Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
 
+        // Act
         var deleteResponse = await DeleteAccountAsync(client, created!.Id);
+
+        // Assert
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
         var list = await (await client.GetAsync("/api/accounts/")).Content.ReadFromJsonAsync<List<AccountDto>>(JsonOptions);
@@ -274,18 +317,22 @@ public class AccountEndpointsTests
     [Fact]
     public async Task Delete_ForAnotherUsersAccountId_ReturnsNotFound()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
         var otherUsersAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "111");
 
+        // Act
         var response = await DeleteAccountAsync(client, otherUsersAccount.Id);
 
+        // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
     public async Task Delete_ForAccountWithLinkedTransactions_ReturnsConflictWithoutThrowing()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
 
@@ -311,8 +358,10 @@ public class AccountEndpointsTests
             await db.SaveChangesAsync();
         }
 
+        // Act
         var deleteResponse = await DeleteAccountAsync(client, created!.Id);
 
+        // Assert
         Assert.Equal(HttpStatusCode.Conflict, deleteResponse.StatusCode);
 
         var list = await (await client.GetAsync("/api/accounts/")).Content.ReadFromJsonAsync<List<AccountDto>>(JsonOptions);

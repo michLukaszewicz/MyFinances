@@ -96,11 +96,14 @@ public class CategorizationEndpointsTests
     [Fact]
     public async Task GetCategories_ReturnsSeededListOrderedBySortOrder()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
 
+        // Act
         var response = await client.GetAsync("/api/categorization/categories");
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var categories = await response.Content.ReadFromJsonAsync<List<CategoryDto>>(JsonOptions);
         Assert.NotNull(categories);
@@ -115,6 +118,7 @@ public class CategorizationEndpointsTests
     [Fact]
     public async Task Queue_ExcludesCategorizedAndTransferFlaggedTransactions()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
         var userId = await GetCurrentUserIdAsync(factory);
@@ -126,9 +130,11 @@ public class CategorizationEndpointsTests
         var putResponse = await PutCategorizeAsync(client, categorized.Id, new CategorizeRequest(categoryId, null));
         Assert.Equal(HttpStatusCode.OK, putResponse.StatusCode);
 
+        // Act
         var queue = await (await client.GetAsync("/api/categorization/queue")).Content
             .ReadFromJsonAsync<List<TransactionQueueItemDto>>(JsonOptions);
 
+        // Assert
         Assert.Contains(queue!, t => t.Id == uncategorized.Id);
         Assert.DoesNotContain(queue!, t => t.Id == categorized.Id);
     }
@@ -136,6 +142,7 @@ public class CategorizationEndpointsTests
     [Fact]
     public async Task Put_SetsCategory_AndPersistsAcrossSubsequentGet()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
         var userId = await GetCurrentUserIdAsync(factory);
@@ -143,7 +150,10 @@ public class CategorizationEndpointsTests
         var transaction = await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2026, 8, 1), -20.00m);
         var categoryId = await GetFirstCategoryIdAsync(client);
 
+        // Act
         var putResponse = await PutCategorizeAsync(client, transaction.Id, new CategorizeRequest(categoryId, null));
+
+        // Assert
         Assert.Equal(HttpStatusCode.OK, putResponse.StatusCode);
 
         var handled = await (await client.GetAsync("/api/categorization/handled")).Content
@@ -155,6 +165,7 @@ public class CategorizationEndpointsTests
     [Fact]
     public async Task Put_SetsInternalTransfer_PersistsAndSurvivesLaterDetectionPass()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
         var userId = await GetCurrentUserIdAsync(factory);
@@ -169,10 +180,12 @@ public class CategorizationEndpointsTests
         var putResponse = await PutCategorizeAsync(client, legA.Id, new CategorizeRequest(null, false));
         Assert.Equal(HttpStatusCode.OK, putResponse.StatusCode);
 
+        // Act
         // Trigger a detection pass via GET /queue.
         var queue = await (await client.GetAsync("/api/categorization/queue")).Content
             .ReadFromJsonAsync<List<TransactionQueueItemDto>>(JsonOptions);
 
+        // Assert
         // legA's manual "not a transfer" decision must survive detection and it stays in the queue.
         Assert.Contains(queue!, t => t.Id == legA.Id && !t.IsInternalTransfer);
     }
@@ -180,6 +193,7 @@ public class CategorizationEndpointsTests
     [Fact]
     public async Task Queue_And_Handled_RunDetectionAndAutoFlagMatchingPair()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
         var userId = await GetCurrentUserIdAsync(factory);
@@ -189,8 +203,11 @@ public class CategorizationEndpointsTests
         var legA = await InsertTransactionAsync(factory, userId, accountA.Id, new DateOnly(2026, 8, 1), -500.00m);
         var legB = await InsertTransactionAsync(factory, userId, accountB.Id, new DateOnly(2026, 8, 2), 500.00m);
 
+        // Act
         var queue = await (await client.GetAsync("/api/categorization/queue")).Content
             .ReadFromJsonAsync<List<TransactionQueueItemDto>>(JsonOptions);
+
+        // Assert
         Assert.DoesNotContain(queue!, t => t.Id == legA.Id || t.Id == legB.Id);
 
         var handled = await (await client.GetAsync("/api/categorization/handled")).Content
@@ -202,17 +219,20 @@ public class CategorizationEndpointsTests
     [Fact]
     public async Task CrossUserIsolation_TransactionFromAnotherUserNeverAppears()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
         var otherUserId = Guid.NewGuid();
         var otherAccount = await InsertAccountAsync(factory, otherUserId, "mBank", "999");
         var otherTransaction = await InsertTransactionAsync(factory, otherUserId, otherAccount.Id, new DateOnly(2026, 8, 1), -10.00m);
 
+        // Act
         var queue = await (await client.GetAsync("/api/categorization/queue")).Content
             .ReadFromJsonAsync<List<TransactionQueueItemDto>>(JsonOptions);
         var handled = await (await client.GetAsync("/api/categorization/handled")).Content
             .ReadFromJsonAsync<List<TransactionQueueItemDto>>(JsonOptions);
 
+        // Assert
         Assert.DoesNotContain(queue!, t => t.Id == otherTransaction.Id);
         Assert.DoesNotContain(handled!, t => t.Id == otherTransaction.Id);
 

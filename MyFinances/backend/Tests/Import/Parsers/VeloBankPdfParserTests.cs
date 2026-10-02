@@ -102,8 +102,10 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parser_IdentifiesItselfAsTheVeloBankPdfParser()
     {
+        // Arrange
         var parser = new VeloBankPdfParser();
 
+        // Assert
         Assert.Equal("VeloBank", parser.BankName);
         Assert.Equal(StatementFormat.Pdf, parser.Format);
     }
@@ -113,6 +115,7 @@ public class VeloBankPdfParserTests
     [InlineData(MultiPageFixture)]
     public void CanParse_ReturnsTrue_ForBothSyntheticFixtures(string fileName)
     {
+        // Act & Assert
         Assert.True(CanParse(ReadFixture(fileName)));
     }
 
@@ -126,16 +129,20 @@ public class VeloBankPdfParserTests
     [InlineData("erste-sample-redacted-comma.csv")]
     public void CanParse_ReturnsFalseWithoutThrowing_ForCsvFixtures(string fileName)
     {
+        // Arrange
         using var stream = File.OpenRead(FixturePath(fileName));
 
+        // Act & Assert
         Assert.False(new VeloBankPdfParser().CanParse(stream));
     }
 
     [Fact]
     public void CanParse_ReturnsFalse_ForPdfThatIsNotAVeloBankStatement()
     {
+        // Arrange
         var pdf = BuildTextPdf("Elektroniczne zestawienie operacji", "mBank S.A.", "Saldo początkowe");
 
+        // Act & Assert
         Assert.False(CanParse(pdf));
     }
 
@@ -146,26 +153,31 @@ public class VeloBankPdfParserTests
     [InlineData("VeloBank S.A.", "DATA TRANSAKCJI DATA KSIĘGOWANIA OPIS KWOTA SALDO", "", false)]
     public void CanParse_RequiresTheTitleTheBankNameAndTheTableHeader(string line1, string line2, string line3, bool expected)
     {
+        // Act & Assert
         Assert.Equal(expected, CanParse(BuildTextPdf(line1, line2, line3)));
     }
 
     [Fact]
     public void CanParse_ReturnsFalse_ForPdfMagicFollowedByGarbage()
     {
+        // Act & Assert
         Assert.False(CanParse(PdfMagicFollowedByGarbage()));
     }
 
     [Fact]
     public void CanParse_ReturnsFalse_ForEmptyStream()
     {
+        // Act & Assert
         Assert.False(CanParse([]));
     }
 
     [Fact]
     public void CanParse_ReturnsFalse_WhenThePdfHasMoreThanMaxPages()
     {
+        // Arrange
         var threePages = ReadFixture(MultiPageFixture);
 
+        // Act & Assert
         Assert.False(CanParse(threePages, maxPages: 2));
         Assert.True(CanParse(threePages, maxPages: 3));
     }
@@ -173,31 +185,39 @@ public class VeloBankPdfParserTests
     [Fact]
     public void CanParse_RestoresStreamPosition()
     {
+        // Arrange
         var parser = new VeloBankPdfParser();
         using var stream = new MemoryStream(ReadFixture(OnePageFixture));
 
+        // Act & Assert
         Assert.True(parser.CanParse(stream));
 
+        // Assert
         Assert.Equal(0, stream.Position);
     }
 
     [Fact]
     public void CanParse_ReadsFromTheCurrentPosition_AndRestoresIt()
     {
+        // Arrange
         var parser = new VeloBankPdfParser();
         using var stream = new MemoryStream([.. new byte[7], .. ReadFixture(OnePageFixture)]);
         stream.Position = 7;
 
+        // Act & Assert
         Assert.True(parser.CanParse(stream));
 
+        // Assert
         Assert.Equal(7, stream.Position);
     }
 
     [Fact]
     public void Parse_ReturnsSeventeenRowsInOrder_ForOnePageFixture()
     {
+        // Act
         var result = Parse(ReadFixture(OnePageFixture));
 
+        // Assert
         Assert.Equal(VeloBankSampleData.OnePageRowCount, result.Transactions.Count);
         Assert.Equal(0, result.SkippedErrorCount);
         Assert.Equal(Expected(OnePage), result.Transactions);
@@ -206,8 +226,10 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_ReturnsPendingRowsLikeAnyOtherRow()
     {
+        // Act
         var result = Parse(ReadFixture(OnePageFixture));
 
+        // Assert
         var pending = OnePage.Where(r => r.BookingDate is null).ToList();
         Assert.Equal(2, pending.Count);
         Assert.Equal(Expected(pending), result.Transactions.Take(pending.Count));
@@ -216,8 +238,10 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_UsesTheTransactionDateRatherThanTheBookingDate()
     {
+        // Act
         var result = Parse(ReadFixture(OnePageFixture));
 
+        // Assert
         // Paid 29.09.2026, booked 30.09.2026.
         var row = result.Transactions[FirstBookedRow];
         Assert.Equal(new DateOnly(2026, 9, 29), row.Date);
@@ -227,8 +251,10 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_ReadsSignedAmounts()
     {
+        // Act
         var result = Parse(ReadFixture(OnePageFixture));
 
+        // Assert
         Assert.Contains(result.Transactions, t => t.Amount == 300.00m && t.Description.Contains("Zwrot za bilety"));
         Assert.Contains(result.Transactions, t => t.Amount == 1200.00m);
         Assert.Contains(result.Transactions, t => t.Amount == -420.00m);
@@ -237,11 +263,14 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_JoinsEveryLineOfAFiveLineDescriptionWithSingleSpaces()
     {
+        // Arrange
         var fiveLines = OnePage[FiveLineDescriptionRow];
         Assert.Equal(5, fiveLines.DescriptionLines.Count);
 
+        // Act
         var result = Parse(ReadFixture(OnePageFixture));
 
+        // Assert
         var description = result.Transactions[FiveLineDescriptionRow].Description;
         Assert.Contains("Wynagrodzenie za wrzesień 2026 - rozliczenie godzin nadliczbowych oraz premii kwartalnej zgodnie z aneksem nr 1", description);
         Assert.DoesNotContain("  ", description);
@@ -251,8 +280,10 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_KeepsPolishDiacritics()
     {
+        // Act
         var result = Parse(ReadFixture(OnePageFixture));
 
+        // Assert
         Assert.Contains(result.Transactions, t => t.Description.Contains("Tytuł: Czynsz za wrzesień 2026") && t.Description.Contains("ADAM PRÓBNY"));
         Assert.Contains(result.Transactions, t => t.Description.Contains("FIRMA PRZYKŁADOWA SP. Z O.O."));
         Assert.Contains(result.Transactions, t => t.Description.Contains("Operacja kartą"));
@@ -261,8 +292,10 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_ReturnsFortyRowsInOrder_ForMultiPageFixture()
     {
+        // Act
         var result = Parse(ReadFixture(MultiPageFixture));
 
+        // Assert
         Assert.Equal(VeloBankSampleData.MultiPageRowCount, result.Transactions.Count);
         Assert.Equal(0, result.SkippedErrorCount);
         Assert.Equal(Expected(VeloBankSampleData.MultiPageRows), result.Transactions);
@@ -275,8 +308,10 @@ public class VeloBankPdfParserTests
         // the one-page fixture has a second header block in the middle of its page.
         foreach (var fixture in new[] { OnePageFixture, MultiPageFixture })
         {
+            // Act
             var result = Parse(ReadFixture(fixture));
 
+            // Assert
             Assert.All(result.Transactions, t =>
             {
                 Assert.DoesNotContain("TRANSAKCJI", t.Description);
@@ -290,9 +325,11 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_ReturnsTheSameKeysForTheSharedRows_OfTheShortAndTheLongExport()
     {
+        // Act
         var shortExport = Parse(ReadFixture(OnePageFixture));
         var longExport = Parse(ReadFixture(MultiPageFixture));
 
+        // Assert
         Assert.Equal(shortExport.Transactions, longExport.Transactions.Take(shortExport.Transactions.Count));
     }
 
@@ -303,6 +340,7 @@ public class VeloBankPdfParserTests
     [InlineData(17, 19, 15)]
     public void Parse_ReturnsTheSameKeys_WhateverThePageBreaks(int firstPageRows, int rowsPerPage, int? midPageHeaderAfterRows)
     {
+        // Arrange
         var layout = new VeloBankPdfLayout
         {
             FirstPageRows = firstPageRows,
@@ -311,19 +349,24 @@ public class VeloBankPdfParserTests
         };
         var pdf = VeloBankPdfBuilder.Build(VeloBankSampleData.Header, VeloBankSampleData.MultiPageRows, layout);
 
+        // Act
         var result = Parse(pdf);
 
+        // Assert
         Assert.Equal(Expected(VeloBankSampleData.MultiPageRows), result.Transactions);
     }
 
     [Fact]
     public void Parse_ReadsValuesCenteredInTheRow_AsWellAsTopAligned()
     {
+        // Arrange
         var centred = new VeloBankPdfLayout { FirstPageRows = VeloBankSampleData.OnePageRowCount, MidPageHeaderAfterRows = 15, CenterValueCells = true };
 
+        // Act
         var onePage = Parse(VeloBankPdfBuilder.Build(VeloBankSampleData.Header, OnePage, centred));
         var multiPage = Parse(VeloBankPdfBuilder.Build(VeloBankSampleData.Header, VeloBankSampleData.MultiPageRows, new VeloBankPdfLayout { CenterValueCells = true }));
 
+        // Assert
         Assert.Equal(Parse(ReadFixture(OnePageFixture)).Transactions, onePage.Transactions);
         Assert.Equal(Expected(VeloBankSampleData.MultiPageRows), multiPage.Transactions);
     }
@@ -331,6 +374,7 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_AssemblesAmountsAndBalancesPrintedWithSeveralThousandsGroups()
     {
+        // Arrange
         var rows = OnePage.ToList();
         rows[CardTamperRow] = rows[CardTamperRow] with
         {
@@ -340,8 +384,10 @@ public class VeloBankPdfParserTests
         var rebalanced = VeloBankSampleData.WithRunningBalances(rows, 1_234_567.89m);
         Assert.Equal(1_234_567.89m, rebalanced[FirstBookedRow].Balance);
 
+        // Act
         var result = Parse(BuildOnePagePdf(rebalanced));
 
+        // Assert
         Assert.Equal(Expected(rebalanced), result.Transactions);
         Assert.Contains(result.Transactions, t => t.Amount == -1250.40m);
     }
@@ -349,24 +395,30 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_IgnoresPendingRowsInTheBalanceChain_WhereverTheyAre()
     {
+        // Arrange
         // A pending row in the middle of the booked ones (its balance cell is never read); the
         // oldest row makes room so the page still fits.
         var rows = OnePage.Take(OnePage.Count - 1).ToList();
         rows.Insert(8, OnePage[0] with { BalanceText = "brak" });
         var layout = new VeloBankPdfLayout { FirstPageRows = rows.Count, MidPageHeaderAfterRows = 15 };
 
+        // Act
         var result = Parse(VeloBankPdfBuilder.Build(VeloBankSampleData.Header, rows, layout));
 
+        // Assert
         Assert.Equal(Expected(rows), result.Transactions);
     }
 
     [Fact]
     public void Parse_ParsesAStatementThatHasOnlyPendingRows()
     {
+        // Arrange
         var pending = OnePage.Take(2).ToList();
 
+        // Act
         var result = Parse(VeloBankPdfBuilder.Build(VeloBankSampleData.Header, pending));
 
+        // Assert
         Assert.Equal(Expected(pending), result.Transactions);
         Assert.Equal(0, result.SkippedErrorCount);
     }
@@ -374,6 +426,7 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_SkipsForeignCurrencyRow_AndComparesNoBalancesAcrossIt()
     {
+        // Arrange
         var euro = OnePage[ForeignCurrencyRow] with
         {
             Amount = -20m,
@@ -389,8 +442,10 @@ public class VeloBankPdfParserTests
             rows[i] = rows[i] with { Balance = rows[i].Balance + 15m };
         }
 
+        // Act
         var result = Parse(BuildOnePagePdf(rows));
 
+        // Assert
         Assert.Equal(1, result.SkippedErrorCount);
         Assert.Equal(Expected(rows.Where((_, i) => i != ForeignCurrencyRow)), result.Transactions);
         Assert.DoesNotContain(result.Transactions, t => t.Description.Contains("ZAGRANICZNY"));
@@ -399,12 +454,14 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_RejectsTheSameBalanceJump_WhenNoForeignCurrencyRowSitsInBetween()
     {
+        // Arrange
         var rows = OnePage.ToList();
         for (var i = ForeignCurrencyRow + 1; i < rows.Count; i++)
         {
             rows[i] = rows[i] with { Balance = rows[i].Balance + 15m };
         }
 
+        // Act & Assert
         // The first row below the jump (25.09.2026) is the one whose balance does not follow.
         AssertRejected(BuildOnePagePdf(rows), BalanceCheck, page: 1, transactionDate: "25.09.2026");
     }
@@ -412,6 +469,7 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_ImportsPlnCardRowWhoseDescriptionNamesAnotherCurrency_WithoutTheCardAmountCheck()
     {
+        // Arrange
         var abroad = OnePage[ForeignCurrencyRow] with
         {
             Amount = -86.40m,
@@ -419,8 +477,10 @@ public class VeloBankPdfParserTests
         };
         var rows = VeloBankSampleData.WithRunningBalances(WithRow(ForeignCurrencyRow, abroad), 1024.50m);
 
+        // Act
         var result = Parse(BuildOnePagePdf(rows));
 
+        // Assert
         Assert.Equal(0, result.SkippedErrorCount);
         Assert.Equal(Expected(rows), result.Transactions);
         Assert.Contains(result.Transactions, t => t.Amount == -86.40m && t.Description.Contains("na kwotę 20,00 EUR"));
@@ -429,18 +489,22 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_Rejects_ATamperedBalance()
     {
+        // Arrange
         var tampered = OnePage[BalanceTamperRow] with { Balance = OnePage[BalanceTamperRow].Balance + 5m };
 
+        // Act & Assert
         AssertRejected(BuildOnePagePdf(WithRow(BalanceTamperRow, tampered)), BalanceCheck, page: 1, transactionDate: "24.09.2026");
     }
 
     [Fact]
     public void Parse_Rejects_ATamperedBalanceOnALaterPage_NamingThatPage()
     {
+        // Arrange
         var rows = VeloBankSampleData.MultiPageRows.ToList();
         var tampered = rows[20] with { Balance = rows[20].Balance - 1m };
         rows[20] = tampered;
 
+        // Act & Assert
         // Row 21 (index 20) is on page 2 (page 1 holds 15 rows, page 2 the next 19); paid 14.09.2026.
         AssertRejected(VeloBankPdfBuilder.Build(VeloBankSampleData.Header, rows), BalanceCheck, page: 2, transactionDate: "14.09.2026");
     }
@@ -448,19 +512,23 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_Rejects_ATamperedCardAmountInTheDescription()
     {
+        // Arrange
         var tampered = OnePage[CardTamperRow] with
         {
             DescriptionLines = VeloBankSampleData.CardLines(-35.81m, "PLN", "SKLEP TESTOWY 12"),
         };
 
+        // Act & Assert
         AssertRejected(BuildOnePagePdf(WithRow(CardTamperRow, tampered)), CardAmountCheck, page: 1, transactionDate: "22.09.2026");
     }
 
     [Fact]
     public void Parse_Rejects_AnUnreadableAmountCell_WithTheRowsDate()
     {
+        // Arrange
         var unreadable = OnePage[BalanceTamperRow] with { AmountText = "n/a" };
 
+        // Act & Assert
         AssertRejected(BuildOnePagePdf(WithRow(BalanceTamperRow, unreadable)), UnreadableRowCheck, page: 1, transactionDate: "24.09.2026");
     }
 
@@ -470,8 +538,10 @@ public class VeloBankPdfParserTests
     [InlineData("12345678901234567,89 PLN")]
     public void Parse_Rejects_AnAbsurdlyLargeAmountCell_AsUnreadable(string amountText)
     {
+        // Arrange
         var unreadable = OnePage[BalanceTamperRow] with { AmountText = amountText };
 
+        // Act & Assert
         AssertRejected(BuildOnePagePdf(WithRow(BalanceTamperRow, unreadable)), UnreadableRowCheck, page: 1, transactionDate: "24.09.2026");
     }
 
@@ -481,33 +551,41 @@ public class VeloBankPdfParserTests
     [InlineData(3)]
     public void Parse_Rejects_ALaterPageWithoutATableHeader_NamingThatPage(int page)
     {
+        // Arrange
         var layout = VeloBankSampleData.MultiPageLayout with { OmitHeaderOnPage = page };
         var pdf = VeloBankPdfBuilder.Build(VeloBankSampleData.Header, VeloBankSampleData.MultiPageRows, layout);
 
+        // Act & Assert
         AssertRejected(pdf, UnreadableRowCheck, page, transactionDate: null);
     }
 
     [Fact]
     public void Parse_Rejects_AnUnreadableTransactionDate_WithoutADate()
     {
+        // Arrange
         var unreadable = OnePage[BalanceTamperRow] with { TransactionDateText = "??.??.????" };
 
+        // Act & Assert
         AssertRejected(BuildOnePagePdf(WithRow(BalanceTamperRow, unreadable)), UnreadableRowCheck, page: 1, transactionDate: null);
     }
 
     [Fact]
     public void Parse_Rejects_AnUnreadableBalanceOnABookedPlnRow()
     {
+        // Arrange
         var unreadable = OnePage[BalanceTamperRow] with { BalanceText = "brak" };
 
+        // Act & Assert
         AssertRejected(BuildOnePagePdf(WithRow(BalanceTamperRow, unreadable)), UnreadableRowCheck, page: 1, transactionDate: "24.09.2026");
     }
 
     [Fact]
     public void Parse_ReturnsNothing_ForPdfThatIsNotAVeloBankStatement()
     {
+        // Act
         var result = Parse(BuildTextPdf("Elektroniczne zestawienie operacji", "mBank S.A."));
 
+        // Assert
         Assert.Empty(result.Transactions);
         Assert.Equal(0, result.SkippedErrorCount);
     }
@@ -515,8 +593,10 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_ReturnsNothing_ForAVeloBankPageWithoutATable()
     {
+        // Act
         var result = Parse(BuildTextPdf("Historia rachunku", "VeloBank S.A.", "DATA TRANSAKCJI DATA KSIĘGOWANIA OPIS KWOTA SALDO"));
 
+        // Assert
         Assert.Empty(result.Transactions);
         Assert.Equal(0, result.SkippedErrorCount);
     }
@@ -526,8 +606,10 @@ public class VeloBankPdfParserTests
     {
         foreach (var bytes in new[] { PdfMagicFollowedByGarbage(), Array.Empty<byte>(), "not a pdf at all"u8.ToArray(), File.ReadAllBytes(FixturePath("mbank-sample-redacted.csv")) })
         {
+            // Act
             var result = Parse(bytes);
 
+            // Assert
             Assert.Empty(result.Transactions);
             Assert.Equal(0, result.SkippedErrorCount);
         }
@@ -536,8 +618,10 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_ReturnsNothing_WhenThePdfHasMoreThanMaxPages()
     {
+        // Act
         var result = Parse(ReadFixture(MultiPageFixture), maxPages: 2);
 
+        // Assert
         Assert.Empty(result.Transactions);
         Assert.Equal(0, result.SkippedErrorCount);
     }
@@ -545,12 +629,15 @@ public class VeloBankPdfParserTests
     [Fact]
     public void Parse_RestoresStreamPosition()
     {
+        // Arrange
         var parser = new VeloBankPdfParser();
         using var stream = new MemoryStream([.. new byte[7], .. ReadFixture(OnePageFixture)]);
         stream.Position = 7;
 
+        // Act
         var result = parser.Parse(stream);
 
+        // Assert
         Assert.Equal(VeloBankSampleData.OnePageRowCount, result.Transactions.Count);
         Assert.Equal(7, stream.Position);
     }
@@ -558,12 +645,15 @@ public class VeloBankPdfParserTests
     [Fact]
     public void CanParseThenParse_WorksOnOneStream()
     {
+        // Arrange
         var parser = new VeloBankPdfParser();
         using var stream = new MemoryStream(ReadFixture(MultiPageFixture));
 
+        // Act & Assert
         Assert.True(parser.CanParse(stream));
         var result = parser.Parse(stream);
 
+        // Assert
         Assert.Equal(VeloBankSampleData.MultiPageRowCount, result.Transactions.Count);
     }
 }

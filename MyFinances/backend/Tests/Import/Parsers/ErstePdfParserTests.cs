@@ -116,8 +116,10 @@ public class ErstePdfParserTests
     [Fact]
     public void Parser_IdentifiesItselfAsTheErstePdfParser()
     {
+        // Arrange
         var parser = new ErstePdfParser();
 
+        // Assert
         Assert.Equal("Erste", parser.BankName);
         Assert.Equal(StatementFormat.Pdf, parser.Format);
     }
@@ -127,6 +129,7 @@ public class ErstePdfParserTests
     [InlineData(MultiPageFixture)]
     public void CanParse_ReturnsTrue_ForBothSyntheticFixtures(string fileName)
     {
+        // Act & Assert
         Assert.True(CanParse(ReadFixture(fileName)));
     }
 
@@ -137,8 +140,10 @@ public class ErstePdfParserTests
     [InlineData("erste-sample-redacted-comma.csv")]
     public void CanParse_ReturnsFalseWithoutThrowing_ForErsteCsvFixtures(string fileName)
     {
+        // Arrange
         using var stream = File.OpenRead(FixturePath(fileName));
 
+        // Act & Assert
         Assert.False(new ErstePdfParser().CanParse(stream));
     }
 
@@ -149,6 +154,7 @@ public class ErstePdfParserTests
     [InlineData("velobank-sample-synthetic-multipage.pdf")]
     public void CanParse_ReturnsFalse_ForMBankAndVeloBankPdfFixtures(string fileName)
     {
+        // Act & Assert
         Assert.False(CanParse(ReadFixture(fileName)));
     }
 
@@ -157,6 +163,7 @@ public class ErstePdfParserTests
     [InlineData(MultiPageFixture)]
     public void MBankAndVeloBankParsers_ReturnFalse_ForErstePdfFixtures(string fileName)
     {
+        // Act & Assert
         Assert.False(new MBankPdfParser().CanParse(new MemoryStream(ReadFixture(fileName))));
         Assert.False(new VeloBankPdfParser().CanParse(new MemoryStream(ReadFixture(fileName))));
     }
@@ -164,8 +171,10 @@ public class ErstePdfParserTests
     [Fact]
     public void CanParse_ReturnsFalse_ForPdfThatIsNotAnErsteStatement()
     {
+        // Arrange
         var pdf = BuildTextPdf("Historia rachunku", "VeloBank S.A.", "DATA TRANSAKCJI DATA KSIĘGOWANIA OPIS KWOTA SALDO");
 
+        // Act & Assert
         Assert.False(CanParse(pdf));
     }
 
@@ -173,8 +182,10 @@ public class ErstePdfParserTests
     [Fact]
     public void CanParse_ReturnsFalse_ForPdfWithAllTheWordsButNoTableHeaderBlock()
     {
+        // Arrange
         var pdf = BuildTextPdf("Konto: 00 0000 0000 0000", "Lista transakcji", "Data operacji", "Operacja", "Kwota", "Saldo");
 
+        // Act & Assert
         Assert.False(CanParse(pdf));
         Assert.Empty(Parse(pdf).Transactions);
     }
@@ -182,14 +193,17 @@ public class ErstePdfParserTests
     [Fact]
     public void CanParse_ReturnsFalse_WhenTheTableHeaderBlockIsMissingFromPageOne()
     {
+        // Arrange
         var layout = ErsteSampleData.OnePageLayout with { OmitHeaderOnPage = 1 };
 
+        // Act & Assert
         Assert.False(CanParse(ErstePdfBuilder.Build(ErsteSampleData.Header, OnePage, layout)));
     }
 
     [Fact]
     public void CanParse_RequiresTheTitleAndTheAccountLine()
     {
+        // Act & Assert
         Assert.False(CanParse(ErstePdfBuilder.Build(ErsteSampleData.Header, OnePage, ErsteSampleData.OnePageLayout with { OmitTitle = true })));
         Assert.False(CanParse(ErstePdfBuilder.Build(ErsteSampleData.Header, OnePage, ErsteSampleData.OnePageLayout with { OmitAccountLine = true })));
     }
@@ -197,20 +211,24 @@ public class ErstePdfParserTests
     [Fact]
     public void CanParse_ReturnsFalse_ForPdfMagicFollowedByGarbage()
     {
+        // Act & Assert
         Assert.False(CanParse(PdfMagicFollowedByGarbage()));
     }
 
     [Fact]
     public void CanParse_ReturnsFalse_ForEmptyStream()
     {
+        // Act & Assert
         Assert.False(CanParse([]));
     }
 
     [Fact]
     public void CanParse_ReturnsFalse_WhenThePdfHasMoreThanMaxPages()
     {
+        // Arrange
         var threePages = ReadFixture(MultiPageFixture);
 
+        // Act & Assert
         Assert.False(CanParse(threePages, maxPages: 2));
         Assert.True(CanParse(threePages, maxPages: 3));
     }
@@ -218,31 +236,39 @@ public class ErstePdfParserTests
     [Fact]
     public void CanParse_RestoresStreamPosition()
     {
+        // Arrange
         var parser = new ErstePdfParser();
         using var stream = new MemoryStream(ReadFixture(OnePageFixture));
 
+        // Act & Assert
         Assert.True(parser.CanParse(stream));
 
+        // Assert
         Assert.Equal(0, stream.Position);
     }
 
     [Fact]
     public void CanParse_ReadsFromTheCurrentPosition_AndRestoresIt()
     {
+        // Arrange
         var parser = new ErstePdfParser();
         using var stream = new MemoryStream([.. new byte[7], .. ReadFixture(OnePageFixture)]);
         stream.Position = 7;
 
+        // Act & Assert
         Assert.True(parser.CanParse(stream));
 
+        // Assert
         Assert.Equal(7, stream.Position);
     }
 
     [Fact]
     public void Parse_ReturnsTwelveRowsInPrintedOrder_ForOnePageFixture()
     {
+        // Act
         var result = Parse(ReadFixture(OnePageFixture));
 
+        // Assert
         Assert.Equal(ErsteSampleData.OnePageRowCount, result.Transactions.Count);
         Assert.Equal(0, result.SkippedErrorCount);
         Assert.Equal(Expected(OnePage), result.Transactions);
@@ -251,8 +277,10 @@ public class ErstePdfParserTests
     [Fact]
     public void Parse_ReadsOperationDates_IncludingAnOctoberOne()
     {
+        // Act
         var result = Parse(ReadFixture(OnePageFixture));
 
+        // Assert
         Assert.Equal(new DateOnly(2026, 10, 1), result.Transactions[0].Date);
         Assert.Contains(result.Transactions, t => t.Date.Month == 10);
         Assert.Contains(result.Transactions, t => t.Date == new DateOnly(2026, 9, 28));
@@ -263,8 +291,10 @@ public class ErstePdfParserTests
     [Fact]
     public void Parse_ReadsSignedAmounts_IncludingOnesOfAThousandOrMore()
     {
+        // Act
         var result = Parse(ReadFixture(OnePageFixture));
 
+        // Assert
         Assert.Contains(result.Transactions, t => t.Amount == 1200.00m && t.Description.StartsWith("Biuro Przykładowe"));
         Assert.Contains(result.Transactions, t => t.Amount == -142.35m);
         Assert.Contains(result.Transactions, t => t.Amount == 29.99m);
@@ -276,11 +306,14 @@ public class ErstePdfParserTests
     [Fact]
     public void Parse_JoinsATwoLineOperationCellWithASingleSpace()
     {
+        // Arrange
         var refund = OnePage[RefundRow];
         Assert.Equal(2, refund.OperationLines.Count);
 
+        // Act
         var result = Parse(ReadFixture(OnePageFixture));
 
+        // Assert
         var description = result.Transactions[RefundRow].Description;
         Assert.Equal(
             "DOP. MC ZWROT KARTĄ 29.99 PLN Sklep Testowy 12 Testowo",
@@ -292,8 +325,10 @@ public class ErstePdfParserTests
     [Fact]
     public void Parse_KeepsSameDayRowsInPrintedOrder_AndAllRowsOfAnIdenticalKeyGroup()
     {
+        // Act
         var result = Parse(ReadFixture(OnePageFixture));
 
+        // Assert
         // Rows 0-2 share 2026-10-01 but their printed order does not follow the balance chain.
         Assert.Equal(
             new[] { "Kawiarnia Testowa Testowo", "Piekarnia Test Testowo", "Sklep Testowy 12 Testowo" },
@@ -306,8 +341,10 @@ public class ErstePdfParserTests
     {
         foreach (var fixture in new[] { OnePageFixture, MultiPageFixture })
         {
+            // Act
             var result = Parse(ReadFixture(fixture));
 
+            // Assert
             Assert.All(result.Transactions, t =>
             {
                 Assert.DoesNotContain("księgowania", t.Description);
@@ -322,8 +359,10 @@ public class ErstePdfParserTests
     [Fact]
     public void Parse_ReturnsFortyRows_ForMultiPageFixture()
     {
+        // Act
         var result = Parse(ReadFixture(MultiPageFixture));
 
+        // Assert
         Assert.Equal(ErsteSampleData.MultiPageRowCount, result.Transactions.Count);
         Assert.Equal(0, result.SkippedErrorCount);
         Assert.Equal(Expected(MultiPage), result.Transactions);
@@ -336,32 +375,41 @@ public class ErstePdfParserTests
     [InlineData(6, 17)]
     public void Parse_ReturnsTheSameRows_WhateverThePageBreaks(int firstPageRows, int rowsPerPage)
     {
+        // Arrange
         var layout = new ErstePdfLayout { FirstPageRows = firstPageRows, RowsPerPage = rowsPerPage };
 
+        // Act
         var result = Parse(ErstePdfBuilder.Build(ErsteSampleData.Header, MultiPage, layout));
 
+        // Assert
         Assert.Equal(Expected(MultiPage), result.Transactions);
     }
 
     [Fact]
     public void Parse_AssemblesAmountsAndBalancesPrintedWithAThousandsSpace()
     {
+        // Arrange
         // The widest values that still fit the 93 pt amount column.
         var row = OnePage[ThousandRow] with { Amount = 123_456.78m, Balance = 123_461.78m };
         var pdf = ErstePdfBuilder.Build(ErsteSampleData.Header, [row]);
 
+        // Act
         var result = Parse(pdf);
 
+        // Assert
         Assert.Equal(123_456.78m, Assert.Single(result.Transactions).Amount);
     }
 
     [Fact]
     public void Parse_ReadsAStatementWithoutAnyRow()
     {
+        // Arrange
         var pdf = ErstePdfBuilder.Build(ErsteSampleData.Header, []);
 
+        // Act
         var result = Parse(pdf);
 
+        // Assert
         Assert.Empty(result.Transactions);
         Assert.Equal(0, result.SkippedErrorCount);
     }
@@ -369,24 +417,30 @@ public class ErstePdfParserTests
     [Fact]
     public void Parse_Rejects_ATamperedBalance()
     {
+        // Arrange
         var tampered = OnePage[MiddleRow] with { Balance = OnePage[MiddleRow].Balance + 5m };
 
+        // Act & Assert
         var exception = AssertRejected(BuildOnePagePdf(WithRow(OnePage, MiddleRow, tampered)), BalanceCheck, page: 1);
 
+        // Assert
         Assert.DoesNotContain("5,00", exception.Message);
     }
 
     [Fact]
     public void Parse_Rejects_ATamperedBalanceOnALaterPage()
     {
+        // Arrange
         var tampered = MultiPage[20] with { Balance = MultiPage[20].Balance - 1m };
 
+        // Act & Assert
         AssertRejected(BuildMultiPagePdf(WithRow(MultiPage, 20, tampered)), BalanceCheck);
     }
 
     [Fact]
     public void Parse_Rejects_ADeletedMiddleRow()
     {
+        // Act & Assert
         AssertRejected(BuildMultiPagePdf(Without(MultiPage, MultiPage[20])), BalanceCheck);
     }
 
@@ -395,44 +449,56 @@ public class ErstePdfParserTests
     [Fact]
     public void Parse_Accepts_ADeletedNewestRow()
     {
+        // Arrange
         var newest = MultiPage.Single(r => r.Balance == ErsteSampleData.NewestBalance);
 
+        // Act
         var result = Parse(BuildMultiPagePdf(Without(MultiPage, newest)));
 
+        // Assert
         Assert.Equal(ErsteSampleData.MultiPageRowCount - 1, result.Transactions.Count);
     }
 
     [Fact]
     public void Parse_Accepts_ADeletedOldestRow()
     {
+        // Arrange
         var oldest = ErsteSampleData.MultiPageRowsInBookingOrder[0];
 
+        // Act
         var result = Parse(BuildMultiPagePdf(Without(MultiPage, oldest)));
 
+        // Assert
         Assert.Equal(ErsteSampleData.MultiPageRowCount - 1, result.Transactions.Count);
     }
 
     [Fact]
     public void Parse_Rejects_AnUnknownMonthToken_WithoutADate()
     {
+        // Arrange
         var unreadable = OnePage[MiddleRow] with { DateText = "28 xyz 2026" };
 
+        // Act & Assert
         AssertRejected(BuildOnePagePdf(WithRow(OnePage, MiddleRow, unreadable)), UnreadableRowCheck, page: 1, dateReadable: false);
     }
 
     [Fact]
     public void Parse_Rejects_AnImpossibleDate()
     {
+        // Arrange
         var unreadable = OnePage[MiddleRow] with { DateText = "31 wrz 2026" };
 
+        // Act & Assert
         AssertRejected(BuildOnePagePdf(WithRow(OnePage, MiddleRow, unreadable)), UnreadableRowCheck, page: 1, dateReadable: false);
     }
 
     [Fact]
     public void Parse_Rejects_AnUnreadableAmountCell_WithTheRowsDate()
     {
+        // Arrange
         var unreadable = OnePage[MiddleRow] with { AmountText = "n/a" };
 
+        // Act & Assert
         AssertRejected(BuildOnePagePdf(WithRow(OnePage, MiddleRow, unreadable)), UnreadableRowCheck, page: 1, operationDate: "30.09.2026");
     }
 
@@ -442,34 +508,43 @@ public class ErstePdfParserTests
     [InlineData("12345678901234567,89 PLN")]
     public void Parse_Rejects_AnAbsurdlyLargeAmountCell_AsUnreadable(string amountText)
     {
+        // Arrange
         var unreadable = OnePage[MiddleRow] with { AmountText = amountText };
 
+        // Act & Assert
         AssertRejected(BuildOnePagePdf(WithRow(OnePage, MiddleRow, unreadable)), UnreadableRowCheck, page: 1, operationDate: "30.09.2026");
     }
 
     [Fact]
     public void Parse_Rejects_AnUnreadableBalanceCell_WithTheRowsDate()
     {
+        // Arrange
         var unreadable = OnePage[MiddleRow] with { BalanceText = "brak" };
 
+        // Act & Assert
         AssertRejected(BuildOnePagePdf(WithRow(OnePage, MiddleRow, unreadable)), UnreadableRowCheck, page: 1, operationDate: "30.09.2026");
     }
 
     [Fact]
     public void Parse_Rejects_APageAfterTheFirstWithoutATableHeader()
     {
+        // Arrange
         var layout = ErsteSampleData.MultiPageLayout with { OmitHeaderOnPage = 2 };
 
+        // Act & Assert
         AssertRejected(ErstePdfBuilder.Build(ErsteSampleData.Header, MultiPage, layout), UnreadableRowCheck, page: 2, dateReadable: false);
     }
 
     [Fact]
     public void Parse_SkipsAForeignCurrencyRow_AndCountsIt()
     {
+        // Arrange
         var eur = OnePage[MiddleRow] with { Currency = "EUR", Amount = -30.00m };
 
+        // Act
         var result = Parse(BuildOnePagePdf(WithRow(OnePage, MiddleRow, eur)));
 
+        // Assert
         Assert.Equal(1, result.SkippedErrorCount);
         Assert.Equal(ErsteSampleData.OnePageRowCount - 1, result.Transactions.Count);
         Assert.DoesNotContain(result.Transactions, t => t.Amount == -30.00m);
@@ -479,23 +554,28 @@ public class ErstePdfParserTests
     [Fact]
     public void Parse_DisablesTheBalanceCheck_ForAFileWithAForeignCurrencyRow()
     {
+        // Arrange
         var eur = OnePage[MiddleRow] with { Currency = "EUR", Amount = -30.00m };
         var rows = WithRow(OnePage, MiddleRow, eur);
         // A tampered PLN balance would be rejected without the foreign row ...
         rows[ThousandRow] = rows[ThousandRow] with { Balance = rows[ThousandRow].Balance + 7m };
         Assert.Throws<StatementIntegrityException>(() => Parse(BuildOnePagePdf(WithRow(OnePage, ThousandRow, rows[ThousandRow]))));
 
+        // Act
         // ... and passes with it, because the effect of the foreign row on the printed balance is unverified.
         var result = Parse(BuildOnePagePdf(rows));
 
+        // Assert
         Assert.Equal(1, result.SkippedErrorCount);
     }
 
     [Fact]
     public void Parse_ReturnsNothing_ForPdfThatIsNotAnErsteStatement()
     {
+        // Act
         var result = Parse(BuildTextPdf("Historia rachunku", "VeloBank S.A."));
 
+        // Assert
         Assert.Empty(result.Transactions);
         Assert.Equal(0, result.SkippedErrorCount);
     }
@@ -505,8 +585,10 @@ public class ErstePdfParserTests
     {
         foreach (var fixture in new[] { "mbank-pdf-sample-synthetic.pdf", "velobank-sample-synthetic.pdf" })
         {
+            // Act
             var result = Parse(ReadFixture(fixture));
 
+            // Assert
             Assert.Empty(result.Transactions);
             Assert.Equal(0, result.SkippedErrorCount);
         }
@@ -517,8 +599,10 @@ public class ErstePdfParserTests
     {
         foreach (var bytes in new[] { PdfMagicFollowedByGarbage(), Array.Empty<byte>(), "not a pdf at all"u8.ToArray(), File.ReadAllBytes(FixturePath("erste-sample-redacted.csv")) })
         {
+            // Act
             var result = Parse(bytes);
 
+            // Assert
             Assert.Empty(result.Transactions);
             Assert.Equal(0, result.SkippedErrorCount);
         }
@@ -527,8 +611,10 @@ public class ErstePdfParserTests
     [Fact]
     public void Parse_ReturnsNothing_WhenThePdfHasMoreThanMaxPages()
     {
+        // Act
         var result = Parse(ReadFixture(MultiPageFixture), maxPages: 2);
 
+        // Assert
         Assert.Empty(result.Transactions);
         Assert.Equal(0, result.SkippedErrorCount);
     }
@@ -536,12 +622,15 @@ public class ErstePdfParserTests
     [Fact]
     public void Parse_RestoresStreamPosition()
     {
+        // Arrange
         var parser = new ErstePdfParser();
         using var stream = new MemoryStream([.. new byte[7], .. ReadFixture(OnePageFixture)]);
         stream.Position = 7;
 
+        // Act
         var result = parser.Parse(stream);
 
+        // Assert
         Assert.Equal(ErsteSampleData.OnePageRowCount, result.Transactions.Count);
         Assert.Equal(7, stream.Position);
     }
@@ -549,12 +638,15 @@ public class ErstePdfParserTests
     [Fact]
     public void CanParseThenParse_WorksOnOneStream()
     {
+        // Arrange
         var parser = new ErstePdfParser();
         using var stream = new MemoryStream(ReadFixture(MultiPageFixture));
 
+        // Act & Assert
         Assert.True(parser.CanParse(stream));
         var result = parser.Parse(stream);
 
+        // Assert
         Assert.Equal(ErsteSampleData.MultiPageRowCount, result.Transactions.Count);
     }
 }
