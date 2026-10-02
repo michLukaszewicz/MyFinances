@@ -325,6 +325,12 @@ namespace MyFinances.Api.Migrations
                     b.Property<int>("SkippedErrorCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("SourceFormat")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("Csv");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
