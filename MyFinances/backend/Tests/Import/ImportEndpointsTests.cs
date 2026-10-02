@@ -948,6 +948,25 @@ public class ImportEndpointsTests
     }
 
     [Fact]
+    public async Task Parse_MBankSinglePagePdf_ReturnsAllRows()
+    {
+        // Arrange
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var rows = MBankSampleData.WithRunningBalances(MBankSampleData.OpeningBalance, MBankSampleData.TwoPageRows.Take(4).ToList());
+        var pdf = MBankPdfBuilder.Build(MBankSampleData.Header, MBankSampleData.OpeningBalance, rows, new MBankPdfLayout { FirstPageRows = 4, RowGap = 0.5 });
+
+        // Act
+        var parsed = await ParseMBankPdfAsync(client, pdf, account.Id);
+
+        // Assert
+        Assert.Equal("mBank", parsed.Bank);
+        Assert.Equal(StatementFormat.Pdf, parsed.Format);
+        Assert.Equal(4, parsed.Rows.Count);
+    }
+
+    [Fact]
     public async Task Parse_MBankPdfWithVeloBankAccount_BankMismatchIsTrue()
     {
         // Arrange
