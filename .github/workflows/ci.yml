@@ -48,3 +48,42 @@ jobs:
           name: mutation-report
           path: MyFinances/backend/Tests/StrykerOutput/**/reports/
           if-no-files-found: ignore
+
+  # Browser-level tests. global-setup starts a throwaway postgres container (Docker is preinstalled
+  # on ubuntu-latest) and migrates it; the API runs against that, never a real database.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: MyFinances/frontend
+    env:
+      # Test-only credentials for the throwaway database; the test user is registered on it by the setup project.
+      E2E_USERNAME: e2e@myfinances.test
+      E2E_PASSWORD: e2e-ci-password-0123
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: MyFinances/frontend/package-lock.json
+      - name: Install dotnet-ef (used by tests/e2e/global-setup.ts)
+        run: |
+          dotnet tool install --global dotnet-ef --version "10.0.*"
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            MyFinances/frontend/playwright-report/
+            MyFinances/frontend/test-results/
+          if-no-files-found: ignore
