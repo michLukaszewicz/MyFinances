@@ -223,6 +223,41 @@ public class VeloBankPdfParserTests
         Assert.Equal(Expected(OnePage), result.Transactions);
     }
 
+    // Transaction dates and amounts as printed in the table of the one-page fixture (the
+    // "DATA TRANSAKCJI" and "KWOTA TRANSAKCJI" columns), written out by hand rather than derived
+    // from the builder's formatting.
+    [Fact]
+    public void Parse_ReadsEveryTransactionDateAndAmount_AsPrintedInTheFixture()
+    {
+        // Arrange
+        (DateOnly Date, decimal Amount)[] printed =
+        [
+            (new DateOnly(2026, 9, 30), -23.40m),
+            (new DateOnly(2026, 9, 30), -112.05m),
+            (new DateOnly(2026, 9, 29), -8.99m),
+            (new DateOnly(2026, 9, 29), -150.00m),
+            (new DateOnly(2026, 9, 28), -64.30m),
+            (new DateOnly(2026, 9, 28), -19.99m),
+            (new DateOnly(2026, 9, 27), 300.00m),
+            (new DateOnly(2026, 9, 26), -42.15m),
+            (new DateOnly(2026, 9, 26), -7.50m),
+            (new DateOnly(2026, 9, 25), -89.00m),
+            (new DateOnly(2026, 9, 24), -420.00m),
+            (new DateOnly(2026, 9, 23), 1200.00m),
+            (new DateOnly(2026, 9, 22), -35.80m),
+            (new DateOnly(2026, 9, 21), -12.00m),
+            (new DateOnly(2026, 9, 20), -75.00m),
+            (new DateOnly(2026, 9, 19), -5.40m),
+            (new DateOnly(2026, 9, 18), -27.60m),
+        ];
+
+        // Act
+        var result = Parse(ReadFixture(OnePageFixture));
+
+        // Assert
+        Assert.Equal(printed, result.Transactions.Select(t => (t.Date, t.Amount)).ToArray());
+    }
+
     [Fact]
     public void Parse_ReturnsPendingRowsLikeAnyOtherRow()
     {
@@ -543,6 +578,143 @@ public class VeloBankPdfParserTests
 
         // Act & Assert
         AssertRejected(BuildOnePagePdf(WithRow(BalanceTamperRow, unreadable)), UnreadableRowCheck, page: 1, transactionDate: "24.09.2026");
+    }
+
+    // Characters that look like part of a Polish amount but are not what the parser accepts: the
+    // Unicode minus sign and a dot as the decimal mark. Each must stop the import (the cell is
+    // rejected by the number pattern, before any balance check); none may be read as a wrong number.
+    [Theory]
+    [InlineData("−420,00 PLN")]
+    [InlineData("-420.00 PLN")]
+    public void Parse_Rejects_AnAmountCellWithALookalikeCharacter_InsteadOfReadingAWrongValue(string amountText)
+    {
+        // Arrange
+        var lookalike = OnePage[BalanceTamperRow] with { AmountText = amountText };
+
+        // Act & Assert
+        AssertRejected(BuildOnePagePdf(WithRow(BalanceTamperRow, lookalike)), UnreadableRowCheck, page: 1, transactionDate: "24.09.2026");
+    }
+
+    [Theory]
+    [InlineData("−1 024,50 PLN")]
+    [InlineData("1 024.50 PLN")]
+    public void Parse_Rejects_ABalanceCellWithALookalikeCharacter_InsteadOfReadingAWrongValue(string balanceText)
+    {
+        // Arrange
+        var lookalike = OnePage[BalanceTamperRow] with { BalanceText = balanceText };
+
+        // Act & Assert
+        AssertRejected(BuildOnePagePdf(WithRow(BalanceTamperRow, lookalike)), UnreadableRowCheck, page: 1, transactionDate: "24.09.2026");
+    }
+
+    // A no-break space as the thousands separator cannot be rejected by the number pattern: PdfPig
+    // returns it as an ordinary space (the pattern never sees U+00A0), so the cell is read as the
+    // value it prints. Pinned so a change in how the text is extracted shows up as a failing test.
+    [Fact]
+    public void Parse_ReadsANoBreakSpaceThousandsSeparator_AsTheSameValueAsARegularSpace()
+    {
+        // Arrange
+        var nbsp = OnePage[11] with { AmountText = "1 200,00 PLN" };
+
+        // Act
+        var result = Parse(BuildOnePagePdf(WithRow(11, nbsp)));
+
+        // Assert
+        Assert.Equal(1200.00m, result.Transactions[11].Amount);
+        Assert.Equal(new DateOnly(2026, 9, 23), result.Transactions[11].Date);
+        Assert.Equal(0, result.SkippedErrorCount);
+    }
+
+    // The balance check compares each booked PLN row with the next newer one, so it needs a
+    // neighbour on both sides. Control: a row dropped from the middle of the chain is rejected.
+    [Fact]
+    public void Parse_Rejects_ADroppedRowInTheMiddleOfTheChain()
+    {
+        // Arrange
+        // Row index 9 (25.09.2026, -89,00) removed: the row below it (24.09.2026) no longer follows.
+        var rows = OnePage.Where((_, i) => i != 9).ToList();
+
+        // Act & Assert
+        AssertRejected(BuildOnePagePdf(rows), BalanceCheck, page: 1, transactionDate: "24.09.2026");
+    }
+
+    // Known limitation: there is no row above the newest booked row and none below the oldest, so
+    // nothing proves that either end is complete (the statement prints no opening or closing
+    // balance). Update this test if VeloBank statements gain an anchor (e.g. a printed opening balance).
+    [Fact]
+    public void Parse_Accepts_ADroppedNewestBookedRow_KnownLimitation()
+    {
+        // Arrange
+        var rows = OnePage.Where((_, i) => i != FirstBookedRow).ToList();
+
+        // Act
+        var result = Parse(BuildOnePagePdf(rows));
+
+        // Assert
+        Assert.Equal(16, result.Transactions.Count);
+        Assert.Equal(0, result.SkippedErrorCount);
+        Assert.Equal(-150.00m, result.Transactions[FirstBookedRow].Amount);
+    }
+
+    [Fact]
+    public void Parse_Accepts_ADroppedOldestRow_KnownLimitation()
+    {
+        // Arrange
+        var rows = OnePage.Take(OnePage.Count - 1).ToList();
+
+        // Act
+        var result = Parse(BuildOnePagePdf(rows));
+
+        // Assert
+        Assert.Equal(16, result.Transactions.Count);
+        Assert.Equal(0, result.SkippedErrorCount);
+        Assert.Equal(-5.40m, result.Transactions[^1].Amount);
+    }
+
+    // Known limitation: a pending row prints no balance and sits outside the chain, so a dropped
+    // pending row leaves nothing to compare. Update this test if pending rows become verifiable.
+    [Fact]
+    public void Parse_Accepts_ADroppedPendingRow_KnownLimitation()
+    {
+        // Arrange
+        var rows = OnePage.Where((_, i) => i != 0).ToList();
+
+        // Act
+        var result = Parse(BuildOnePagePdf(rows));
+
+        // Assert
+        Assert.Equal(16, result.Transactions.Count);
+        Assert.Equal(0, result.SkippedErrorCount);
+        Assert.Equal(-112.05m, result.Transactions[0].Amount);
+    }
+
+    // Known limitation: a foreign-currency row resets the chain (its effect on the PLN balance is
+    // unverified), so a booked row dropped right above or right below it cannot be seen. Without the
+    // foreign row the same drops are rejected (see the control above). Update these tests if the
+    // balance effect of foreign-currency rows becomes verifiable.
+    [Theory]
+    [InlineData(ForeignCurrencyRow - 1)]
+    [InlineData(ForeignCurrencyRow + 1)]
+    public void Parse_Accepts_ADroppedRowNextToAForeignCurrencyRow_KnownLimitation(int droppedIndex)
+    {
+        // Arrange
+        var euro = OnePage[ForeignCurrencyRow] with
+        {
+            Amount = -20m,
+            Currency = "EUR",
+            DescriptionLines = VeloBankSampleData.CardLines(-20m, "EUR", "SKLEP ZAGRANICZNY"),
+            Balance = 500m,
+        };
+        var withForeignRow = VeloBankSampleData.WithRunningBalances(WithRow(ForeignCurrencyRow, euro), 1024.50m);
+        var rows = withForeignRow.Where((_, i) => i != droppedIndex).ToList();
+
+        // Act
+        var result = Parse(BuildOnePagePdf(rows));
+
+        // Assert
+        // 17 rows - 1 dropped - 1 euro row skipped.
+        Assert.Equal(15, result.Transactions.Count);
+        Assert.Equal(1, result.SkippedErrorCount);
     }
 
     // A later page whose table cannot be found would silently lose its rows.

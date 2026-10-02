@@ -223,15 +223,15 @@ None. Tests only.
 
 #### Manual
 
-- [ ] 1.4 New tests read in Arrange/Act/Assert form with a shared per-class setup
-- [ ] 1.5 Pinned outcomes for thousands-space and NBSP `Kwota` are recorded and none mis-values the amount
+- [x] 1.4 New tests read in Arrange/Act/Assert form with a shared per-class setup — 89f3928
+- [x] 1.5 Pinned outcomes for thousands-space and NBSP `Kwota` are recorded and none mis-values the amount — 89f3928
 
 ### Phase 2: PDF correctness and integrity oracles
 
 #### Automated
 
-- [ ] 2.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`)
-- [ ] 2.2 Rejection tests fail when `NumberPattern` is loosened to accept U+2212/NBSP (mutation spot-check, then revert)
+- [x] 2.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`)
+- [x] 2.2 Rejection tests fail when `NumberPattern` is loosened to accept U+2212/NBSP (mutation spot-check, then revert)
 
 #### Manual
 
