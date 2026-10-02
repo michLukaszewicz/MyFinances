@@ -49,6 +49,16 @@
     <None Include="Fixtures/erste-sample-redacted-comma.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures/velobank-sample-synthetic.pdf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures/velobank-sample-synthetic-multipage.pdf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <!-- Embedded by VeloBankPdfBuilder when it writes the synthetic PDFs (SIL OFL 1.1, license beside it). -->
+    <None Include="Fixtures/fonts/NotoSans-Regular.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

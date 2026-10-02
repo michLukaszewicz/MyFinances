@@ -8,9 +8,14 @@ public record ParseResult(IReadOnlyList<NormalizedTransaction> Transactions, int
 
 // Isolates all bank-specific quirks behind one interface so future bank parsers only need a
 // new implementation, never changes to the dedup/endpoint code that consumes parsers generically.
+// One parser per bank and format: all of a bank's parsers share BankName, each declares the
+// Format it reads, and CanParse must be cheap and never throw (every candidate parser of the
+// upload's format runs it on every upload).
 public interface IBankStatementParser
 {
     string BankName { get; }
+
+    StatementFormat Format { get; }
 
     // Scans the stream for this bank's recognition anchor without consuming it in a way that
     // breaks a subsequent Parse call. If the stream is seekable, implementations reset the
