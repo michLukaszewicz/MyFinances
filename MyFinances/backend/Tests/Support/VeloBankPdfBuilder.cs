@@ -144,7 +144,7 @@ public static class VeloBankPdfBuilder
 
     // PdfPig writes a random /ID into the trailer; overwriting it in place (same length, so no
     // offset moves) makes two builds of the same input byte-identical.
-    private static void PinTrailerId(byte[] pdf)
+    internal static void PinTrailerId(byte[] pdf)
     {
         ReadOnlySpan<byte> marker = "/ID [ <"u8;
         var start = pdf.AsSpan().LastIndexOf(marker);
