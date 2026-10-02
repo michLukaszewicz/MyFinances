@@ -21,7 +21,7 @@ Add backend integration tests that prove, through the real `/api/import/parse` a
 - "Totals unchanged" is asserted on stored rows and per-account amount sum in the DB; dashboard charts only count categorized, non-transfer rows (`Dashboard/DashboardEndpoints.cs:63-71`).
 - `MBankPdfBuilder.Build(header, openingBalance, rows, layout)` builds a PDF from independent row records (used at `Tests/ImportEndpointsTests.cs:883`); the CSV counterpart must be authored from the same records, not from parser output.
 - mBank CSV decoding tries strict UTF-8 then Windows-1252 re-encode, else cp1250 (`Import/MBankCsvParser.cs:41-52`); a test CSV writer should emit cp1250 bytes (or ASCII-only text) so Polish characters do not go through the remojibake path.
-- `Tests/ImportEndpointsTests.cs` helpers are `private static`; `TestClientHelpers` and `AuthApiFactory` are reusable (`Tests/TestClientHelpers.cs`, `Tests/AuthEndpointsTests.cs:23`).
+- `Tests/Import/ImportEndpointsTests.cs` helpers are `private static`; `TestClientHelpers` and `AuthApiFactory` are reusable (`Tests/TestClientHelpers.cs`, `Tests/AuthEndpointsTests.cs:23`).
 
 ## What We're NOT Doing
 
@@ -30,7 +30,7 @@ Add backend integration tests that prove, through the real `/api/import/parse` a
 - No red tests for known limitations; limitations are pinned as characterization tests.
 - No Erste or VeloBank cross-format pairs (Erste CSV/PDF description relationship unverified; VeloBank has no CSV).
 - No frontend tests, no concurrency/double-submit tests, no Postgres-backed tests (InMemory is sufficient; research.md "Test layer and InMemory").
-- No changes to `Tests/ImportEndpointsTests.cs`.
+- No changes to `Tests/Import/ImportEndpointsTests.cs`.
 
 ## Implementation Approach
 
@@ -77,7 +77,7 @@ Prove re-imports are flagged and, when skipped, leave stored data unchanged; pro
 
 #### 1. Dedup integrity tests
 
-**File**: `MyFinances/backend/Tests/ImportDedupIntegrityTests.cs`
+**File**: `MyFinances/backend/Tests/Import/ImportDedupIntegrityTests.cs`
 
 **Intent**: Cover the behaviors the research found untested, using `AuthApiFactory` with one authenticated user.
 
@@ -124,7 +124,7 @@ Prove the overlap warning fires for a PDF and a CSV that describe the same trans
 
 #### 2. Cross-format overlap tests
 
-**File**: `MyFinances/backend/Tests/ImportCrossFormatOverlapTests.cs`
+**File**: `MyFinances/backend/Tests/Import/ImportCrossFormatOverlapTests.cs`
 
 **Intent**: Exercise the full parse, commit, parse sequence with a real pair in both orders.
 
@@ -197,15 +197,15 @@ None.
 
 #### Automated
 
-- [x] 1.1 Solution builds: `dotnet build` from `MyFinances/backend`
-- [x] 1.2 Existing import tests still pass: `dotnet test --filter "FullyQualifiedName~ImportEndpointsTests"` from `MyFinances/backend`
+- [x] 1.1 Solution builds: `dotnet build` from `MyFinances/backend` — 74e3966
+- [x] 1.2 Existing import tests still pass: `dotnet test --filter "FullyQualifiedName~ImportEndpointsTests"` from `MyFinances/backend` — 74e3966
 
 ### Phase 2: Risk #1 — re-import and partial-overlap integrity
 
 #### Automated
 
-- [ ] 2.1 New class passes: `dotnet test --filter "FullyQualifiedName~ImportDedupIntegrityTests"` from `MyFinances/backend`
-- [ ] 2.2 Whole suite passes: `dotnet test` from `MyFinances/backend`
+- [x] 2.1 New class passes: `dotnet test --filter "FullyQualifiedName~ImportDedupIntegrityTests"` from `MyFinances/backend`
+- [x] 2.2 Whole suite passes: `dotnet test` from `MyFinances/backend`
 
 #### Manual
 
@@ -222,3 +222,9 @@ None.
 
 - [ ] 3.3 Temporarily making the overlap query ignore `SourceFormat` makes the cross-format tests fail; revert afterwards
 - [ ] 3.4 §6.2 in `context/foundation/test-plan.md` reads correctly and references the new test files
+
+## Amendments (during Phase 2)
+
+- Test conventions for new tests: Arrange/Act/Assert comments; shared setup in `IAsyncLifetime` (xUnit's equivalent of `TestInitialize`), so a test's Arrange holds only what differs from the standard setup; neutral descriptions ("Test description N"), no real-looking transfer titles.
+- Existing test classes were moved into folders (`Auth/`, `Accounts/`, `Transactions/`, `Categorization/`, `Dashboard/`, `Import/`, `Import/Parsers/`, `Support/`) with the namespace left as `MyFinances.Api.Tests`. Existing tests were not otherwise rewritten.
+- `Tests/Support/MBankCsvBuilder.cs` (cp1250 mBank CSV from authored rows) replaces reading `Fixtures/mbank-sample-redacted.csv` in new tests; Phase 3's paired fixture reuses it instead of a CSV writer inside `MBankPairedStatement`.
