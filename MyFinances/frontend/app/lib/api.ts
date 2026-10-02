@@ -48,3 +48,16 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   const text = await response.text();
   return (text ? JSON.parse(text) : undefined) as T;
 }
+
+// Server-provided problem title for a failed request (e.g. a 400 validation message), or the fallback.
+export async function apiErrorMessage(error: unknown, fallback: string): Promise<string> {
+  if (error instanceof ApiError) {
+    try {
+      const body = await error.response.clone().json();
+      if (typeof body?.title === "string") return body.title;
+    } catch {
+      // fall through to the fallback
+    }
+  }
+  return fallback;
+}

@@ -191,6 +191,9 @@ export default function Home() {
   const listGeneration = useRef(0);
   const [chartRefreshKey, setChartRefreshKey] = useState(0);
 
+  // Deliberately not keyed on `period`: a period change always clears the slice selection in the same
+  // batch (handlePeriodSelectionChange), and without a selection the list is unfiltered and period-independent.
+  // If the selection is ever kept across period changes, add `period` to the dependencies below.
   // Re-fetch page 1 when the donut selection changes. The first run is skipped: the
   // clientLoader already provided the unfiltered page 1.
   useEffect(() => {
@@ -343,8 +346,11 @@ export default function Home() {
   const todayValue = toDateInputValue(new Date());
   const periodInputClass =
     "rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
-  const customRangeInvalid =
-    periodSelection.preset === "custom" && resolvePeriod(periodSelection) === null;
+  const periodInvalid = resolvePeriod(periodSelection) === null;
+  const periodInvalidMessage =
+    periodSelection.preset === "custom"
+      ? "Pick a start date on or before the end date, neither in the future."
+      : "Pick a month that is not in the future.";
 
   async function handleLoadMore() {
     setLoadMoreError(null);
@@ -725,11 +731,7 @@ export default function Home() {
               </>
             )}
           </div>
-          {customRangeInvalid && (
-            <p className="text-center text-sm text-red-400">
-              Pick a start date on or before the end date, neither in the future.
-            </p>
-          )}
+          {periodInvalid && <p className="text-center text-sm text-red-400">{periodInvalidMessage}</p>}
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <CategorySpendDonut
