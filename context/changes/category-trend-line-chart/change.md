@@ -1,7 +1,7 @@
 ---
 change_id: category-trend-line-chart
 title: Category spend trend line chart
-status: planned
+status: implementing
 created: 2026-10-02
 updated: 2026-10-02
 archived_at: null
