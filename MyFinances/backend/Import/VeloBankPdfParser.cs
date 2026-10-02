@@ -58,14 +58,15 @@ public class VeloBankPdfParser(int maxPages = VeloBankPdfParser.DefaultMaxPages)
     private static readonly string[] RecognitionWords =
         ["Historia", "rachunku", "VeloBank", "TRANSAKCJI", "KSIĘGOWANIA", "KWOTA", "SALDO"];
 
+    // Digit runs are bounded so an absurd number is an unreadable cell, never an OverflowException.
     private static readonly Regex MoneyPattern = new(
-        @"^(?<number>[-+]?(?:[0-9]{1,3}(?: [0-9]{3})+|[0-9]+),[0-9]{2}) (?<currency>[A-Z]{3})$",
+        @"^(?<number>[-+]?(?:[0-9]{1,3}(?: [0-9]{3}){1,5}|[0-9]{1,15}),[0-9]{2}) (?<currency>[A-Z]{3})$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     // "Operacja kartą 0000 **** **** 0000 na kwotę 12,34 PLN w <merchant>..." — anchored at the start so a
     // free-text transfer title that happens to contain "na kwotę" is never mistaken for a card amount.
     private static readonly Regex CardAmountPattern = new(
-        @"^Operacja kartą .*? na kwotę (?<number>(?:[0-9]{1,3}(?: [0-9]{3})+|[0-9]+),[0-9]{2}) (?<currency>[A-Z]{3})(?: |$)",
+        @"^Operacja kartą .*? na kwotę (?<number>(?:[0-9]{1,3}(?: [0-9]{3}){1,5}|[0-9]{1,15}),[0-9]{2}) (?<currency>[A-Z]{3})(?: |$)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public string BankName => "VeloBank";
@@ -86,6 +87,13 @@ public class VeloBankPdfParser(int maxPages = VeloBankPdfParser.DefaultMaxPages)
         var rows = new List<StatementRow>();
         foreach (var page in pages)
         {
+            // Every page of a statement repeats the table header; a later page without one would
+            // silently lose its rows, so it is an integrity failure (page 1 was recognised already).
+            if (page != pages[0] && FindHeaderBlocks(page).Count == 0)
+            {
+                throw Rejection(UnreadableRow, page.Number, null);
+            }
+
             rows.AddRange(ReadRows(page));
         }
 
