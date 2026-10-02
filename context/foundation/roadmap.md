@@ -9,7 +9,7 @@ main_goal: market-feedback
 top_blocker: time
 milestone_id: mvp-spend-insight-loop
 milestone_seq: 1
-milestone_status: open
+milestone_status: done
 ---
 
 # Roadmap: MyFinances
@@ -20,7 +20,7 @@ milestone_status: open
 
 ## Milestone
 
-**M-1: Full MVP spend-insight loop (mBank, Erste, VeloBank)** — Status: open
+**M-1: Full MVP spend-insight loop (mBank, Erste, VeloBank)** — Status: done
 
 - **Intent:** Deliver the entire MVP scope in `prd.md` v3 — the full import → dedup → categorize → chart → budget/average-deviation loop, across all four banks (VeloBank via PDF statements, the others via CSV) — as one outcome-scoped milestone. The PRD carries no staged "Etap" split (that framing lived only in the earlier shape-notes draft), so all must-have FRs belong to this single milestone. S-12 (mBank and Erste PDF import) is an optional follow-up to S-11 and sits outside this milestone's done criterion.
 - **Source materials:** `context/foundation/prd.md` (v3), supplemented by `context/foundation/shape-notes.md`'s `## Forward: technical-roadmap` notes (parser architecture, dedup-hash shape, CSV formats to verify).
@@ -286,7 +286,7 @@ No cross-cutting open questions at this time — PRD's own `## Open Questions` s
 
 ## Milestone History
 
-(Empty — this is the first milestone.)
+- **M-1: Full MVP spend-insight loop (mBank, Erste, VeloBank)** (`mvp-spend-insight-loop`) — closed 2026-10-02. All foundations and slices done; S-05 (budget-vs-actual) and S-07 (Revolut import) were dropped from the MVP on 2026-10-02.
 
 ## Done
 
