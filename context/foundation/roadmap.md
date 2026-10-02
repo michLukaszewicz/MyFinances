@@ -49,8 +49,8 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | S-08  | erste-import                     | import an Erste Bank Polska CSV statement through the same loop                     | S-01           | FR-003                        | done |
 | S-09  | transaction-history-view         | see a chronological list of their imported/manually-entered transactions on the dashboard (date, description, amount, category) | S-01           | FR-011 (partial)              | done |
 | S-10  | account-management                | add/edit/remove their own bank accounts (account number + bank name) via a settings page, and pick from them when manually entering a transaction | F-01           | FR-009, FR-010                | done |
-| S-11  | pdf-statement-import              | import a VeloBank PDF statement through the same import/dedup/categorize/chart loop | S-01           | FR-018                        | in-progress |
-| S-12  | pdf-import                        | (optional) import an mBank or Erste Bank Polska PDF statement as a second format next to the CSV | S-11 | FR-018                        | planning |
+| S-11  | pdf-statement-import              | import a VeloBank PDF statement through the same import/dedup/categorize/chart loop | S-01           | FR-018                        | done |
+| S-12  | pdf-import                        | (optional) import an mBank or Erste Bank Polska PDF statement as a second format next to the CSV | S-11 | FR-018                        | done |
 | S-14  | chart-period-selector             | pick the period (last 30/90 days, a month, a custom range) shown by both donut charts, the slice drilldown list and the deviation badge | S-04, S-06 | FR-011, FR-012, FR-013, FR-016 | done |
 | S-15  | category-trend-line-chart         | see a line chart of per-category spend/income over time, bucketed by week, month or year | S-04          | FR-011 (data exploration)     | done |
 
@@ -206,7 +206,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Whether a pending payment and its later booked row carry the same description and amount (a card hold may settle for a different amount) — if not, a payment imported while pending would be counted twice. **Open follow-up (post-merge):** once the bank has booked the two payments that were pending on 2026-10-01, export again and import; both should be flagged as duplicates. If either is not, reopen the pending-row decision — Owner: user. Block: no.
 - **Risk:** First bank imported only through PDF — row boundaries come from the table geometry rather than a delimiter, so a misread row would silently skew totals; mitigated by checking the statement's own running balances and rejecting an inconsistent file. Revolut (S-07) was dropped from the MVP, so VeloBank is the last bank added.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-12: mBank and Erste Bank Polska PDF import (optional)
 
@@ -219,7 +219,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Cross-format dedup — decided approach: the import batch records its source format (CSV or PDF), and importing a period already imported from the other format on the same account shows a non-blocking overlap warning instead of attempting cross-format hash matching (descriptions, and therefore dedup hashes, differ between the two formats) — Owner: user. Block: no.
 - **Risk:** Optional and outside M-1's done criterion; the risk is double-counting transactions already imported from CSV. The Erste PDF is lossy versus its CSV (no booking date, counterparty-only description), so the same transaction hashes differently from the CSV import — the overlap warning is the mitigation, not exact matching.
-- **Status:** planning
+- **Status:** done
 
 ### S-14: Chart period selector
 
@@ -304,3 +304,9 @@ No cross-cutting open questions at this time — PRD's own `## Open Questions` s
 - **S-08: user can import an Erste Bank Polska CSV statement through the same loop, completing PLN-only coverage of all three target banks.** — Archived 2026-10-01 → `context/archive/2026-10-01-erste-import/`. Lesson: —.
 - **S-14: user can choose the period shown by the spend and income donut charts — last 30 days, last 90 days, a selected month, or a custom date range — with the slice-click transaction list and the average-deviation badge following the same period.** — Archived 2026-10-02 → `context/archive/2026-10-02-chart-period-selector/`. Lesson: —.
 - **S-15: user sees a line chart on the dashboard with time (week, month or year) on the X axis and the summed spend (or income) of each selected category on the Y axis, one line per category.** — Archived 2026-10-02 → `context/archive/2026-10-02-category-trend-line-chart/`. Lesson: —.
+- **S-11: user can import a VeloBank PDF statement through the same import/dedup/categorize/chart loop.** — Archived 2026-10-02 → `context/archive/2026-10-02-pdf-statement-import/`. Lesson: —.
+- **S-12: user can import an mBank or Erste Bank Polska PDF statement as a second input format next to the CSV import.** — Archived 2026-10-02 → `context/archive/2026-10-02-pdf-import/`. Lesson: —.
+- **import-account-linking (S-01 follow-up): imported transactions are linked to one of the user's accounts instead of a free-text bank string.** — Archived 2026-10-02 → `context/archive/2026-10-02-import-account-linking/`. Lesson: —.
+- **account-bank-selection (S-10 follow-up): accounts get a Bank dropdown (Polish banks + Other) that drives the import bank-mismatch check.** — Archived 2026-10-02 → `context/archive/2026-10-02-account-bank-selection/`. Lesson: —.
+- **homepage-redesign: placeholder home page replaced with a real MyFinances landing page.** — Archived 2026-10-02 → `context/archive/2026-10-02-homepage-redesign/`. Lesson: —.
+- **homepage-visual-refresh: homepage gets the logo and animation.** — Archived 2026-10-02 → `context/archive/2026-10-02-homepage-visual-refresh/`. Lesson: —.
