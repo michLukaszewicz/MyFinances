@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { apiFetch } from "../lib/api";
+import { apiErrorMessage, apiFetch } from "../lib/api";
+import type { CategoryDto } from "../lib/categories";
+import { periodQuery, type Period } from "../lib/period";
 
 // Mirrors the backend's DashboardContracts.cs CategorySpendDto.
 interface CategorySpendDto {
@@ -23,21 +25,14 @@ const DEVIATION_BADGE: Record<Deviation, { label: string; className: string }> =
 
 export type FlowKind = "spend" | "income";
 
-const FLOW_COPY: Record<FlowKind, { endpoint: string; title: string; empty: string }> = {
-  spend: {
-    endpoint: "/dashboard/category-spend",
-    title: "Spend by category — this month",
-    empty: "No categorized spend for this month yet.",
-  },
-  income: {
-    endpoint: "/dashboard/category-income",
-    title: "Income by category — this month",
-    empty: "No categorized income for this month yet.",
-  },
+const FLOW_COPY: Record<FlowKind, { endpoint: string; title: string; noun: string }> = {
+  spend: { endpoint: "/dashboard/category-spend", title: "Spend by category", noun: "spend" },
+  income: { endpoint: "/dashboard/category-income", title: "Income by category", noun: "income" },
 };
 
 interface CategorySpendDonutProps {
   kind: FlowKind;
+  period: Period;
   selectedCategoryId: string | null;
   // Bump to re-fetch the chart (e.g. after a transaction is added, edited or deleted).
   refreshKey: number;
@@ -65,11 +60,15 @@ function formatAmount(amount: number): string {
   return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-export function CategorySpendDonut({ kind, selectedCategoryId, refreshKey, onSelectCategory }: CategorySpendDonutProps) {
+export function CategorySpendDonut({ kind, period, selectedCategoryId, refreshKey, onSelectCategory }: CategorySpendDonutProps) {
   const copy = FLOW_COPY[kind];
   const [data, setData] = useState<CategorySpendDto[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Fixed palette slot per category (its position in the shared category list), so colours match the trend chart.
+  const [categories, setCategories] = useState<CategoryDto[]>([]);
+  const periodKey = `${period.from}/${period.to}`;
+  const lastPeriodKey = useRef(periodKey);
   // Read inside the fetch effect without making a selection change re-fetch the chart.
   const selectedRef = useRef(selectedCategoryId);
   selectedRef.current = selectedCategoryId;
@@ -77,17 +76,22 @@ export function CategorySpendDonut({ kind, selectedCategoryId, refreshKey, onSel
   useEffect(() => {
     let cancelled = false;
     async function load() {
+      if (lastPeriodKey.current !== periodKey) {
+        // Do not show the previous period's slices under the new period label while refetching.
+        lastPeriodKey.current = periodKey;
+        setLoading(true);
+      }
       try {
-        const result = await apiFetch<CategorySpendDto[]>(copy.endpoint);
+        const result = await apiFetch<CategorySpendDto[]>(`${copy.endpoint}?${periodQuery(period)}`);
         if (cancelled) return;
         setData(result);
         setLoadError(null);
-        // A write can remove the selected category from this month's spend; drop the stale filter.
+        // A write can remove the selected category from this period's totals; drop the stale filter.
         if (selectedRef.current !== null && !result.some((e) => e.categoryId === selectedRef.current)) {
           onSelectCategory(null, null);
         }
-      } catch {
-        if (!cancelled) setLoadError("Something went wrong loading this chart. Please try again.");
+      } catch (err) {
+        if (!cancelled) setLoadError(await apiErrorMessage(err, "Something went wrong loading this chart. Please try again."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -97,7 +101,25 @@ export function CategorySpendDonut({ kind, selectedCategoryId, refreshKey, onSel
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey]);
+  }, [refreshKey, period.from, period.to]);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch<CategoryDto[]>("/categorization/categories")
+      .then((list) => {
+        if (!cancelled) setCategories(list);
+      })
+      .catch(() => {
+        // Colours fall back to the slice order.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function categorySlot(categoryId: string): number {
+    return categories.findIndex((c) => c.id === categoryId);
+  }
 
   if (loading) {
     return <p className="text-sm text-gray-400">Loading…</p>;
@@ -110,7 +132,7 @@ export function CategorySpendDonut({ kind, selectedCategoryId, refreshKey, onSel
   if (!data || data.length === 0) {
     return (
       <p className="text-center text-sm text-gray-400">
-        {copy.empty}{" "}
+        No categorized {copy.noun} for {period.label} yet.{" "}
         <Link to="/categorize" className="text-brand-400 hover:text-brand-300">
           Categorize transactions
         </Link>
@@ -120,7 +142,7 @@ export function CategorySpendDonut({ kind, selectedCategoryId, refreshKey, onSel
 
   const chartData = data.map((entry, index) => ({
     ...entry,
-    fill: PALETTE[index % PALETTE.length],
+    fill: PALETTE[(categorySlot(entry.categoryId) >= 0 ? categorySlot(entry.categoryId) : index) % PALETTE.length],
     fillOpacity: selectedCategoryId === null || selectedCategoryId === entry.categoryId ? 1 : 0.35,
   }));
 
@@ -140,7 +162,7 @@ export function CategorySpendDonut({ kind, selectedCategoryId, refreshKey, onSel
 
   return (
     <div className="space-y-2">
-      <h2 className="text-center text-sm font-medium text-gray-200">{copy.title}</h2>
+      <h2 className="text-center text-sm font-medium text-gray-200">{copy.title} — {period.label}</h2>
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -189,7 +211,7 @@ export function CategorySpendDonut({ kind, selectedCategoryId, refreshKey, onSel
                     <span className="flex flex-col items-end">
                       <span className={`rounded px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
                       {entry.averageToDate != null && (
-                        <span className="text-xs text-gray-400">avg by this day: {formatAmount(entry.averageToDate)}</span>
+                        <span className="text-xs text-gray-400">{period.isCurrentMonth ? "avg by this day" : "avg for comparable period"}: {formatAmount(entry.averageToDate)}</span>
                       )}
                     </span>
                   )}
