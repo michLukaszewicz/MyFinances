@@ -24,6 +24,12 @@ Backend (from `MyFinances/backend`):
 dotnet run                # http://localhost:5007, Swagger UI at /swagger
 dotnet build
 dotnet publish            # also builds+copies the frontend into wwwroot (see above)
+dotnet tool restore       # once; installs dotnet-stryker from dotnet-tools.json
+```
+
+Mutation testing (from `MyFinances/backend/Tests`; incremental, mutates only code changed since the target branch — locally use `main`, the remote is named `Master` so `origin/main` exists only in CI):
+```bash
+dotnet stryker --since:main   # report in StrykerOutput/ (git-ignored)
 ```
 
 Frontend (from `MyFinances/frontend`):
