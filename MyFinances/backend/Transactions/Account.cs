@@ -9,7 +9,12 @@ public class Account
 
     public Guid UserId { get; set; }
 
+    // The user's own free-text label for the account.
     public required string BankName { get; set; }
+
+    // The bank, picked from PolishBanks.Options. Only this is compared with the bank detected
+    // from an uploaded statement; PolishBanks.Other means "never check".
+    public string Bank { get; set; } = PolishBanks.Other;
 
     public required string AccountNumber { get; set; }
 }
