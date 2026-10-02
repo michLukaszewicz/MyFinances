@@ -1,10 +1,10 @@
 ---
 change_id: category-trend-line-chart
 title: Category spend trend line chart
-status: impl_reviewed
+status: archived
 created: 2026-10-02
 updated: 2026-10-02
-archived_at: null
+archived_at: 2026-10-02T07:14:43Z
 ---
 
 ## Notes
