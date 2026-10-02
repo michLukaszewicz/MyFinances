@@ -466,14 +466,14 @@ No schema or data changes. Existing mBank and Erste transactions and their hashe
 
 #### Automated
 
-- [x] 5.1 Full backend suite passes: `dotnet test` (from `MyFinances/backend`)
-- [x] 5.2 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`)
-- [x] 5.3 Frontend builds: `npm run build` (from `MyFinances/frontend`)
+- [x] 5.1 Full backend suite passes: `dotnet test` (from `MyFinances/backend`) — 72be853
+- [x] 5.2 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`) — 72be853
+- [x] 5.3 Frontend builds: `npm run build` (from `MyFinances/frontend`) — 72be853
 
 #### Manual
 
-- [x] 5.4 In settings, "VeloBank" is offered in the bank dropdown and a VeloBank account can be created.
-- [x] 5.5 Uploading the real 90-day PDF auto-detects VeloBank and shows 17 rows including the two pending payments; committing and re-uploading flags every row as a duplicate.
-- [x] 5.6 Uploading the real one-year PDF into the same account shows 62 rows with the 17 already-imported rows flagged as duplicates.
-- [x] 5.7 A synthetic PDF with a tampered balance is rejected with the explanatory message and no bank picker; an unrecognised PDF with "mBank" chosen manually shows "mBank import does not support PDF files."
-- [x] 5.8 Imported rows appear in the categorization queue and in the dashboard history with their transaction dates.
+- [x] 5.4 In settings, "VeloBank" is offered in the bank dropdown and a VeloBank account can be created. — 72be853
+- [x] 5.5 Uploading the real 90-day PDF auto-detects VeloBank and shows 17 rows including the two pending payments; committing and re-uploading flags every row as a duplicate. — 72be853
+- [x] 5.6 Uploading the real one-year PDF into the same account shows 62 rows with the 17 already-imported rows flagged as duplicates. — 72be853
+- [x] 5.7 A synthetic PDF with a tampered balance is rejected with the explanatory message and no bank picker; an unrecognised PDF with "mBank" chosen manually shows "mBank import does not support PDF files." — 72be853
+- [x] 5.8 Imported rows appear in the categorization queue and in the dashboard history with their transaction dates. — 72be853
