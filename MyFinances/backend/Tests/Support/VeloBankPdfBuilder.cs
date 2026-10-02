@@ -38,6 +38,10 @@ public sealed record VeloBankPdfLayout
     // (a hair below the first description line), not at the middle of a tall row.
     // true centres them vertically instead, to stress parsers that group words by baseline.
     public bool CenterValueCells { get; init; }
+
+    // Leaves the header block off this (1-based) page while keeping its rows where they were, to
+    // test how a parser treats a page whose table it cannot find.
+    public int? OmitHeaderOnPage { get; init; }
 }
 
 // Writes a VeloBank-style "Historia rachunku" PDF from invented rows, reproducing the geometry
@@ -115,7 +119,7 @@ public static class VeloBankPdfBuilder
             {
                 y = NextPageHeaderTop;
             }
-            y = DrawHeaderBlock(painter, edges, y);
+            y = layout.OmitHeaderOnPage == pageIndex + 1 ? y - HeaderHeight : DrawHeaderBlock(painter, edges, y);
 
             var pageRows = pages[pageIndex];
             for (var i = 0; i < pageRows.Count; i++)

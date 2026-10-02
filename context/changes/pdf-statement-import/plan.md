@@ -453,27 +453,27 @@ No schema or data changes. Existing mBank and Erste transactions and their hashe
 
 #### Automated
 
-- [x] 4.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [x] 4.2 Parser tests pass: `dotnet test --filter VeloBankPdfParserTests` (from `MyFinances/backend`)
-- [x] 4.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 4.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — 56ec52d
+- [x] 4.2 Parser tests pass: `dotnet test --filter VeloBankPdfParserTests` (from `MyFinances/backend`) — 56ec52d
+- [x] 4.3 Full suite passes: `dotnet test` (from `MyFinances/backend`) — 56ec52d
 
 #### Manual
 
-- [x] 4.4 Running the parser (through a temporary local test that is not committed) on the real 90-day and one-year VeloBank PDFs returns 17 and 62 rows with no integrity exception, and the 17 shared rows have identical date, amount and description in both.
-- [x] 4.5 No real personal data was added to the repository by this phase (fixtures, tests, exception messages).
+- [x] 4.4 Running the parser (through a temporary local test that is not committed) on the real 90-day and one-year VeloBank PDFs returns 17 and 62 rows with no integrity exception, and the 17 shared rows have identical date, amount and description in both. — 56ec52d
+- [x] 4.5 No real personal data was added to the repository by this phase (fixtures, tests, exception messages). — 56ec52d
 
 ### Phase 5: Wire into the app
 
 #### Automated
 
-- [ ] 5.1 Full backend suite passes: `dotnet test` (from `MyFinances/backend`)
-- [ ] 5.2 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`)
-- [ ] 5.3 Frontend builds: `npm run build` (from `MyFinances/frontend`)
+- [x] 5.1 Full backend suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 5.2 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`)
+- [x] 5.3 Frontend builds: `npm run build` (from `MyFinances/frontend`)
 
 #### Manual
 
-- [ ] 5.4 In settings, "VeloBank" is offered in the bank dropdown and a VeloBank account can be created.
-- [ ] 5.5 Uploading the real 90-day PDF auto-detects VeloBank and shows 17 rows including the two pending payments; committing and re-uploading flags every row as a duplicate.
-- [ ] 5.6 Uploading the real one-year PDF into the same account shows 62 rows with the 17 already-imported rows flagged as duplicates.
-- [ ] 5.7 A synthetic PDF with a tampered balance is rejected with the explanatory message and no bank picker; an unrecognised PDF with "mBank" chosen manually shows "mBank import does not support PDF files."
-- [ ] 5.8 Imported rows appear in the categorization queue and in the dashboard history with their transaction dates.
+- [x] 5.4 In settings, "VeloBank" is offered in the bank dropdown and a VeloBank account can be created.
+- [x] 5.5 Uploading the real 90-day PDF auto-detects VeloBank and shows 17 rows including the two pending payments; committing and re-uploading flags every row as a duplicate.
+- [x] 5.6 Uploading the real one-year PDF into the same account shows 62 rows with the 17 already-imported rows flagged as duplicates.
+- [x] 5.7 A synthetic PDF with a tampered balance is rejected with the explanatory message and no bank picker; an unrecognised PDF with "mBank" chosen manually shows "mBank import does not support PDF files."
+- [x] 5.8 Imported rows appear in the categorization queue and in the dashboard history with their transaction dates.

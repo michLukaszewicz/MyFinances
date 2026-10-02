@@ -9,7 +9,7 @@ import { categoriesForAmount, type CategoryDto } from "../lib/categories";
 const valueProps = [
   {
     title: "Import your statements",
-    description: "Upload bank CSV exports from mBank, Revolut, and Erste.",
+    description: "Upload bank statements: CSV exports from mBank, Revolut, and Erste, or PDF statements from VeloBank.",
   },
   {
     title: "Categorize in minutes",

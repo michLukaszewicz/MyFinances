@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MyFinances.Api;
 using MyFinances.Api.Auth;
 using MyFinances.Api.Import;
+using MyFinances.Api.Tests.Support;
 using MyFinances.Api.Transactions;
 using Xunit;
 
@@ -582,6 +583,160 @@ public class ImportEndpointsTests
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("StubPdfBank import does not support CSV files.", await ReadProblemTitleAsync(response));
+    }
+
+    private static async Task<HttpResponseMessage> UploadPdfAsync(HttpClient client, byte[] pdf, Guid accountId, string? bank = null)
+    {
+        using var request = await BuildUploadRequestAsync(client, pdf, accountId, bank: bank, fileName: "statement.pdf", contentType: "application/pdf");
+        return await client.SendAsync(request);
+    }
+
+    private static async Task<ImportParseResponse> ParseVeloBankPdfAsync(HttpClient client, byte[] pdf, Guid accountId)
+    {
+        var response = await UploadPdfAsync(client, pdf, accountId);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.NotNull(parsed);
+        return parsed!;
+    }
+
+    [Fact]
+    public async Task Parse_VeloBankOnePagePdf_ReturnsRowsIncludingPendingOnes()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "VeloBank", "111");
+
+        var parsed = await ParseVeloBankPdfAsync(client, VeloBankSampleData.BuildOnePagePdf(), account.Id);
+
+        Assert.Equal("VeloBank", parsed.Bank);
+        Assert.False(parsed.BankMismatch);
+        Assert.Equal(VeloBankSampleData.OnePageRowCount, parsed.Rows.Count);
+        Assert.All(parsed.Rows, row => Assert.False(row.IsDuplicate));
+        // The two pending card rows have no booking date, so they carry their transaction date.
+        Assert.Contains(parsed.Rows, row => row.Date == new DateOnly(2026, 9, 30) && row.Amount == -23.40m);
+        Assert.Contains(parsed.Rows, row => row.Date == new DateOnly(2026, 9, 30) && row.Amount == -112.05m);
+    }
+
+    [Fact]
+    public async Task Parse_VeloBankPdfWithMBankAccount_BankMismatchIsTrue()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        var parsed = await ParseVeloBankPdfAsync(client, VeloBankSampleData.BuildOnePagePdf(), account.Id);
+
+        Assert.Equal("VeloBank", parsed.Bank);
+        Assert.True(parsed.BankMismatch);
+    }
+
+    [Fact]
+    public async Task Parse_VeloBankPdfAfterCommit_FlagsEveryCommittedRowAsDuplicate()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "VeloBank", "111");
+        var pdf = VeloBankSampleData.BuildOnePagePdf();
+
+        var firstParsed = await ParseVeloBankPdfAsync(client, pdf, account.Id);
+        Assert.All(firstParsed.Rows, row => Assert.False(row.IsDuplicate));
+
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+        using var commitRequest = new HttpRequestMessage(HttpMethod.Post, "/api/import/commit");
+        commitRequest.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
+        commitRequest.Content = JsonContent.Create(new
+        {
+            AccountId = account.Id,
+            SkippedErrorCount = firstParsed.SkippedErrorCount,
+            Rows = firstParsed.Rows.Select(r => new { r.Date, r.Description, r.Amount, Decision = "Keep" }),
+        });
+        var commitResponse = await client.SendAsync(commitRequest);
+        Assert.Equal(HttpStatusCode.OK, commitResponse.StatusCode);
+
+        var secondParsed = await ParseVeloBankPdfAsync(client, pdf, account.Id);
+
+        Assert.Equal(VeloBankSampleData.OnePageRowCount, secondParsed.Rows.Count);
+        Assert.All(secondParsed.Rows, row => Assert.True(row.IsDuplicate));
+    }
+
+    [Fact]
+    public async Task Parse_VeloBankMultiPagePdf_ReturnsAllRows()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "VeloBank", "111");
+
+        var parsed = await ParseVeloBankPdfAsync(client, VeloBankSampleData.BuildMultiPagePdf(), account.Id);
+
+        Assert.Equal("VeloBank", parsed.Bank);
+        Assert.Equal(VeloBankSampleData.MultiPageRowCount, parsed.Rows.Count);
+    }
+
+    [Fact]
+    public async Task Parse_VeloBankPdfWithTamperedBalance_Returns422WithIntegrityMessageAndNoRows()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "VeloBank", "111");
+
+        // Row 5 is a booked PLN card row in the middle of the balance chain.
+        var rows = VeloBankSampleData.OnePageRows.ToList();
+        rows[5] = rows[5] with { Balance = rows[5].Balance + 1.00m };
+        var pdf = VeloBankPdfBuilder.Build(VeloBankSampleData.Header, rows, VeloBankSampleData.OnePageLayout);
+
+        var response = await UploadPdfAsync(client, pdf, account.Id);
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var title = document.RootElement.GetProperty("title").GetString();
+        Assert.StartsWith("VeloBank statement rejected", title);
+        Assert.False(document.RootElement.TryGetProperty("rows", out _));
+    }
+
+    [Fact]
+    public async Task Parse_VeloBankChosenWithCsvContent_ReturnsBadRequestNamingBankAndFormat()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "VeloBank", "111");
+
+        using var request = await BuildUploadRequestAsync(client, Encoding.UTF8.GetBytes("not,a,recognizable,export\r\n1,2,3,4\r\n"), account.Id, bank: "VeloBank");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("VeloBank import does not support CSV files.", await ReadProblemTitleAsync(response));
+    }
+
+    [Fact]
+    public async Task Parse_VeloBankChosenWithCorruptPdf_ReturnsOkWithZeroRows()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "VeloBank", "111");
+
+        var response = await UploadPdfAsync(client, PdfBytes, account.Id, bank: "VeloBank");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.NotNull(parsed);
+        Assert.Equal("VeloBank", parsed!.Bank);
+        Assert.Empty(parsed.Rows);
+    }
+
+    [Fact]
+    public async Task Parse_VeloBankPdfWithAnotherBankChosen_AutoDetectionWins()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        var response = await UploadPdfAsync(client, VeloBankSampleData.BuildOnePagePdf(), account.Id, bank: "mBank");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.NotNull(parsed);
+        Assert.Equal("VeloBank", parsed!.Bank);
     }
 
     [Fact]
