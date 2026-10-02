@@ -20,8 +20,10 @@ public static class DashboardEndpoints
             TransferDetectionService transferDetection,
             UserManager<AppUser> userManager,
             ClaimsPrincipal principal,
-            TimeProvider clock) =>
-            GetCategoryTotalsAsync(db, transferDetection, userManager, principal, clock, income: false));
+            TimeProvider clock,
+            DateOnly? from,
+            DateOnly? to) =>
+            GetCategoryTotalsAsync(db, transferDetection, userManager, principal, clock, from, to, income: false));
 
         // Income: positive amounts (salary, refunds, ...), categorized and non-transfer.
         dashboard.MapGet("/category-income", (
@@ -29,8 +31,10 @@ public static class DashboardEndpoints
             TransferDetectionService transferDetection,
             UserManager<AppUser> userManager,
             ClaimsPrincipal principal,
-            TimeProvider clock) =>
-            GetCategoryTotalsAsync(db, transferDetection, userManager, principal, clock, income: true));
+            TimeProvider clock,
+            DateOnly? from,
+            DateOnly? to) =>
+            GetCategoryTotalsAsync(db, transferDetection, userManager, principal, clock, from, to, income: true));
     }
 
     private static async Task<IResult> GetCategoryTotalsAsync(
@@ -39,17 +43,22 @@ public static class DashboardEndpoints
         UserManager<AppUser> userManager,
         ClaimsPrincipal principal,
         TimeProvider clock,
+        DateOnly? from,
+        DateOnly? to,
         bool income)
     {
         var userId = principal.GetUserId(userManager);
 
+        // Read the clock once so `today` and the period can never straddle a boundary.
+        var today = CurrentMonthRange.Today(clock);
+        if (!PeriodRange.TryResolve(from, to, today, out var range, out var error))
+        {
+            return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: error);
+        }
+
         // Transfer detection must run before the query executes (same ordering as
         // CategorizationEndpoints), so IsInternalTransfer is current when we exclude it.
         await transferDetection.DetectAsync(userId, db);
-
-        // Read the clock once so `today` and the month range can never straddle a boundary.
-        var today = CurrentMonthRange.Today(clock);
-        var range = CurrentMonthRange.MonthOf(today);
 
         var rows = await db.Transactions
             .AsNoTracking()
@@ -79,8 +88,10 @@ public static class DashboardEndpoints
                 .ToList());
         }
 
-        // Spend signal: compare spend-to-date against the same day-of-month window in prior
-        // months. History only decorates categories that already have current-month spend.
+        // Spend signal. A whole calendar month compares spend-to-date (full month for a past one)
+        // against the same day-of-month window in prior months; any other period compares its
+        // total against preceding windows of equal length. History only decorates categories
+        // that already have spend in the period.
         var categoryIds = groups.Select(g => g.First().Category!.Id).ToList();
         var history = categoryIds.Count == 0
             ? new Dictionary<Guid, List<(DateOnly Date, decimal Amount)>>()
@@ -103,14 +114,27 @@ public static class DashboardEndpoints
             .Select(g =>
             {
                 var categoryId = g.First().Category!.Id;
-                var toDate = g.Where(t => t.Date <= today).Sum(t => -t.Amount);
-                var signal = history.TryGetValue(categoryId, out var prior)
-                    ? CategoryDeviation.Calculate(prior, toDate, today)
-                    : null;
+                var total = g.Sum(t => -t.Amount);
+                (decimal AverageToDate, string Deviation)? signal = null;
+                if (history.TryGetValue(categoryId, out var prior))
+                {
+                    if (range.IsFullCalendarMonth)
+                    {
+                        // As-of day is the month end for a past month, today for the current one.
+                        var asOf = today < range.End ? today : range.End;
+                        var toDate = g.Where(t => t.Date <= asOf).Sum(t => -t.Amount);
+                        signal = CategoryDeviation.Calculate(prior, toDate, asOf, fullMonth: asOf == range.End);
+                    }
+                    else
+                    {
+                        signal = CategoryDeviation.CalculateWindow(prior, total, range.Start, range.DayCount);
+                    }
+                }
+
                 return new CategorySpendSignalDto(
                     categoryId,
                     g.First().Category!.Name,
-                    g.Sum(t => -t.Amount),
+                    total,
                     signal?.AverageToDate,
                     signal?.Deviation);
             })
