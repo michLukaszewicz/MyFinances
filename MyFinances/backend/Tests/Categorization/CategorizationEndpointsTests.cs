@@ -8,8 +8,9 @@ using MyFinances.Api.Auth;
 using MyFinances.Api.Categorization;
 using MyFinances.Api.Transactions;
 using Xunit;
+using MyFinances.Api.Tests.Auth;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Categorization;
 
 // Integration coverage for CategorizationEndpoints: reuses AuthApiFactory's WebApplicationFactory
 // + EF Core InMemory swap (same pattern as AccountEndpointsTests). The seeded Category HasData

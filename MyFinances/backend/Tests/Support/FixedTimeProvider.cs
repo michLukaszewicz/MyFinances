@@ -1,4 +1,4 @@
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Support;
 
 // Shared test clock: always reports the given UTC instant.
 internal sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider

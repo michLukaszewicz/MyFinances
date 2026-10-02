@@ -1,7 +1,8 @@
 using Xunit;
 using MyFinances.Api;
+using MyFinances.Api.Tests.Support;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Dashboard;
 
 public class CurrentMonthRangeTests
 {

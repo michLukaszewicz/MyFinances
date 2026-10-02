@@ -8,8 +8,10 @@ using MyFinances.Api;
 using MyFinances.Api.Dashboard;
 using MyFinances.Api.Transactions;
 using Xunit;
+using MyFinances.Api.Tests.Auth;
+using MyFinances.Api.Tests.Support;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Dashboard;
 
 // Coverage for GET /api/dashboard/category-spend. Seeds directly via AppDbContext on a single
 // account per user, so TransferDetectionService (which needs two different accounts) never

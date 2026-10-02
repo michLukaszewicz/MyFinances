@@ -217,9 +217,9 @@ None. Tests only.
 
 #### Automated
 
-- [x] 1.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`)
-- [x] 1.2 Build has no warnings introduced: `dotnet build` (from `MyFinances/backend`)
-- [x] 1.3 mBank dmy test fails if day/month are swapped (mutation spot-check, then revert)
+- [x] 1.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`) — 89f3928
+- [x] 1.2 Build has no warnings introduced: `dotnet build` (from `MyFinances/backend`) — 89f3928
+- [x] 1.3 mBank dmy test fails if day/month are swapped (mutation spot-check, then revert) — 89f3928
 
 #### Manual
 
