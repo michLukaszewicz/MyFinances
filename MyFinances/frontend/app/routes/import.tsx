@@ -35,11 +35,18 @@ interface ImportParseRow {
 
 // bankMismatch: true when the detected/selected parser's bank differs from the chosen
 // account's bank — non-blocking, the caller decides whether to proceed anyway.
+// format: the parser's statement format (backend StatementFormat, string-serialized), echoed
+// back as SourceFormat on commit. mixedFormatOverlapCount: transactions on the account in the
+// file's date range that were imported from the other format — non-blocking warning.
+type StatementFormatValue = "Csv" | "Pdf";
+
 interface ImportParseResponse {
   bank: string;
   bankMismatch: boolean;
   rows: ImportParseRow[];
   skippedErrorCount: number;
+  format: StatementFormatValue;
+  mixedFormatOverlapCount: number;
 }
 
 interface ImportSummaryDto {
@@ -181,6 +188,7 @@ export default function Import() {
           AccountId: accountId,
           SkippedErrorCount: result.skippedErrorCount,
           Rows: rows,
+          SourceFormat: result.format,
         }),
       });
       setSummary(response);
@@ -255,6 +263,18 @@ export default function Import() {
                     This file looks like a <strong>{result.bank}</strong> export, but the selected
                     account is <strong>{selectedAccountBankName}</strong>. You can still continue
                     if this is correct.
+                  </p>
+                </div>
+              )}
+
+              {result.mixedFormatOverlapCount > 0 && (
+                <div className="space-y-2 rounded-lg border border-amber-700/60 bg-amber-950/20 p-3 text-sm text-amber-400">
+                  <p>
+                    <strong>{result.mixedFormatOverlapCount}</strong> transaction(s) in this period
+                    on this account were imported from{" "}
+                    {result.format === "Pdf" ? "a CSV" : "a PDF"} file. Descriptions and dates
+                    differ between CSV and PDF statements, so duplicates between them will not be
+                    detected. You can still continue.
                   </p>
                 </div>
               )}

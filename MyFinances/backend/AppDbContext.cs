@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using MyFinances.Api.Categorization;
+using MyFinances.Api.Import;
 using MyFinances.Api.Transactions;
 
 namespace MyFinances.Api;
@@ -40,6 +41,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityUser
             .WithMany()
             .HasForeignKey(b => b.AccountId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Stored as text ("Csv"/"Pdf"); existing rows default to Csv (the migration backfills Pdf
+        // for VeloBank accounts).
+        builder.Entity<ImportBatch>()
+            .Property(b => b.SourceFormat)
+            .HasConversion<string>()
+            .HasDefaultValue(StatementFormat.Csv);
 
         // Enforces "no duplicate bank+number per user" at the DB level; endpoints translate
         // a violation into a friendly 409 instead of letting a raw DbUpdateException surface.
