@@ -242,10 +242,10 @@ None. Tests only.
 
 #### Automated
 
-- [x] 3.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`)
-- [x] 3.2 Culture test fails if a parser is changed to use `CurrentCulture` (mutation spot-check, then revert)
-- [x] 3.3 Thread culture is restored after each test (full suite passes in a single run in any order)
+- [x] 3.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`) — 06473a0
+- [x] 3.2 Culture test fails if a parser is changed to use `CurrentCulture` (mutation spot-check, then revert) — 06473a0
+- [x] 3.3 Thread culture is restored after each test (full suite passes in a single run in any order) — 06473a0
 
 #### Manual
 
-- [x] 3.4 `test-plan.md` Phase 2 row reflects the outcome and remaining limitations
+- [x] 3.4 `test-plan.md` Phase 2 row reflects the outcome and remaining limitations — 06473a0
