@@ -520,8 +520,8 @@ One additive migration: `ImportBatches.SourceFormat`, non-null, default `Csv`, b
 
 #### Manual
 
-- [ ] 4.4 Both fixture PDFs open in a PDF viewer and look like the real mBank statement in shape (letterhead, summary table, grid, per-page header, footer).
-- [ ] 4.5 The fixtures and generator contain no real name, address, account number, card number or counterparty from `mbank.pdf`.
+- [x] 4.4 Both fixture PDFs open in a PDF viewer and look like the real mBank statement in shape (letterhead, summary table, grid, per-page header, footer).
+- [x] 4.5 The fixtures and generator contain no real name, address, account number, card number or counterparty from `mbank.pdf`.
 
 ### Phase 5: mBank PDF parser and wiring
 
@@ -534,10 +534,10 @@ One additive migration: `ImportBatches.SourceFormat`, non-null, default `Csv`, b
 
 #### Manual
 
-- [ ] 5.5 A temporary local test (not committed) on the real `mbank.pdf` returns 32 rows with no integrity exception, and the credit/debit/total counts and sums equal the statement's 7 / 4 274,36, 25 / 2 484,84 and 32 / 1 789,52.
-- [ ] 5.6 On the import page, uploading `mbank.pdf` into an mBank account auto-detects mBank and lists the 32 rows; committing and re-uploading flags every row as a duplicate; a tampered synthetic PDF is rejected with the explanatory message and no bank picker.
-- [ ] 5.7 Importing an mBank CSV whose dates overlap the committed PDF rows (or vice versa) shows the overlap banner with a plausible count.
-- [ ] 5.8 No real personal data was added to the repository by this phase.
+- [x] 5.5 A temporary local test (not committed) on the real `mbank.pdf` returns 32 rows with no integrity exception, and the credit/debit/total counts and sums equal the statement's 7 / 4 274,36, 25 / 2 484,84 and 32 / 1 789,52.
+- [x] 5.6 On the import page, uploading `mbank.pdf` into an mBank account auto-detects mBank and lists the 32 rows; committing and re-uploading flags every row as a duplicate; a tampered synthetic PDF is rejected with the explanatory message and no bank picker.
+- [x] 5.7 Importing an mBank CSV whose dates overlap the committed PDF rows (or vice versa) shows the overlap banner with a plausible count.
+- [x] 5.8 No real personal data was added to the repository by this phase.
 
 ### Phase 6: Erste synthetic PDF fixtures
 
@@ -549,23 +549,23 @@ One additive migration: `ImportBatches.SourceFormat`, non-null, default `Csv`, b
 
 #### Manual
 
-- [ ] 6.4 Both fixture PDFs open in a PDF viewer and look like the real Erste statement in shape.
-- [ ] 6.5 The fixtures and generator contain no real name, account number or counterparty from `erste.pdf`.
+- [x] 6.4 Both fixture PDFs open in a PDF viewer and look like the real Erste statement in shape.
+- [x] 6.5 The fixtures and generator contain no real name, account number or counterparty from `erste.pdf`.
 
 ### Phase 7: Erste PDF parser and wiring
 
 #### Automated
 
-- [x] 7.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [x] 7.2 Parser tests pass: `dotnet test --filter ErstePdfParserTests` (from `MyFinances/backend`)
-- [x] 7.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
-- [x] 7.4 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`)
-- [x] 7.5 Frontend builds: `npm run build` (from `MyFinances/frontend`)
+- [x] 7.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — 8112efa
+- [x] 7.2 Parser tests pass: `dotnet test --filter ErstePdfParserTests` (from `MyFinances/backend`) — 8112efa
+- [x] 7.3 Full suite passes: `dotnet test` (from `MyFinances/backend`) — 8112efa
+- [x] 7.4 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`) — 8112efa
+- [x] 7.5 Frontend builds: `npm run build` (from `MyFinances/frontend`) — 8112efa
 
 #### Manual
 
-- [ ] 7.6 A temporary local test (not committed) on the real `erste.pdf` returns 55 rows with no integrity exception and no unreadable row.
-- [ ] 7.7 On the import page, uploading `erste.pdf` into an Erste account auto-detects Erste and lists the rows; committing and re-uploading flags every row as a duplicate; importing an Erste CSV for an overlapping period shows the overlap banner.
-- [ ] 7.8 mBank CSV, Erste CSV, VeloBank PDF and mBank PDF imports still behave as before.
-- [ ] 7.9 Imported rows appear in the categorization queue and the dashboard history with their dates.
-- [ ] 7.10 No real personal data was added to the repository by this phase.
+- [x] 7.6 A temporary local test (not committed) on the real `erste.pdf` returns 55 rows with no integrity exception and no unreadable row.
+- [x] 7.7 On the import page, uploading `erste.pdf` into an Erste account auto-detects Erste and lists the rows; committing and re-uploading flags every row as a duplicate; importing an Erste CSV for an overlapping period shows the overlap banner.
+- [x] 7.8 mBank CSV, Erste CSV, VeloBank PDF and mBank PDF imports still behave as before.
+- [x] 7.9 Imported rows appear in the categorization queue and the dashboard history with their dates.
+- [x] 7.10 No real personal data was added to the repository by this phase.
