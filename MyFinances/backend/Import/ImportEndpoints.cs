@@ -112,7 +112,23 @@ public static class ImportEndpoints
             var bankMismatch = account.Bank != PolishBanks.Other
                 && !string.Equals(parser.BankName, account.Bank, StringComparison.OrdinalIgnoreCase);
 
-            return Results.Ok(new ImportParseResponse(parser.BankName, bankMismatch, rows, parseResult.SkippedErrorCount));
+            // Rows imported from the other format describe the same transactions with different
+            // descriptions/dates, so dedup cannot catch them; count them in the parsed date range.
+            var mixedFormatOverlapCount = 0;
+            if (parseResult.Transactions.Count > 0)
+            {
+                var minDate = parseResult.Transactions.Min(t => t.Date);
+                var maxDate = parseResult.Transactions.Max(t => t.Date);
+                mixedFormatOverlapCount = await db.Transactions.CountAsync(t =>
+                    t.UserId == userId
+                    && t.AccountId == account.Id
+                    && t.ImportBatch != null
+                    && t.ImportBatch.SourceFormat != parser.Format
+                    && t.Date >= minDate
+                    && t.Date <= maxDate);
+            }
+
+            return Results.Ok(new ImportParseResponse(parser.BankName, bankMismatch, rows, parseResult.SkippedErrorCount, parser.Format, mixedFormatOverlapCount));
         });
 
         import.MapPost("/commit", async (
@@ -157,6 +173,7 @@ public static class ImportEndpoints
                 ImportedCount = keepRows.Count,
                 SkippedDuplicateCount = skipHashes.Count(h => existingHashes.Contains(h)),
                 SkippedErrorCount = request.SkippedErrorCount,
+                SourceFormat = request.SourceFormat,
             };
 
             db.ImportBatches.Add(importBatch);
