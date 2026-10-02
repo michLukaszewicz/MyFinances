@@ -17,7 +17,8 @@ public static class CategoryDeviation
     public static (decimal AverageToDate, string Deviation)? Calculate(
         IReadOnlyCollection<(DateOnly Date, decimal Amount)> priorSpend,
         decimal currentToDate,
-        DateOnly today)
+        DateOnly today,
+        bool fullMonth = false)
     {
         if (priorSpend.Count == 0)
         {
@@ -32,13 +33,43 @@ public static class CategoryDeviation
             return null;
         }
 
-        var priorToDate = priorSpend.Where(r => r.Date.Day <= today.Day).Sum(r => r.Amount);
+        // A fully elapsed month compares like for like on whole months, so no day-of-month cutoff.
+        var priorToDate = priorSpend.Where(r => fullMonth || r.Date.Day <= today.Day).Sum(r => r.Amount);
         var average = priorToDate / monthCount;
 
-        var deviation = currentToDate > average * UpperFactor ? Above
-            : currentToDate < average * LowerFactor ? Below
-            : InLine;
-
-        return (average, deviation);
+        return (average, Classify(currentToDate, average));
     }
+
+    // Window mode for rolling or custom periods: compares the period total against the average
+    // total of the preceding windows of the same length, walking back from the day before `from`
+    // to the category's first spend (windows without spend count as zero). `priorSpend` holds the
+    // category's spend rows dated before `from`; returns null when there are none.
+    public static (decimal AverageToDate, string Deviation)? CalculateWindow(
+        IReadOnlyCollection<(DateOnly Date, decimal Amount)> priorSpend,
+        decimal periodTotal,
+        DateOnly from,
+        int windowDays)
+    {
+        if (priorSpend.Count == 0 || windowDays <= 0)
+        {
+            return null;
+        }
+
+        var first = priorSpend.Min(r => r.Date);
+        var spanDays = from.DayNumber - first.DayNumber;
+        if (spanDays <= 0)
+        {
+            return null;
+        }
+
+        var windowCount = (spanDays + windowDays - 1) / windowDays;
+        var average = priorSpend.Sum(r => r.Amount) / windowCount;
+
+        return (average, Classify(periodTotal, average));
+    }
+
+    private static string Classify(decimal value, decimal average) =>
+        value > average * UpperFactor ? Above
+        : value < average * LowerFactor ? Below
+        : InLine;
 }

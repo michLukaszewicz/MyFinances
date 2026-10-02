@@ -25,13 +25,24 @@ public static class TransactionEndpoints
             int? skip,
             int? take,
             Guid? categoryId,
-            bool? currentMonth,
+            DateOnly? from,
+            DateOnly? to,
             string? kind,
             AppDbContext db,
             UserManager<AppUser> userManager,
-            ClaimsPrincipal principal) =>
+            ClaimsPrincipal principal,
+            TimeProvider clock) =>
         {
             var userId = principal.GetUserId(userManager);
+
+            // Same validation and clock as the dashboard endpoints, so a chart slice and its list agree.
+            var hasPeriod = from is not null || to is not null;
+            PeriodRange period = default;
+            if (hasPeriod
+                && !PeriodRange.TryResolve(from, to, CurrentMonthRange.Today(clock), out period, out var error))
+            {
+                return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: error);
+            }
 
             var effectiveSkip = Math.Max(skip ?? 0, 0);
             var effectiveTake = Math.Clamp(take ?? DefaultTake, 1, MaxTake);
@@ -43,16 +54,15 @@ public static class TransactionEndpoints
                 query = query.Where(t => t.CategoryId == categoryId);
             }
 
-            if (currentMonth == true)
+            if (hasPeriod)
             {
-                var range = CurrentMonthRange.Get();
-                query = query.Where(t => t.Date >= range.Start && t.Date <= range.End);
+                query = query.Where(t => t.Date >= period.Start && t.Date <= period.End);
             }
 
-            // Drilling into a chart slice (category + current month) must list exactly what the
+            // Drilling into a chart slice (category + period) must list exactly what the
             // slice summed (see DashboardEndpoints): non-transfer rows of the matching sign —
             // positive for the income chart (kind=income), negative otherwise.
-            if (categoryId is not null && currentMonth == true)
+            if (categoryId is not null && hasPeriod)
             {
                 query = string.Equals(kind, "income", StringComparison.OrdinalIgnoreCase)
                     ? query.Where(t => t.Amount > 0 && !t.IsInternalTransfer)
