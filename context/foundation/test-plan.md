@@ -115,8 +115,14 @@ How to add new tests in this project. Sub-sections fill in as phases ship.
 
 ### 6.2 Adding an import / dedup integration test
 
-- TBD — see §3 Phase 1 (re-import and CSV-vs-PDF overlap pattern).
-- **Reference test (existing)**: `MyFinances/backend/Tests/ImportEndpointsTests.cs`.
+- **Flow**: drive the real endpoints end to end. Parse the file (`ImportTestHelpers.ParseAsync` / `ParsePdfAsync`), derive the per-row decisions from `IsDuplicate` (or a fixed decision), commit (`CommitAsync`, `CommitAllAsync`, `CommitSkippingDuplicatesAsync`), then assert the persisted state read straight from the database (`GetStoredAsync`), not only the HTTP responses.
+- **Expected values are authored, never read back**: write the rows the test expects as literals (`MBankCsvRow`, `MBankPairedTransaction`) and build the file from them (`MBankCsvBuilder`, `MBankPdfBuilder`). Do not generate a fixture from parser output and do not take the oracle from a first parse.
+- **Paired-fixture rule**: a CSV and a PDF that must describe the same transactions are both built from one authored row list (`MBankPairedStatement`); the CSV carries the title only, the PDF an operation-type line plus the title. Keep a sanity test that both files parse to the same (date, amount) multiset as the authored list.
+- **Structure**: `public class ... : IAsyncLifetime`; `InitializeAsync` creates a fresh `AuthApiFactory`, an authenticated client and an empty mBank account, so a test's Arrange holds only what differs. Use neutral invented text ("Test description N").
+- **Pin known limitations as characterization tests**: name them `..._KnownLimitation` or comment them as current behavior, not endorsement.
+- **Reference tests (new)**: `MyFinances/backend/Tests/Import/ImportDedupIntegrityTests.cs`, `MyFinances/backend/Tests/Import/ImportCrossFormatOverlapTests.cs`; shared helper `MyFinances/backend/Tests/Support/ImportTestHelpers.cs`.
+- **Reference test (existing)**: `MyFinances/backend/Tests/Import/ImportEndpointsTests.cs`.
+- **Run locally**: `dotnet test --filter "FullyQualifiedName~Import"` from `MyFinances/backend`.
 
 ### 6.3 Adding an ownership (two-user) test for an endpoint
 
@@ -125,6 +131,8 @@ How to add new tests in this project. Sub-sections fill in as phases ship.
 ### 6.4 Per-rollout-phase notes
 
 (Appended by `/10x-implement` after each phase.)
+
+- **Phase 1 (import integrity and dedup)** — shipped two test classes, `ImportDedupIntegrityTests` (re-import, partial overlap, skip/keep contract, manual-entry match) and `ImportCrossFormatOverlapTests` (CSV-vs-PDF overlap warning in both orders, same-format control, partial period, warn-only commit), plus the helpers `ImportTestHelpers`, `MBankCsvBuilder` and `MBankPairedStatement`. Known limitations pinned as current behavior: the cross-format overlap is warn-only (keeping both imports doubles the stored sum); repeated identical rows are flagged together (the dedup key has no occurrence counter); edit-then-reimport is out of scope. Fixture note: the paired PDF spans two pages on purpose, because the mBank PDF parser reads no rows from a statement that fits on one page.
 
 ## 7. What We Deliberately Don't Test
 
