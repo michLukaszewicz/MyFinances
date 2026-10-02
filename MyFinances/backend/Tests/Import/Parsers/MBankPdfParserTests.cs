@@ -104,8 +104,10 @@ public class MBankPdfParserTests
     [Fact]
     public void Parser_IdentifiesItselfAsTheMBankPdfParser()
     {
+        // Arrange
         var parser = new MBankPdfParser();
 
+        // Assert
         Assert.Equal("mBank", parser.BankName);
         Assert.Equal(StatementFormat.Pdf, parser.Format);
     }
@@ -115,6 +117,7 @@ public class MBankPdfParserTests
     [InlineData(MultiPageFixture)]
     public void CanParse_ReturnsTrue_ForBothSyntheticFixtures(string fileName)
     {
+        // Act & Assert
         Assert.True(CanParse(ReadFixture(fileName)));
     }
 
@@ -129,8 +132,10 @@ public class MBankPdfParserTests
     [InlineData("erste-sample-redacted-comma.csv")]
     public void CanParse_ReturnsFalseWithoutThrowing_ForCsvFixtures(string fileName)
     {
+        // Arrange
         using var stream = File.OpenRead(FixturePath(fileName));
 
+        // Act & Assert
         Assert.False(new MBankPdfParser().CanParse(stream));
     }
 
@@ -139,6 +144,7 @@ public class MBankPdfParserTests
     [InlineData("velobank-sample-synthetic-multipage.pdf")]
     public void CanParse_ReturnsFalse_ForVeloBankPdfFixtures(string fileName)
     {
+        // Act & Assert
         Assert.False(CanParse(ReadFixture(fileName)));
     }
 
@@ -147,14 +153,17 @@ public class MBankPdfParserTests
     [InlineData(MultiPageFixture)]
     public void VeloBankParser_ReturnsFalse_ForMBankPdfFixtures(string fileName)
     {
+        // Act & Assert
         Assert.False(new VeloBankPdfParser().CanParse(new MemoryStream(ReadFixture(fileName))));
     }
 
     [Fact]
     public void CanParse_ReturnsFalse_ForPdfThatIsNotAnMBankStatement()
     {
+        // Arrange
         var pdf = BuildTextPdf("Historia rachunku", "VeloBank S.A.", "DATA TRANSAKCJI DATA KSIĘGOWANIA OPIS KWOTA SALDO");
 
+        // Act & Assert
         Assert.False(CanParse(pdf));
     }
 
@@ -165,26 +174,31 @@ public class MBankPdfParserTests
     [InlineData("mBank S.A.", "Data księgowania Opis operacji Kwota Saldo po operacji", "", false)]
     public void CanParse_RequiresTheTitleTheBankNameAndTheTableHeader(string line1, string line2, string line3, bool expected)
     {
+        // Act & Assert
         Assert.Equal(expected, CanParse(BuildTextPdf(line1, line2, line3)));
     }
 
     [Fact]
     public void CanParse_ReturnsFalse_ForPdfMagicFollowedByGarbage()
     {
+        // Act & Assert
         Assert.False(CanParse(PdfMagicFollowedByGarbage()));
     }
 
     [Fact]
     public void CanParse_ReturnsFalse_ForEmptyStream()
     {
+        // Act & Assert
         Assert.False(CanParse([]));
     }
 
     [Fact]
     public void CanParse_ReturnsFalse_WhenThePdfHasMoreThanMaxPages()
     {
+        // Arrange
         var threePages = ReadFixture(MultiPageFixture);
 
+        // Act & Assert
         Assert.False(CanParse(threePages, maxPages: 2));
         Assert.True(CanParse(threePages, maxPages: 3));
     }
@@ -192,31 +206,39 @@ public class MBankPdfParserTests
     [Fact]
     public void CanParse_RestoresStreamPosition()
     {
+        // Arrange
         var parser = new MBankPdfParser();
         using var stream = new MemoryStream(ReadFixture(TwoPageFixture));
 
+        // Act & Assert
         Assert.True(parser.CanParse(stream));
 
+        // Assert
         Assert.Equal(0, stream.Position);
     }
 
     [Fact]
     public void CanParse_ReadsFromTheCurrentPosition_AndRestoresIt()
     {
+        // Arrange
         var parser = new MBankPdfParser();
         using var stream = new MemoryStream([.. new byte[7], .. ReadFixture(TwoPageFixture)]);
         stream.Position = 7;
 
+        // Act & Assert
         Assert.True(parser.CanParse(stream));
 
+        // Assert
         Assert.Equal(7, stream.Position);
     }
 
     [Fact]
     public void Parse_ReturnsTwentyRowsInOrder_ForTwoPageFixture()
     {
+        // Act
         var result = Parse(ReadFixture(TwoPageFixture));
 
+        // Assert
         Assert.Equal(MBankSampleData.TwoPageRowCount, result.Transactions.Count);
         Assert.Equal(0, result.SkippedErrorCount);
         Assert.Equal(Expected(TwoPage), result.Transactions);
@@ -225,8 +247,10 @@ public class MBankPdfParserTests
     [Fact]
     public void Parse_ReturnsRowsOldestFirst_WithTheBookingDate()
     {
+        // Act
         var result = Parse(ReadFixture(TwoPageFixture));
 
+        // Assert
         Assert.Equal(result.Transactions.OrderBy(t => t.Date).ToList(), result.Transactions);
         Assert.Equal(new DateOnly(2026, 9, 10), result.Transactions[0].Date);
         // Operated 2026-09-11, booked 2026-09-12.
@@ -239,8 +263,10 @@ public class MBankPdfParserTests
     [Fact]
     public void Parse_ReadsSignedAmounts_IncludingOnesOfAThousandOrMore()
     {
+        // Act
         var result = Parse(ReadFixture(TwoPageFixture));
 
+        // Assert
         Assert.Contains(result.Transactions, t => t.Amount == 3200.00m && t.Description.StartsWith("PRZELEW ZEWNĘTRZNY PRZYCHODZĄCY"));
         Assert.Contains(result.Transactions, t => t.Amount == -1200.00m);
         Assert.Contains(result.Transactions, t => t.Amount == 25.00m && t.Description.StartsWith("POS ZWROT TOWARU"));
@@ -250,11 +276,14 @@ public class MBankPdfParserTests
     [Fact]
     public void Parse_JoinsEveryLineOfAFiveLineDescriptionWithSingleSpaces()
     {
+        // Arrange
         var fiveLines = TwoPage[IncomingTransferRow];
         Assert.Equal(5, fiveLines.DescriptionLines.Count);
 
+        // Act
         var result = Parse(ReadFixture(TwoPageFixture));
 
+        // Assert
         var description = result.Transactions[IncomingTransferRow].Description;
         Assert.Equal(
             "PRZELEW ZEWNĘTRZNY PRZYCHODZĄCY BIURO PRZYKŁADOWE SP. Z O.O. UL. TESTOWA 1 00-000 TESTOWO 11 1111 1111 1111 1111 1111 1111 WYNAGRODZENIE ZA WRZESIEŃ 2026",
@@ -266,8 +295,10 @@ public class MBankPdfParserTests
     [Fact]
     public void Parse_KeepsPolishDiacritics()
     {
+        // Act
         var result = Parse(ReadFixture(TwoPageFixture));
 
+        // Assert
         Assert.Contains(result.Transactions, t => t.Description.Contains("ZAKUP PRZY UŻYCIU KARTY"));
         Assert.Contains(result.Transactions, t => t.Description.Contains("BLIK P2P-WYCHODZĄCY"));
         Assert.Contains(result.Transactions, t => t.Description.Contains("APTEKA PRZYKŁADOWA"));
@@ -278,8 +309,10 @@ public class MBankPdfParserTests
     [Fact]
     public void Parse_ReturnsFortyRowsInOrder_ForMultiPageFixture()
     {
+        // Act
         var result = Parse(ReadFixture(MultiPageFixture));
 
+        // Assert
         Assert.Equal(MBankSampleData.MultiPageRowCount, result.Transactions.Count);
         Assert.Equal(0, result.SkippedErrorCount);
         Assert.Equal(Expected(MBankSampleData.MultiPageRows), result.Transactions);
@@ -292,8 +325,10 @@ public class MBankPdfParserTests
         // pages; the last page also carries the closing balance and the boilerplate paragraph.
         foreach (var fixture in new[] { TwoPageFixture, MultiPageFixture })
         {
+            // Act
             var result = Parse(ReadFixture(fixture));
 
+            // Assert
             Assert.All(result.Transactions, t =>
             {
                 Assert.DoesNotContain("księgowania", t.Description);
@@ -309,9 +344,11 @@ public class MBankPdfParserTests
     [Fact]
     public void Parse_ReturnsTheSameKeysForTheSharedRows_OfTheShortAndTheLongExport()
     {
+        // Act
         var shortExport = Parse(ReadFixture(TwoPageFixture));
         var longExport = Parse(ReadFixture(MultiPageFixture));
 
+        // Assert
         Assert.Equal(shortExport.Transactions, longExport.Transactions.Take(shortExport.Transactions.Count));
     }
 
@@ -322,21 +359,27 @@ public class MBankPdfParserTests
     [InlineData(6, 20)]
     public void Parse_ReturnsTheSameRows_WhateverThePageBreaks(int firstPageRows, int rowsPerPage)
     {
+        // Arrange
         var layout = new MBankPdfLayout { FirstPageRows = firstPageRows, RowsPerPage = rowsPerPage };
         var pdf = MBankPdfBuilder.Build(MBankSampleData.Header, MBankSampleData.OpeningBalance, MBankSampleData.MultiPageRows, layout);
 
+        // Act
         var result = Parse(pdf);
 
+        // Assert
         Assert.Equal(Expected(MBankSampleData.MultiPageRows), result.Transactions);
     }
 
     [Fact]
     public void Parse_ReadsAStatementWithoutAnyRow()
     {
+        // Arrange
         var pdf = MBankPdfBuilder.Build(MBankSampleData.Header, MBankSampleData.OpeningBalance, [], MBankSampleData.TwoPageLayout);
 
+        // Act
         var result = Parse(pdf);
 
+        // Assert
         Assert.Empty(result.Transactions);
         Assert.Equal(0, result.SkippedErrorCount);
     }
@@ -344,13 +387,17 @@ public class MBankPdfParserTests
     [Fact]
     public void Parse_AssemblesAmountsAndBalancesPrintedWithSeveralThousandsGroups()
     {
+        // Arrange
         var rows = TwoPage.ToList();
         rows[PageOneRow] = rows[PageOneRow] with { Amount = -1250.40m };
         var rebalanced = MBankSampleData.WithRunningBalances(1_234_567.89m, rows);
 
         var result = MBankPdfBuilder.Build(MBankSampleData.Header, 1_234_567.89m, rebalanced, MBankSampleData.TwoPageLayout);
+
+        // Act
         var parsed = Parse(result);
 
+        // Assert
         Assert.Equal(Expected(rebalanced), parsed.Transactions);
         Assert.Contains(parsed.Transactions, t => t.Amount == -1250.40m);
     }
@@ -358,16 +405,20 @@ public class MBankPdfParserTests
     [Fact]
     public void Parse_Rejects_ATamperedBalance()
     {
+        // Arrange
         var tampered = TwoPage[PageOneRow] with { Balance = TwoPage[PageOneRow].Balance + 5m };
 
+        // Act & Assert
         AssertRejected(BuildTwoPagePdf(WithRow(PageOneRow, tampered)), BalanceCheck, page: 1, bookingDate: "13.09.2026");
     }
 
     [Fact]
     public void Parse_Rejects_ATamperedBalanceOnALaterPage_NamingThatPage()
     {
+        // Arrange
         var tampered = TwoPage[SecondPageRow] with { Balance = TwoPage[SecondPageRow].Balance - 1m };
 
+        // Act & Assert
         // Row 15 (index 14) is on page 2 (page 1 holds 12 rows); booked 2026-09-18.
         AssertRejected(BuildTwoPagePdf(WithRow(SecondPageRow, tampered)), BalanceCheck, page: 2, bookingDate: "18.09.2026");
     }
@@ -375,67 +426,83 @@ public class MBankPdfParserTests
     [Fact]
     public void Parse_Rejects_ATamperedClosingBalance()
     {
+        // Arrange
         var layout = MBankSampleData.TwoPageLayout with { ClosingBalanceOverride = TwoPage[^1].Balance + 10m };
 
+        // Act & Assert
         AssertRejected(BuildTwoPagePdf(TwoPage, layout), ClosingBalanceCheck, page: 2, bookingDate: null);
     }
 
     [Fact]
     public void Parse_Rejects_ATamperedSummaryCount()
     {
+        // Arrange
         var real = MBankPdfBuilder.ComputeSummary(TwoPage);
         var layout = MBankSampleData.TwoPageLayout with { SummaryOverride = real with { CreditCount = real.CreditCount + 1 } };
 
+        // Act & Assert
         AssertRejected(BuildTwoPagePdf(TwoPage, layout), SummaryCheck, page: 1, bookingDate: null);
     }
 
     [Fact]
     public void Parse_Rejects_ATamperedSummaryCountOfDebits()
     {
+        // Arrange
         var real = MBankPdfBuilder.ComputeSummary(TwoPage);
         var layout = MBankSampleData.TwoPageLayout with { SummaryOverride = real with { DebitCount = real.DebitCount - 1 } };
 
+        // Act & Assert
         AssertRejected(BuildTwoPagePdf(TwoPage, layout), SummaryCheck, page: 1, bookingDate: null);
     }
 
     [Fact]
     public void Parse_Rejects_ATamperedSummarySum()
     {
+        // Arrange
         var real = MBankPdfBuilder.ComputeSummary(TwoPage);
         var layout = MBankSampleData.TwoPageLayout with { SummaryOverride = real with { DebitSum = real.DebitSum + 0.01m } };
 
+        // Act & Assert
         AssertRejected(BuildTwoPagePdf(TwoPage, layout), SummaryCheck, page: 1, bookingDate: null);
     }
 
     [Fact]
     public void Parse_Rejects_AMissingOpeningBalance()
     {
+        // Arrange
         var layout = MBankSampleData.TwoPageLayout with { OmitOpeningBalance = true };
 
+        // Act & Assert
         AssertRejected(BuildTwoPagePdf(TwoPage, layout), MissingOpeningCheck, page: 1, bookingDate: null);
     }
 
     [Fact]
     public void Parse_Rejects_AMissingClosingBalance_NamingTheLastPage()
     {
+        // Arrange
         var layout = MBankSampleData.TwoPageLayout with { OmitClosingBalance = true };
 
+        // Act & Assert
         AssertRejected(BuildTwoPagePdf(TwoPage, layout), MissingClosingCheck, page: 2, bookingDate: null);
     }
 
     [Fact]
     public void Parse_Rejects_AMissingSummary()
     {
+        // Arrange
         var layout = MBankSampleData.TwoPageLayout with { OmitSummary = true };
 
+        // Act & Assert
         AssertRejected(BuildTwoPagePdf(TwoPage, layout), MissingSummaryCheck, page: 1, bookingDate: null);
     }
 
     [Fact]
     public void Parse_Rejects_AnUnreadableAmountCell_WithTheRowsDate()
     {
+        // Arrange
         var unreadable = TwoPage[PageOneRow] with { AmountText = "n/a" };
 
+        // Act & Assert
         AssertRejected(BuildTwoPagePdf(WithRow(PageOneRow, unreadable)), UnreadableRowCheck, page: 1, bookingDate: "13.09.2026");
     }
 
@@ -445,34 +512,43 @@ public class MBankPdfParserTests
     [InlineData("12345678901234567,89")]
     public void Parse_Rejects_AnAbsurdlyLargeAmountCell_AsUnreadable(string amountText)
     {
+        // Arrange
         var unreadable = TwoPage[PageOneRow] with { AmountText = amountText };
 
+        // Act & Assert
         AssertRejected(BuildTwoPagePdf(WithRow(PageOneRow, unreadable)), UnreadableRowCheck, page: 1, bookingDate: "13.09.2026");
     }
 
     [Fact]
     public void Parse_Rejects_AnUnreadableBalanceCell_WithTheRowsDate()
     {
+        // Arrange
         var unreadable = TwoPage[SecondPageRow] with { BalanceText = "brak" };
 
+        // Act & Assert
         AssertRejected(BuildTwoPagePdf(WithRow(SecondPageRow, unreadable)), UnreadableRowCheck, page: 2, bookingDate: "18.09.2026");
     }
 
     [Fact]
     public void Parse_Rejects_AnUnreadableBookingDate_WithoutADate()
     {
+        // Arrange
         var unreadable = TwoPage[PageOneRow] with { BookingDateText = "??-??-????" };
 
+        // Act & Assert
         AssertRejected(BuildTwoPagePdf(WithRow(PageOneRow, unreadable)), UnreadableRowCheck, page: 1, bookingDate: null);
     }
 
     [Fact]
     public void Parse_ReturnsNoTransactionsAndSkipsEveryRow_WhenTheStatementIsNotInPln()
     {
+        // Arrange
         var header = MBankSampleData.Header with { Currency = "EUR" };
 
+        // Act
         var result = Parse(BuildTwoPagePdf(TwoPage, header: header));
 
+        // Assert
         Assert.Empty(result.Transactions);
         Assert.Equal(MBankSampleData.TwoPageRowCount, result.SkippedErrorCount);
     }
@@ -480,17 +556,21 @@ public class MBankPdfParserTests
     [Fact]
     public void Parse_StillChecksTheFigures_OfAStatementThatIsNotInPln()
     {
+        // Arrange
         var header = MBankSampleData.Header with { Currency = "EUR" };
         var tampered = TwoPage[PageOneRow] with { Balance = TwoPage[PageOneRow].Balance + 5m };
 
+        // Act & Assert
         Assert.Throws<StatementIntegrityException>(() => Parse(BuildTwoPagePdf(WithRow(PageOneRow, tampered), header: header)));
     }
 
     [Fact]
     public void Parse_ReturnsNothing_ForPdfThatIsNotAnMBankStatement()
     {
+        // Act
         var result = Parse(BuildTextPdf("Historia rachunku", "VeloBank S.A."));
 
+        // Assert
         Assert.Empty(result.Transactions);
         Assert.Equal(0, result.SkippedErrorCount);
     }
@@ -498,8 +578,10 @@ public class MBankPdfParserTests
     [Fact]
     public void Parse_ReturnsNothing_ForAnMBankPageWithoutATable()
     {
+        // Act
         var result = Parse(BuildTextPdf("Elektroniczne zestawienie operacji", "mBank S.A.", "Data księgowania Opis operacji Kwota Saldo po operacji"));
 
+        // Assert
         Assert.Empty(result.Transactions);
         Assert.Equal(0, result.SkippedErrorCount);
     }
@@ -509,8 +591,10 @@ public class MBankPdfParserTests
     {
         foreach (var fixture in new[] { "velobank-sample-synthetic.pdf", "velobank-sample-synthetic-multipage.pdf" })
         {
+            // Act
             var result = Parse(ReadFixture(fixture));
 
+            // Assert
             Assert.Empty(result.Transactions);
             Assert.Equal(0, result.SkippedErrorCount);
         }
@@ -521,8 +605,10 @@ public class MBankPdfParserTests
     {
         foreach (var bytes in new[] { PdfMagicFollowedByGarbage(), Array.Empty<byte>(), "not a pdf at all"u8.ToArray(), File.ReadAllBytes(FixturePath("mbank-sample-redacted.csv")) })
         {
+            // Act
             var result = Parse(bytes);
 
+            // Assert
             Assert.Empty(result.Transactions);
             Assert.Equal(0, result.SkippedErrorCount);
         }
@@ -531,8 +617,10 @@ public class MBankPdfParserTests
     [Fact]
     public void Parse_ReturnsNothing_WhenThePdfHasMoreThanMaxPages()
     {
+        // Act
         var result = Parse(ReadFixture(MultiPageFixture), maxPages: 2);
 
+        // Assert
         Assert.Empty(result.Transactions);
         Assert.Equal(0, result.SkippedErrorCount);
     }
@@ -540,12 +628,15 @@ public class MBankPdfParserTests
     [Fact]
     public void Parse_RestoresStreamPosition()
     {
+        // Arrange
         var parser = new MBankPdfParser();
         using var stream = new MemoryStream([.. new byte[7], .. ReadFixture(TwoPageFixture)]);
         stream.Position = 7;
 
+        // Act
         var result = parser.Parse(stream);
 
+        // Assert
         Assert.Equal(MBankSampleData.TwoPageRowCount, result.Transactions.Count);
         Assert.Equal(7, stream.Position);
     }
@@ -553,12 +644,15 @@ public class MBankPdfParserTests
     [Fact]
     public void CanParseThenParse_WorksOnOneStream()
     {
+        // Arrange
         var parser = new MBankPdfParser();
         using var stream = new MemoryStream(ReadFixture(MultiPageFixture));
 
+        // Act & Assert
         Assert.True(parser.CanParse(stream));
         var result = parser.Parse(stream);
 
+        // Assert
         Assert.Equal(MBankSampleData.MultiPageRowCount, result.Transactions.Count);
     }
 }

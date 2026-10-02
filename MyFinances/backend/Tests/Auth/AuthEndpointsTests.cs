@@ -97,12 +97,15 @@ public class AuthEndpointsTests
     [Fact]
     public async Task Register_WithAllowedEmail_SucceedsAndSetsCookie()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = factory.CreateClient();
 
+        // Act
         var response = await client.PostAsJsonAsync("/api/auth/register",
             new RegisterRequest(AuthApiFactory.AllowedEmail, "correct-horse-battery"));
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(HasSetCookie(response));
     }
@@ -110,30 +113,37 @@ public class AuthEndpointsTests
     [Fact]
     public async Task Register_WithNonAllowedEmail_ReturnsBadRequest()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = factory.CreateClient();
 
+        // Act
         var response = await client.PostAsJsonAsync("/api/auth/register",
             new RegisterRequest("someone-else@example.com", "correct-horse-battery"));
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task Register_WithShortPassword_ReturnsBadRequest()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = factory.CreateClient();
 
+        // Act
         var response = await client.PostAsJsonAsync("/api/auth/register",
             new RegisterRequest(AuthApiFactory.AllowedEmail, "short1"));
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task Register_Twice_SecondAttemptFails()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = factory.CreateClient();
 
@@ -141,23 +151,30 @@ public class AuthEndpointsTests
             new RegisterRequest(AuthApiFactory.AllowedEmail, "correct-horse-battery"));
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
 
+        // Act
         var second = await client.PostAsJsonAsync("/api/auth/register",
             new RegisterRequest(AuthApiFactory.AllowedEmail, "correct-horse-battery"));
+
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, second.StatusCode);
     }
 
     [Fact]
     public async Task Login_WithCorrectCredentials_SucceedsAndSetsCookie_WithWrongPassword_Returns401()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var registerClient = factory.CreateClient();
         var registerResponse = await registerClient.PostAsJsonAsync("/api/auth/register",
             new RegisterRequest(AuthApiFactory.AllowedEmail, "correct-horse-battery"));
         Assert.Equal(HttpStatusCode.OK, registerResponse.StatusCode);
 
+        // Act
         using var loginClient = factory.CreateClient();
         var loginResponse = await loginClient.PostAsJsonAsync("/api/auth/login",
             new LoginRequest(AuthApiFactory.AllowedEmail, "correct-horse-battery"));
+
+        // Assert
         Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
         Assert.True(HasSetCookie(loginResponse));
 
@@ -170,10 +187,14 @@ public class AuthEndpointsTests
     [Fact]
     public async Task AuthMe_RequiresAuthCookie()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
 
+        // Act
         using var anonymousClient = factory.CreateClient();
         var unauthorized = await anonymousClient.GetAsync("/api/auth/me");
+
+        // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, unauthorized.StatusCode);
 
         using var authedClient = factory.CreateClient();
@@ -188,6 +209,7 @@ public class AuthEndpointsTests
     [Fact]
     public async Task Logout_RequiresAntiforgeryHeader_ThenInvalidatesSession()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = factory.CreateClient();
 
@@ -195,8 +217,11 @@ public class AuthEndpointsTests
             new RegisterRequest(AuthApiFactory.AllowedEmail, "correct-horse-battery"));
         Assert.Equal(HttpStatusCode.OK, registerResponse.StatusCode);
 
+        // Act
         // Without the antiforgery header, logout must be rejected.
         var logoutWithoutToken = await client.PostAsync("/api/auth/logout", content: null);
+
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, logoutWithoutToken.StatusCode);
 
         // The session should still be usable, since the logout above did not succeed.

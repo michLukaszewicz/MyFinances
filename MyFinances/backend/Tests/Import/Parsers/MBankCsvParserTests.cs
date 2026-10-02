@@ -18,20 +18,25 @@ public class MBankCsvParserTests
     [Fact]
     public void CanParse_ReturnsTrue_ForFixtureFile()
     {
+        // Arrange
         var parser = new MBankCsvParser();
         using var stream = OpenFixture();
 
+        // Act & Assert
         Assert.True(parser.CanParse(stream));
     }
 
     [Fact]
     public void Parse_ExtractsExactlyFourValidTransactions_IncludingBothBlikRows()
     {
+        // Arrange
         var parser = new MBankCsvParser();
         using var stream = OpenFixture();
 
+        // Act
         var result = parser.Parse(stream);
 
+        // Assert
         Assert.Equal(4, result.Transactions.Count);
 
         var blikRows = result.Transactions
@@ -43,33 +48,42 @@ public class MBankCsvParserTests
     [Fact]
     public void Parse_SkipsMalformedRow_WithoutAbortingRestOfFile()
     {
+        // Arrange
         var parser = new MBankCsvParser();
         using var stream = OpenFixture();
 
+        // Act
         var result = parser.Parse(stream);
 
+        // Assert
         Assert.Contains(result.Transactions, t => t.Date == new DateOnly(2026, 8, 5) && t.Amount == -120.00m);
     }
 
     [Fact]
     public void Parse_ReportsOneSkippedErrorRow_ForFixture()
     {
+        // Arrange
         var parser = new MBankCsvParser();
         using var stream = OpenFixture();
 
+        // Act
         var result = parser.Parse(stream);
 
+        // Assert
         Assert.Equal(1, result.SkippedErrorCount);
     }
 
     [Fact]
     public void Parse_ExcludesFooterRows_FromTransactionsAndErrorCount()
     {
+        // Arrange
         var parser = new MBankCsvParser();
         using var stream = OpenFixture();
 
+        // Act
         var result = parser.Parse(stream);
 
+        // Assert
         Assert.DoesNotContain(result.Transactions, t => t.Description.Contains("informacyjny", StringComparison.OrdinalIgnoreCase));
         // 4 valid + 1 skipped-error == 5 data rows accounted for; footer rows contribute to neither.
         Assert.Equal(5, result.Transactions.Count + result.SkippedErrorCount);
@@ -78,13 +92,16 @@ public class MBankCsvParserTests
     [Fact]
     public void Parse_ExtractsExactlyFourValidTransactions_ForDmyDateFormatFixture()
     {
+        // Arrange
         // Some mBank exports (e.g. after being opened/resaved in Excel) use dd.MM.yyyy
         // instead of yyyy-MM-dd for Data księgowania/Data operacji.
         var parser = new MBankCsvParser();
         using var stream = OpenDmyFixture();
 
+        // Act
         var result = parser.Parse(stream);
 
+        // Assert
         Assert.Equal(4, result.Transactions.Count);
         Assert.Equal(1, result.SkippedErrorCount);
     }
@@ -92,23 +109,28 @@ public class MBankCsvParserTests
     [Fact]
     public void CanParse_ReturnsTrue_ForUtf8RemojibakeFixture()
     {
+        // Arrange
         // Some exports have been round-tripped through a tool that decoded the original cp1250
         // bytes as Windows-1252 and re-saved as UTF-8, corrupting every diacritic in the file —
         // including the one in the "#Data księgowania" header CanParse matches on.
         var parser = new MBankCsvParser();
         using var stream = OpenUtf8RemojibakeFixture();
 
+        // Act & Assert
         Assert.True(parser.CanParse(stream));
     }
 
     [Fact]
     public void Parse_RecoversCorrectPolishText_FromUtf8RemojibakeFixture()
     {
+        // Arrange
         var parser = new MBankCsvParser();
         using var stream = OpenUtf8RemojibakeFixture();
 
+        // Act
         var result = parser.Parse(stream);
 
+        // Assert
         Assert.Equal(2, result.Transactions.Count);
         Assert.Contains(result.Transactions, t => t.Description == "NA JEDZENIE" && t.Amount == -500.00m);
         Assert.Contains(result.Transactions, t => t.Description == "Śklep żabka" && t.Amount == -120.00m);
@@ -117,14 +139,17 @@ public class MBankCsvParserTests
     [Fact]
     public void Parse_UnwrapsCommaPaddedRows_FromSpreadsheetResavedExport()
     {
+        // Arrange
         // Some exports have also been re-saved through a spreadsheet tool that wraps each real
         // ';'-row in an outer ','-quoted cell (doubling its internal quotes) plus trailing empty
         // ',' padding, on top of the UTF-8 remojibake. Both corruptions must be undone together.
         var parser = new MBankCsvParser();
         using var stream = OpenCommaWrappedFixture();
 
+        // Act
         var result = parser.Parse(stream);
 
+        // Assert
         Assert.Equal(2, result.Transactions.Count);
         Assert.Contains(result.Transactions, t => t.Date == new DateOnly(2026, 8, 1) && t.Description == "NA JEDZENIE" && t.Amount == -500.00m);
         Assert.Contains(result.Transactions, t => t.Date == new DateOnly(2026, 8, 5) && t.Description == "Śklep żabka" && t.Amount == -120.00m);

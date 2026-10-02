@@ -71,10 +71,13 @@ public class VeloBankPdfFixtureTests
     [Fact]
     public void RegenerateFixtures_WritesCommittedPdfs_OnlyWhenRequested()
     {
+        // Arrange
         if (Environment.GetEnvironmentVariable("REGENERATE_PDF_FIXTURES") != "1")
             return;
 
         var directory = SourceFixturesDirectory();
+
+        // Act
         File.WriteAllBytes(Path.Combine(directory, OnePageFixture), VeloBankSampleData.BuildOnePagePdf());
         File.WriteAllBytes(Path.Combine(directory, MultiPageFixture), VeloBankSampleData.BuildMultiPagePdf());
     }
@@ -84,8 +87,10 @@ public class VeloBankPdfFixtureTests
     [InlineData(MultiPageFixture, 3)]
     public void Fixture_OpensWithPdfPig_WithExpectedPageCount(string fileName, int pageCount)
     {
+        // Act
         using var document = PdfDocument.Open(ReadFixture(fileName));
 
+        // Assert
         Assert.Equal(pageCount, document.NumberOfPages);
     }
 
@@ -94,8 +99,10 @@ public class VeloBankPdfFixtureTests
     [InlineData(MultiPageFixture)]
     public void Fixture_CarriesPolishHeaderText_OnEveryPage(string fileName)
     {
+        // Act
         using var document = PdfDocument.Open(ReadFixture(fileName));
 
+        // Assert
         foreach (var page in Pages(document))
         {
             var words = page.GetWords().Select(w => w.Text).ToList();
@@ -109,9 +116,11 @@ public class VeloBankPdfFixtureTests
     [Fact]
     public void OnePageFixture_HasOneSeparatorPerRow_AndARepeatedHeaderBlock()
     {
+        // Act
         using var document = PdfDocument.Open(ReadFixture(OnePageFixture));
         var page = Pages(document).Single();
 
+        // Assert
         Assert.Equal(VeloBankSampleData.OnePageRowCount, CountSeparators(page));
         Assert.Equal(2, CountHeaderBlocks(page));
     }
@@ -119,9 +128,11 @@ public class VeloBankPdfFixtureTests
     [Fact]
     public void MultiPageFixture_HasOneSeparatorPerRow_AndOneHeaderBlockPerPage()
     {
+        // Act
         using var document = PdfDocument.Open(ReadFixture(MultiPageFixture));
         var pages = Pages(document);
 
+        // Assert
         Assert.Equal(VeloBankSampleData.MultiPageRowCount, pages.Sum(CountSeparators));
         Assert.All(pages, page => Assert.Equal(1, CountHeaderBlocks(page)));
         Assert.Equal(new[] { 15, 19, 6 }, pages.Select(CountSeparators).ToArray());
@@ -132,9 +143,11 @@ public class VeloBankPdfFixtureTests
     [InlineData(MultiPageFixture)]
     public void Fixture_PrintsThousandsBalanceAsTwoWords(string fileName)
     {
+        // Act
         using var document = PdfDocument.Open(ReadFixture(fileName));
         var pages = Pages(document);
 
+        // Assert
         Assert.Contains(pages, HasSplitThousandsBalance);
         Assert.DoesNotContain(pages, page => page.GetWords().Any(w => Regex.IsMatch(w.Text, @"^-?\d{4},\d{2}$")));
     }
@@ -142,11 +155,14 @@ public class VeloBankPdfFixtureTests
     [Fact]
     public void OnePageFixture_PrintsDashForEachPendingBookingDateAndBalance()
     {
+        // Act
         using var document = PdfDocument.Open(ReadFixture(OnePageFixture));
         var dashes = Pages(document).Single().GetWords().Where(w => w.Text == "-").ToList();
 
         var bookingColumn = dashes.Count(w => w.BoundingBox.Left < VeloBankPdfBuilder.ColumnEdges[2] && w.BoundingBox.Left > VeloBankPdfBuilder.ColumnEdges[1]);
         var balanceColumn = dashes.Count(w => w.BoundingBox.Left > VeloBankPdfBuilder.ColumnEdges[4]);
+
+        // Assert
         Assert.Equal(2, bookingColumn);
         Assert.Equal(2, balanceColumn);
     }
@@ -156,11 +172,14 @@ public class VeloBankPdfFixtureTests
     [InlineData(MultiPageFixture)]
     public void Fixture_MatchesWhatTheGeneratorProducesNow(string fileName)
     {
+        // Arrange
         var regenerated = fileName == OnePageFixture ? VeloBankSampleData.BuildOnePagePdf() : VeloBankSampleData.BuildMultiPagePdf();
 
+        // Act
         using var committed = PdfDocument.Open(ReadFixture(fileName));
         using var fresh = PdfDocument.Open(regenerated);
 
+        // Assert
         Assert.Equal(
             fresh.GetPages().Select(p => p.Text).ToList(),
             committed.GetPages().Select(p => p.Text).ToList());
@@ -171,8 +190,10 @@ public class VeloBankPdfFixtureTests
     [InlineData(MultiPageFixture)]
     public void Fixture_IsDetectedAsPdf(string fileName)
     {
+        // Arrange
         using var stream = new MemoryStream(ReadFixture(fileName));
 
+        // Act & Assert
         Assert.Equal(StatementFormat.Pdf, StatementFormatSniffer.Detect(stream));
     }
 
@@ -181,9 +202,11 @@ public class VeloBankPdfFixtureTests
     [InlineData(MultiPageFixture)]
     public void CsvParsers_RejectPdfFixturesWithoutThrowing(string fileName)
     {
+        // Arrange
         using var forMBank = new MemoryStream(ReadFixture(fileName));
         using var forErste = new MemoryStream(ReadFixture(fileName));
 
+        // Act & Assert
         Assert.False(new MBankCsvParser().CanParse(forMBank));
         Assert.False(new ErsteCsvParser().CanParse(forErste));
     }
@@ -191,6 +214,7 @@ public class VeloBankPdfFixtureTests
     [Fact]
     public void Generator_IsDeterministic()
     {
+        // Act & Assert
         Assert.Equal(VeloBankSampleData.BuildOnePagePdf(), VeloBankSampleData.BuildOnePagePdf());
         Assert.Equal(VeloBankSampleData.BuildMultiPagePdf(), VeloBankSampleData.BuildMultiPagePdf());
     }
@@ -198,21 +222,27 @@ public class VeloBankPdfFixtureTests
     [Fact]
     public void Generator_SplitsRowsOverPagesAccordingToTheLayout()
     {
+        // Arrange
         var layout = new VeloBankPdfLayout { FirstPageRows = 10, RowsPerPage = 10 };
 
+        // Act
         using var document = PdfDocument.Open(VeloBankPdfBuilder.Build(VeloBankSampleData.Header, VeloBankSampleData.MultiPageRows, layout));
 
+        // Assert
         Assert.Equal(new[] { 10, 10, 10, 10 }, Pages(document).Select(CountSeparators).ToArray());
     }
 
     [Fact]
     public void Generator_WritesRawTextOverridesVerbatim()
     {
+        // Arrange
         var row = VeloBankSampleData.OnePageRows[2] with { AmountText = "n/a", TransactionDateText = "??.??.????", BalanceText = "brak" };
 
+        // Act
         using var document = PdfDocument.Open(VeloBankPdfBuilder.Build(VeloBankSampleData.Header, [row]));
         var words = Pages(document).Single().GetWords().Select(w => w.Text).ToList();
 
+        // Assert
         Assert.Contains("n/a", words);
         Assert.Contains("??.??.????", words);
         Assert.Contains("brak", words);
@@ -221,8 +251,10 @@ public class VeloBankPdfFixtureTests
     [Fact]
     public void Generator_RefusesRowsThatWouldRunIntoTheFooter()
     {
+        // Arrange
         var layout = new VeloBankPdfLayout { FirstPageRows = 40 };
 
+        // Act & Assert
         Assert.Throws<InvalidOperationException>(() =>
             VeloBankPdfBuilder.Build(VeloBankSampleData.Header, VeloBankSampleData.MultiPageRows, layout));
     }
@@ -230,6 +262,7 @@ public class VeloBankPdfFixtureTests
     [Fact]
     public void Generator_KeepsValueCellsBesideTheFirstLine_UnlessCenteringIsRequested()
     {
+        // Arrange
         var tallRow = VeloBankSampleData.MultiPageRows.First(r => r.DescriptionLines.Count == 5);
 
         double Gap(VeloBankPdfLayout layout)
@@ -241,6 +274,7 @@ public class VeloBankPdfFixtureTests
             return firstLine - dateBaseline;
         }
 
+        // Act & Assert
         Assert.InRange(Gap(new VeloBankPdfLayout()), 0, 2);
         Assert.InRange(Gap(new VeloBankPdfLayout { CenterValueCells = true }), 8, 14);
     }
@@ -248,8 +282,10 @@ public class VeloBankPdfFixtureTests
     [Fact]
     public void SampleData_OnePageRows_MirrorTheNinetyDayExport()
     {
+        // Arrange
         var rows = VeloBankSampleData.OnePageRows;
 
+        // Assert
         Assert.Equal(VeloBankSampleData.OnePageRowCount, rows.Count);
         Assert.Equal(new[] { true, true }, rows.Take(2).Select(r => r.BookingDate is null && r.Balance is null));
         Assert.All(rows.Skip(2), r => Assert.True(r.BookingDate is not null && r.Balance is not null));
@@ -264,8 +300,10 @@ public class VeloBankPdfFixtureTests
     [Fact]
     public void SampleData_MultiPageRows_HaveFortyRowsAndAFiveLineDescription()
     {
+        // Arrange
         var rows = VeloBankSampleData.MultiPageRows;
 
+        // Assert
         Assert.Equal(VeloBankSampleData.MultiPageRowCount, rows.Count);
         Assert.Contains(rows, r => r.DescriptionLines.Count == 5);
     }
@@ -273,8 +311,10 @@ public class VeloBankPdfFixtureTests
     [Fact]
     public void SampleData_BookedPlnRows_FormOneExactBalanceChain()
     {
+        // Arrange
         var booked = VeloBankSampleData.MultiPageRows.Where(r => r.BookingDate is not null && r.Currency == "PLN").ToList();
 
+        // Assert
         for (var i = 0; i < booked.Count - 1; i++)
             Assert.Equal(booked[i + 1].Balance, booked[i].Balance - booked[i].Amount);
         Assert.All(booked, r => Assert.True(r.Balance > 0));
@@ -283,8 +323,10 @@ public class VeloBankPdfFixtureTests
     [Fact]
     public void SampleData_CardDescriptions_RepeatTheAmountColumn()
     {
+        // Arrange
         var cardRows = VeloBankSampleData.MultiPageRows.Where(r => r.DescriptionLines[0].StartsWith("Operacja kartą")).ToList();
 
+        // Assert
         Assert.NotEmpty(cardRows);
         Assert.All(cardRows, r =>
             Assert.Contains($"na kwotę {VeloBankPdfBuilder.FormatMoney(Math.Abs(r.Amount))} PLN", r.DescriptionLines[0]));

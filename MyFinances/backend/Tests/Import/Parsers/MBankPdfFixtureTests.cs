@@ -69,10 +69,13 @@ public class MBankPdfFixtureTests
     [Fact]
     public void RegenerateFixtures_WritesCommittedPdfs_OnlyWhenRequested()
     {
+        // Arrange
         if (Environment.GetEnvironmentVariable("REGENERATE_PDF_FIXTURES") != "1")
             return;
 
         var directory = SourceFixturesDirectory();
+
+        // Act
         File.WriteAllBytes(Path.Combine(directory, TwoPageFixture), MBankSampleData.BuildTwoPagePdf());
         File.WriteAllBytes(Path.Combine(directory, MultiPageFixture), MBankSampleData.BuildMultiPagePdf());
     }
@@ -82,8 +85,10 @@ public class MBankPdfFixtureTests
     [InlineData(MultiPageFixture, 3)]
     public void Fixture_OpensWithPdfPig_WithExpectedPageCount(string fileName, int pageCount)
     {
+        // Act
         using var document = PdfDocument.Open(ReadFixture(fileName));
 
+        // Assert
         Assert.Equal(pageCount, document.NumberOfPages);
     }
 
@@ -92,9 +97,11 @@ public class MBankPdfFixtureTests
     [InlineData(MultiPageFixture)]
     public void Fixture_CarriesTitleOnFirstPage_AndTableHeaderAndFooterOnEveryPage(string fileName)
     {
+        // Act
         using var document = PdfDocument.Open(ReadFixture(fileName));
         var pages = Pages(document);
 
+        // Assert
         var firstPageWords = WordTexts(pages[0]);
         Assert.Contains("Elektroniczne", firstPageWords);
         Assert.Contains("zestawienie", firstPageWords);
@@ -121,9 +128,11 @@ public class MBankPdfFixtureTests
     [Fact]
     public void TwoPageFixture_HasOneDateLinePerRow()
     {
+        // Act
         using var document = PdfDocument.Open(ReadFixture(TwoPageFixture));
         var pages = Pages(document);
 
+        // Assert
         Assert.Equal(MBankSampleData.TwoPageRowCount, pages.Sum(CountDateLines));
         Assert.Equal(new[] { 12, 8 }, pages.Select(CountDateLines).ToArray());
     }
@@ -131,9 +140,11 @@ public class MBankPdfFixtureTests
     [Fact]
     public void MultiPageFixture_HasOneDateLinePerRow_AndRepeatsHeaderAndFooterOnEveryPage()
     {
+        // Act
         using var document = PdfDocument.Open(ReadFixture(MultiPageFixture));
         var pages = Pages(document);
 
+        // Assert
         Assert.Equal(MBankSampleData.MultiPageRowCount, pages.Sum(CountDateLines));
         Assert.Equal(new[] { 12, 14, 14 }, pages.Select(CountDateLines).ToArray());
         Assert.All(pages, page => Assert.Equal(1, WordTexts(page).Count(w => w == "Strona")));
@@ -144,9 +155,11 @@ public class MBankPdfFixtureTests
     [InlineData(MultiPageFixture)]
     public void Fixture_PrintsThousandsBalanceAsTwoWords(string fileName)
     {
+        // Act
         using var document = PdfDocument.Open(ReadFixture(fileName));
         var pages = Pages(document);
 
+        // Assert
         Assert.Contains(pages, HasSplitThousandsBalance);
         Assert.DoesNotContain(pages, page => page.GetWords().Any(w => Regex.IsMatch(w.Text, @"^-?\d{4},\d{2}$")));
     }
@@ -156,9 +169,11 @@ public class MBankPdfFixtureTests
     [InlineData(MultiPageFixture)]
     public void Fixture_DrawsTheGridAsStrokedLines_NotAsFilledRectangles(string fileName)
     {
+        // Act
         using var document = PdfDocument.Open(ReadFixture(fileName));
         var pages = Pages(document);
 
+        // Assert
         Assert.All(pages, page => Assert.DoesNotContain(page.Paths, p => p.IsFilled));
         Assert.All(pages, page => Assert.True(CountFirstColumnHorizontalLines(page) > 2 * CountDateLines(page)));
     }
@@ -168,11 +183,14 @@ public class MBankPdfFixtureTests
     [InlineData(MultiPageFixture)]
     public void Fixture_MatchesWhatTheGeneratorProducesNow(string fileName)
     {
+        // Arrange
         var regenerated = fileName == TwoPageFixture ? MBankSampleData.BuildTwoPagePdf() : MBankSampleData.BuildMultiPagePdf();
 
+        // Act
         using var committed = PdfDocument.Open(ReadFixture(fileName));
         using var fresh = PdfDocument.Open(regenerated);
 
+        // Assert
         Assert.Equal(
             fresh.GetPages().Select(p => p.Text).ToList(),
             committed.GetPages().Select(p => p.Text).ToList());
@@ -183,8 +201,10 @@ public class MBankPdfFixtureTests
     [InlineData(MultiPageFixture)]
     public void Fixture_IsDetectedAsPdf(string fileName)
     {
+        // Arrange
         using var stream = new MemoryStream(ReadFixture(fileName));
 
+        // Act & Assert
         Assert.Equal(StatementFormat.Pdf, StatementFormatSniffer.Detect(stream));
     }
 
@@ -193,10 +213,12 @@ public class MBankPdfFixtureTests
     [InlineData(MultiPageFixture)]
     public void OtherParsers_RejectPdfFixturesWithoutThrowing(string fileName)
     {
+        // Arrange
         using var forMBankCsv = new MemoryStream(ReadFixture(fileName));
         using var forErsteCsv = new MemoryStream(ReadFixture(fileName));
         using var forVeloBankPdf = new MemoryStream(ReadFixture(fileName));
 
+        // Act & Assert
         Assert.False(new MBankCsvParser().CanParse(forMBankCsv));
         Assert.False(new ErsteCsvParser().CanParse(forErsteCsv));
         Assert.False(new VeloBankPdfParser().CanParse(forVeloBankPdf));
@@ -205,6 +227,7 @@ public class MBankPdfFixtureTests
     [Fact]
     public void Generator_IsDeterministic()
     {
+        // Act & Assert
         Assert.Equal(MBankSampleData.BuildTwoPagePdf(), MBankSampleData.BuildTwoPagePdf());
         Assert.Equal(MBankSampleData.BuildMultiPagePdf(), MBankSampleData.BuildMultiPagePdf());
     }
@@ -212,23 +235,29 @@ public class MBankPdfFixtureTests
     [Fact]
     public void Generator_SplitsRowsOverPagesAccordingToTheLayout()
     {
+        // Arrange
         var layout = new MBankPdfLayout { FirstPageRows = 10, RowsPerPage = 10 };
 
+        // Act
         using var document = PdfDocument.Open(
             MBankPdfBuilder.Build(MBankSampleData.Header, MBankSampleData.OpeningBalance, MBankSampleData.MultiPageRows, layout));
 
+        // Assert
         Assert.Equal(new[] { 10, 10, 10, 10 }, Pages(document).Select(CountDateLines).ToArray());
     }
 
     [Fact]
     public void Generator_WritesRawTextOverridesVerbatim()
     {
+        // Arrange
         var row = MBankSampleData.TwoPageRows[2] with { AmountText = "n/a", BookingDateText = "??-??-????", BalanceText = "brak" };
 
+        // Act
         using var document = PdfDocument.Open(
             MBankPdfBuilder.Build(MBankSampleData.Header, MBankSampleData.OpeningBalance, [row]));
         var words = WordTexts(Pages(document).Single());
 
+        // Assert
         Assert.Contains("n/a", words);
         Assert.Contains("??-??-????", words);
         Assert.Contains("brak", words);
@@ -237,8 +266,10 @@ public class MBankPdfFixtureTests
     [Fact]
     public void Generator_RefusesRowsThatWouldRunIntoTheFooter()
     {
+        // Arrange
         var layout = new MBankPdfLayout { FirstPageRows = 40 };
 
+        // Act & Assert
         Assert.Throws<InvalidOperationException>(() =>
             MBankPdfBuilder.Build(MBankSampleData.Header, MBankSampleData.OpeningBalance, MBankSampleData.MultiPageRows, layout));
     }
@@ -246,12 +277,15 @@ public class MBankPdfFixtureTests
     [Fact]
     public void Generator_PrintsSummaryAndClosingBalanceComputedFromTheRows()
     {
+        // Arrange
         var rows = MBankSampleData.TwoPageRows;
         var summary = MBankPdfBuilder.ComputeSummary(rows);
 
+        // Act
         using var document = PdfDocument.Open(MBankSampleData.BuildTwoPagePdf());
         var pages = Pages(document);
 
+        // Assert
         Assert.Equal(rows.Count(r => r.Amount > 0), summary.CreditCount);
         Assert.Equal(rows.Count(r => r.Amount < 0), summary.DebitCount);
         Assert.Equal(MBankSampleData.TwoPageRowCount, summary.CreditCount + summary.DebitCount);
@@ -262,6 +296,7 @@ public class MBankPdfFixtureTests
     [Fact]
     public void Generator_AppliesSummaryAndClosingBalanceOverridesAndOmissions()
     {
+        // Arrange
         var rows = MBankSampleData.TwoPageRows;
         var layout = MBankSampleData.TwoPageLayout with
         {
@@ -270,16 +305,24 @@ public class MBankPdfFixtureTests
             OmitOpeningBalance = true,
         };
 
+        // Act
         using var tampered = PdfDocument.Open(MBankPdfBuilder.Build(MBankSampleData.Header, MBankSampleData.OpeningBalance, rows, layout));
         var tamperedPages = Pages(tampered);
+
+        // Assert
         Assert.Contains("11,11", WordTexts(tamperedPages[0]));
         Assert.Contains("22,22", WordTexts(tamperedPages[0]));
         Assert.Contains("77,77", WordTexts(tamperedPages[^1]));
         Assert.DoesNotContain("początkowe:", WordTexts(tamperedPages[0]));
 
+        // Arrange
         var omitted = MBankSampleData.TwoPageLayout with { OmitClosingBalance = true, OmitSummary = true };
+
+        // Act
         using var bare = PdfDocument.Open(MBankPdfBuilder.Build(MBankSampleData.Header, MBankSampleData.OpeningBalance, rows, omitted));
         var barePages = Pages(bare);
+
+        // Assert
         Assert.DoesNotContain("końcowe:", WordTexts(barePages[^1]));
         Assert.DoesNotContain("Podsumowanie", WordTexts(barePages[0]));
     }
@@ -287,8 +330,10 @@ public class MBankPdfFixtureTests
     [Fact]
     public void SampleData_TwoPageRows_MirrorTheRealShape()
     {
+        // Arrange
         var rows = MBankSampleData.TwoPageRows;
 
+        // Assert
         Assert.Equal(MBankSampleData.TwoPageRowCount, rows.Count);
         Assert.Contains(rows, r => r.DescriptionLines[0] == "ZAKUP PRZY UŻYCIU KARTY" && r.DescriptionLines[1].Contains("DATA TRANSAKCJI:"));
         Assert.Contains(rows, r => r.DescriptionLines[0].StartsWith("BLIK"));
@@ -304,8 +349,10 @@ public class MBankPdfFixtureTests
     [Fact]
     public void SampleData_MultiPageRows_HaveFortyRows_AndBalancesFormOneExactChain()
     {
+        // Arrange
         var rows = MBankSampleData.MultiPageRows;
 
+        // Assert
         Assert.Equal(MBankSampleData.MultiPageRowCount, rows.Count);
         Assert.Equal(rows[0].Balance, MBankSampleData.OpeningBalance + rows[0].Amount);
         for (var i = 1; i < rows.Count; i++)
@@ -316,6 +363,7 @@ public class MBankPdfFixtureTests
     [Fact]
     public void SampleData_PagesFitTheirRows_WithTwoLineRowsOnPageOne()
     {
+        // Act & Assert
         Assert.All(MBankSampleData.TwoPageRows.Take(MBankSampleData.TwoPageLayout.FirstPageRows),
             r => Assert.Equal(2, r.DescriptionLines.Count));
     }

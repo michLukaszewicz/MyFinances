@@ -95,51 +95,67 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_UnrecognizedFileWithNoBankFallback_ReturnsBadRequest()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, Encoding.UTF8.GetBytes("not,a,recognizable,export\r\n1,2,3,4\r\n"), account.Id);
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task Parse_AccountIdNotOwnedByUser_ReturnsNotFound()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var otherUsersAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), otherUsersAccount.Id);
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
     public async Task Parse_AccountIdThatDoesNotExist_ReturnsNotFound()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), Guid.NewGuid());
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
     public async Task Parse_RecognizedMBankFile_ReturnsRowsWithDuplicateFlags()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.NotNull(parsed);
@@ -154,13 +170,17 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_AccountBankNameMatchesDetectedBank_BankMismatchIsFalse()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.NotNull(parsed);
@@ -170,13 +190,17 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_AccountBankDiffersFromDetectedBank_BankMismatchIsTrue()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "Revolut", "111", "Santander Bank Polska");
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.NotNull(parsed);
@@ -186,13 +210,17 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_AccountBankIsOther_BankMismatchIsNeverRaised()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "Revolut", "111", "Other");
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.False(parsed!.BankMismatch);
@@ -201,13 +229,17 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_AccountLabelIsATypoButBankIsRight_BankMismatchIsFalse()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mbnak glowne", "111", "mBank");
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.False(parsed!.BankMismatch);
@@ -220,6 +252,7 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_WhenTwoStoredTransactionsShareTheSameHash_DoesNotThrow()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -239,8 +272,11 @@ public class ImportEndpointsTests
         }
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.NotNull(parsed);
@@ -255,6 +291,7 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_SameTransactionDataUnderDifferentAccount_IsNotFlaggedAsDuplicate()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var firstAccount = await CreateAccountAsync(client, "mBank", "111");
@@ -278,8 +315,11 @@ public class ImportEndpointsTests
         Assert.Equal(HttpStatusCode.OK, commitResponse.StatusCode);
 
         using var secondRequest = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), secondAccount.Id);
+
+        // Act
         var secondResponse = await client.SendAsync(secondRequest);
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode);
         var secondParsed = await secondResponse.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.NotNull(secondParsed);
@@ -289,6 +329,7 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Commit_PersistsKeptRowAndCountsSkippedDuplicate()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -329,7 +370,10 @@ public class ImportEndpointsTests
             }
         });
 
+        // Act
         var commitResponse = await client.SendAsync(commitRequest);
+
+        // Assert
         Assert.Equal(HttpStatusCode.OK, commitResponse.StatusCode);
 
         var summary = await commitResponse.Content.ReadFromJsonAsync<ImportSummaryDto>(JsonOptions);
@@ -358,6 +402,7 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Commit_AccountIdNotOwnedByUser_ReturnsNotFound()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var otherUsersAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "111");
@@ -372,8 +417,10 @@ public class ImportEndpointsTests
             Rows = Array.Empty<object>(),
         });
 
+        // Act
         var response = await client.SendAsync(commitRequest);
 
+        // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
@@ -395,11 +442,14 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_RecognizedErsteFile_ReturnsErsteRowsWithoutBankMismatch()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
 
+        // Act
         var parsed = await ParseErsteFixtureAsync(client, "Erste");
 
+        // Assert
         Assert.Equal("Erste", parsed.Bank);
         Assert.Equal(29, parsed.Rows.Count);
         Assert.False(parsed.BankMismatch);
@@ -408,11 +458,14 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_ErsteFileWithMBankAccount_BankMismatchIsTrue()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
 
+        // Act
         var parsed = await ParseErsteFixtureAsync(client, "mBank");
 
+        // Assert
         Assert.Equal("Erste", parsed.Bank);
         Assert.True(parsed.BankMismatch);
     }
@@ -423,11 +476,14 @@ public class ImportEndpointsTests
     [InlineData("erste-sample-redacted-comma.csv")]
     public async Task Parse_ErsteDelimiterVariants_AreRecognizedThroughTheEndpoint(string fileName)
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
 
+        // Act
         var parsed = await ParseErsteFixtureAsync(client, "Erste", fileName);
 
+        // Assert
         Assert.Equal("Erste", parsed.Bank);
         Assert.Equal(21, parsed.Rows.Count);
     }
@@ -438,6 +494,7 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_ErsteFileAfterCommit_FlagsEveryCommittedRowAsDuplicate()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "Erste", "111");
@@ -462,8 +519,11 @@ public class ImportEndpointsTests
         Assert.Equal(HttpStatusCode.OK, commitResponse.StatusCode);
 
         using var secondRequest = await BuildUploadRequestAsync(client, fileBytes, account.Id);
+
+        // Act
         var secondResponse = await client.SendAsync(secondRequest);
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode);
         var secondParsed = await secondResponse.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.NotNull(secondParsed);
@@ -478,13 +538,17 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_ManualErsteFallbackOnNonErsteFile_ReturnsOkWithZeroRows()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "Erste", "111");
 
         using var request = await BuildUploadRequestAsync(client, Encoding.UTF8.GetBytes("not,a,recognizable,export\r\n1,2,3,4\r\n"), account.Id, bank: "Erste");
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.NotNull(parsed);
@@ -536,6 +600,7 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_PdfWithBankThatHasNoPdfParser_ReturnsBadRequestNamingBankAndFormat()
     {
+        // Arrange
         using var baseFactory = new AuthApiFactory();
         var factory = baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
             services.AddScoped<IBankStatementParser>(_ => new CsvOnlyParser())));
@@ -543,8 +608,11 @@ public class ImportEndpointsTests
         var account = await CreateAccountAsync(client, "StubCsvBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, PdfBytes, account.Id, bank: "StubCsvBank", fileName: "statement.pdf", contentType: "application/pdf");
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("StubCsvBank import does not support PDF files.", await ReadProblemTitleAsync(response));
     }
@@ -552,13 +620,17 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_PdfWithoutBank_ReturnsTheGenericUnrecognizedBadRequest()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, PdfBytes, account.Id, fileName: "statement.pdf", contentType: "application/pdf");
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal(UnrecognizedFormatTitle, await ReadProblemTitleAsync(response));
     }
@@ -566,13 +638,17 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_PdfWithUnknownBank_ReturnsTheGenericUnrecognizedBadRequest()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, PdfBytes, account.Id, bank: "NoSuchBank", fileName: "statement.pdf", contentType: "application/pdf");
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal(UnrecognizedFormatTitle, await ReadProblemTitleAsync(response));
     }
@@ -580,14 +656,18 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_PdfParserThrowsIntegrityException_Returns422WithItsMessageAndNoRows()
     {
+        // Arrange
         using var baseFactory = new AuthApiFactory();
         var factory = WithIntegrityFailingPdfParser(baseFactory);
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "StubPdfBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, PdfBytes, account.Id, fileName: "statement.pdf", contentType: "application/pdf");
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
         var body = await response.Content.ReadAsStringAsync();
         using var document = JsonDocument.Parse(body);
@@ -600,14 +680,18 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_CsvUploadWithPdfParserRegistered_StillResolvesTheCsvParser()
     {
+        // Arrange
         using var baseFactory = new AuthApiFactory();
         var factory = WithIntegrityFailingPdfParser(baseFactory);
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.NotNull(parsed);
@@ -618,14 +702,18 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_CsvWithBankThatHasOnlyAPdfParser_ReturnsBadRequestNamingBankAndFormat()
     {
+        // Arrange
         using var baseFactory = new AuthApiFactory();
         var factory = WithIntegrityFailingPdfParser(baseFactory);
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "StubPdfBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, Encoding.UTF8.GetBytes("not,a,recognizable,export\r\n1,2,3,4\r\n"), account.Id, bank: "StubPdfBank");
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("StubPdfBank import does not support CSV files.", await ReadProblemTitleAsync(response));
     }
@@ -648,12 +736,15 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_VeloBankOnePagePdf_ReturnsRowsIncludingPendingOnes()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "VeloBank", "111");
 
+        // Act
         var parsed = await ParseVeloBankPdfAsync(client, VeloBankSampleData.BuildOnePagePdf(), account.Id);
 
+        // Assert
         Assert.Equal("VeloBank", parsed.Bank);
         Assert.False(parsed.BankMismatch);
         Assert.Equal(VeloBankSampleData.OnePageRowCount, parsed.Rows.Count);
@@ -666,12 +757,15 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_VeloBankPdfWithMBankAccount_BankMismatchIsTrue()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
+        // Act
         var parsed = await ParseVeloBankPdfAsync(client, VeloBankSampleData.BuildOnePagePdf(), account.Id);
 
+        // Assert
         Assert.Equal("VeloBank", parsed.Bank);
         Assert.True(parsed.BankMismatch);
     }
@@ -679,6 +773,7 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_VeloBankPdfAfterCommit_FlagsEveryCommittedRowAsDuplicate()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "VeloBank", "111");
@@ -699,8 +794,10 @@ public class ImportEndpointsTests
         var commitResponse = await client.SendAsync(commitRequest);
         Assert.Equal(HttpStatusCode.OK, commitResponse.StatusCode);
 
+        // Act
         var secondParsed = await ParseVeloBankPdfAsync(client, pdf, account.Id);
 
+        // Assert
         Assert.Equal(VeloBankSampleData.OnePageRowCount, secondParsed.Rows.Count);
         Assert.All(secondParsed.Rows, row => Assert.True(row.IsDuplicate));
     }
@@ -708,12 +805,15 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_VeloBankMultiPagePdf_ReturnsAllRows()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "VeloBank", "111");
 
+        // Act
         var parsed = await ParseVeloBankPdfAsync(client, VeloBankSampleData.BuildMultiPagePdf(), account.Id);
 
+        // Assert
         Assert.Equal("VeloBank", parsed.Bank);
         Assert.Equal(VeloBankSampleData.MultiPageRowCount, parsed.Rows.Count);
     }
@@ -721,6 +821,7 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_VeloBankPdfWithTamperedBalance_Returns422WithIntegrityMessageAndNoRows()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "VeloBank", "111");
@@ -730,8 +831,10 @@ public class ImportEndpointsTests
         rows[5] = rows[5] with { Balance = rows[5].Balance + 1.00m };
         var pdf = VeloBankPdfBuilder.Build(VeloBankSampleData.Header, rows, VeloBankSampleData.OnePageLayout);
 
+        // Act
         var response = await UploadPdfAsync(client, pdf, account.Id);
 
+        // Assert
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var title = document.RootElement.GetProperty("title").GetString();
@@ -742,13 +845,17 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_VeloBankChosenWithCsvContent_ReturnsBadRequestNamingBankAndFormat()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "VeloBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, Encoding.UTF8.GetBytes("not,a,recognizable,export\r\n1,2,3,4\r\n"), account.Id, bank: "VeloBank");
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("VeloBank import does not support CSV files.", await ReadProblemTitleAsync(response));
     }
@@ -756,12 +863,15 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_VeloBankChosenWithCorruptPdf_ReturnsOkWithZeroRows()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "VeloBank", "111");
 
+        // Act
         var response = await UploadPdfAsync(client, PdfBytes, account.Id, bank: "VeloBank");
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.NotNull(parsed);
@@ -772,12 +882,15 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_VeloBankPdfWithAnotherBankChosen_AutoDetectionWins()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
+        // Act
         var response = await UploadPdfAsync(client, VeloBankSampleData.BuildOnePagePdf(), account.Id, bank: "mBank");
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.NotNull(parsed);
@@ -801,12 +914,15 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_MBankPdfWithMBankAccount_ReturnsRowsAsPdfWithoutBankMismatch()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
+        // Act
         var parsed = await ParseMBankPdfAsync(client, ReadMBankPdfFixture(), account.Id);
 
+        // Assert
         Assert.Equal("mBank", parsed.Bank);
         Assert.False(parsed.BankMismatch);
         Assert.Equal(StatementFormat.Pdf, parsed.Format);
@@ -818,12 +934,15 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_MBankMultiPagePdf_ReturnsAllRows()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
+        // Act
         var parsed = await ParseMBankPdfAsync(client, MBankSampleData.BuildMultiPagePdf(), account.Id);
 
+        // Assert
         Assert.Equal("mBank", parsed.Bank);
         Assert.Equal(MBankSampleData.MultiPageRowCount, parsed.Rows.Count);
     }
@@ -831,12 +950,15 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_MBankPdfWithVeloBankAccount_BankMismatchIsTrue()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "VeloBank", "111");
 
+        // Act
         var parsed = await ParseMBankPdfAsync(client, ReadMBankPdfFixture(), account.Id);
 
+        // Assert
         Assert.Equal("mBank", parsed.Bank);
         Assert.True(parsed.BankMismatch);
     }
@@ -844,6 +966,7 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_MBankPdfAfterCommit_FlagsEveryCommittedRowAsDuplicate()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -865,8 +988,10 @@ public class ImportEndpointsTests
         var commitResponse = await client.SendAsync(commitRequest);
         Assert.Equal(HttpStatusCode.OK, commitResponse.StatusCode);
 
+        // Act
         var secondParsed = await ParseMBankPdfAsync(client, pdf, account.Id);
 
+        // Assert
         Assert.Equal(MBankSampleData.TwoPageRowCount, secondParsed.Rows.Count);
         Assert.All(secondParsed.Rows, row => Assert.True(row.IsDuplicate));
     }
@@ -874,6 +999,7 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_MBankPdfWithTamperedBalance_Returns422WithIntegrityMessageAndNoRows()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -882,8 +1008,10 @@ public class ImportEndpointsTests
         rows[5] = rows[5] with { Balance = rows[5].Balance + 1.00m };
         var pdf = MBankPdfBuilder.Build(MBankSampleData.Header, MBankSampleData.OpeningBalance, rows, MBankSampleData.TwoPageLayout);
 
+        // Act
         var response = await UploadPdfAsync(client, pdf, account.Id);
 
+        // Assert
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var title = document.RootElement.GetProperty("title").GetString();
@@ -894,12 +1022,15 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_MBankChosenWithCorruptPdf_ReturnsOkWithZeroRows()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
+        // Act
         var response = await UploadPdfAsync(client, PdfBytes, account.Id, bank: "mBank");
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.NotNull(parsed);
@@ -925,12 +1056,15 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_ErstePdfWithErsteAccount_ReturnsRowsAsPdfWithoutBankMismatch()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "Erste", "111");
 
+        // Act
         var parsed = await ParseErstePdfAsync(client, ReadErstePdfFixture(), account.Id);
 
+        // Assert
         Assert.Equal("Erste", parsed.Bank);
         Assert.False(parsed.BankMismatch);
         Assert.Equal(StatementFormat.Pdf, parsed.Format);
@@ -942,12 +1076,15 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_ErsteMultiPagePdf_ReturnsAllRows()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "Erste", "111");
 
+        // Act
         var parsed = await ParseErstePdfAsync(client, ErsteSampleData.BuildMultiPagePdf(), account.Id);
 
+        // Assert
         Assert.Equal("Erste", parsed.Bank);
         Assert.Equal(ErsteSampleData.MultiPageRowCount, parsed.Rows.Count);
     }
@@ -955,12 +1092,15 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_ErstePdfWithMBankAccount_BankMismatchIsTrue()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
+        // Act
         var parsed = await ParseErstePdfAsync(client, ReadErstePdfFixture(), account.Id);
 
+        // Assert
         Assert.Equal("Erste", parsed.Bank);
         Assert.True(parsed.BankMismatch);
     }
@@ -970,6 +1110,7 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_ErstePdfAfterCommit_FlagsEveryCommittedRowAsDuplicate()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "Erste", "111");
@@ -992,8 +1133,10 @@ public class ImportEndpointsTests
         var commitResponse = await client.SendAsync(commitRequest);
         Assert.Equal(HttpStatusCode.OK, commitResponse.StatusCode);
 
+        // Act
         var secondParsed = await ParseErstePdfAsync(client, pdf, account.Id);
 
+        // Assert
         Assert.Equal(ErsteSampleData.OnePageRowCount, secondParsed.Rows.Count);
         Assert.All(secondParsed.Rows, row => Assert.True(row.IsDuplicate));
     }
@@ -1001,6 +1144,7 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_ErstePdfWithTamperedBalance_Returns422WithIntegrityMessageAndNoRows()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "Erste", "111");
@@ -1009,8 +1153,10 @@ public class ImportEndpointsTests
         rows[5] = rows[5] with { Balance = rows[5].Balance + 1.00m };
         var pdf = ErstePdfBuilder.Build(ErsteSampleData.Header, rows, ErsteSampleData.OnePageLayout);
 
+        // Act
         var response = await UploadPdfAsync(client, pdf, account.Id);
 
+        // Assert
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var title = document.RootElement.GetProperty("title").GetString();
@@ -1021,12 +1167,15 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_ErsteChosenWithCorruptPdf_ReturnsOkWithZeroRows()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "Erste", "111");
 
+        // Act
         var response = await UploadPdfAsync(client, PdfBytes, account.Id, bank: "Erste");
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.NotNull(parsed);
@@ -1040,6 +1189,7 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_EachPdfFixtureFamily_AutoDetectsToItsOwnBank()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "Other", "111");
@@ -1054,6 +1204,7 @@ public class ImportEndpointsTests
             ("VeloBank", VeloBankSampleData.BuildMultiPagePdf()),
         };
 
+        // Act & Assert
         foreach (var (bank, pdf) in cases)
         {
             var parsed = await ParseErstePdfAsync(client, pdf, account.Id);
@@ -1067,14 +1218,17 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_MBankCsvIntoAccountHoldingAnOverlappingPdfBatch_WarnsAboutTheOverlap()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
         var userId = await GetUserIdAsync(factory);
         await SeedTransactionsAsync(factory, userId, account.Id, StatementFormat.Pdf, new DateOnly(2026, 8, 3));
 
+        // Act
         var parsed = await ParseMBankCsvAsync(client, account.Id);
 
+        // Assert
         Assert.Equal("mBank", parsed.Bank);
         Assert.Equal(StatementFormat.Csv, parsed.Format);
         Assert.True(parsed.MixedFormatOverlapCount > 0);
@@ -1152,12 +1306,15 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_CsvUpload_ReportsCsvFormatAndNoOverlapWhenAccountIsEmpty()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
+        // Act
         var parsed = await ParseMBankCsvAsync(client, account.Id);
 
+        // Assert
         Assert.Equal(StatementFormat.Csv, parsed.Format);
         Assert.Equal(0, parsed.MixedFormatOverlapCount);
     }
@@ -1165,25 +1322,32 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_VeloBankPdfUpload_ReportsPdfFormat()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "VeloBank", "111");
 
+        // Act
         var parsed = await ParseVeloBankPdfAsync(client, VeloBankSampleData.BuildOnePagePdf(), account.Id);
 
+        // Assert
         Assert.Equal(StatementFormat.Pdf, parsed.Format);
     }
 
     [Fact]
     public async Task Parse_FormatIsSerializedAsAString()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal("Csv", document.RootElement.GetProperty("format").GetString());
     }
@@ -1191,76 +1355,92 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Parse_OtherFormatRowsInsideRange_AreCounted()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
         var userId = await GetUserIdAsync(factory);
         await SeedTransactionsAsync(factory, userId, account.Id, StatementFormat.Pdf, new DateOnly(2026, 8, 2), new DateOnly(2026, 8, 3), new DateOnly(2026, 8, 4));
 
+        // Act
         var parsed = await ParseMBankCsvAsync(client, account.Id);
 
+        // Assert
         Assert.Equal(3, parsed.MixedFormatOverlapCount);
     }
 
     [Fact]
     public async Task Parse_OtherFormatRowsExactlyAtRangeBoundaries_AreCounted()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
         var userId = await GetUserIdAsync(factory);
         await SeedTransactionsAsync(factory, userId, account.Id, StatementFormat.Pdf, FixtureFirstDate, FixtureLastDate);
 
+        // Act
         var parsed = await ParseMBankCsvAsync(client, account.Id);
 
+        // Assert
         Assert.Equal(2, parsed.MixedFormatOverlapCount);
     }
 
     [Fact]
     public async Task Parse_OtherFormatRowsOutsideRange_AreNotCounted()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
         var userId = await GetUserIdAsync(factory);
         await SeedTransactionsAsync(factory, userId, account.Id, StatementFormat.Pdf, FixtureFirstDate.AddDays(-1), FixtureLastDate.AddDays(1));
 
+        // Act
         var parsed = await ParseMBankCsvAsync(client, account.Id);
 
+        // Assert
         Assert.Equal(0, parsed.MixedFormatOverlapCount);
     }
 
     [Fact]
     public async Task Parse_SameFormatRowsInsideRange_AreNotCounted()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
         var userId = await GetUserIdAsync(factory);
         await SeedTransactionsAsync(factory, userId, account.Id, StatementFormat.Csv, new DateOnly(2026, 8, 2), new DateOnly(2026, 8, 3));
 
+        // Act
         var parsed = await ParseMBankCsvAsync(client, account.Id);
 
+        // Assert
         Assert.Equal(0, parsed.MixedFormatOverlapCount);
     }
 
     [Fact]
     public async Task Parse_ManualEntriesInsideRange_AreNotCounted()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
         var userId = await GetUserIdAsync(factory);
         await SeedTransactionsAsync(factory, userId, account.Id, null, new DateOnly(2026, 8, 2), new DateOnly(2026, 8, 3));
 
+        // Act
         var parsed = await ParseMBankCsvAsync(client, account.Id);
 
+        // Assert
         Assert.Equal(0, parsed.MixedFormatOverlapCount);
     }
 
     [Fact]
     public async Task Parse_OtherFormatRowsOnAnotherAccountOfTheSameUser_AreNotCounted()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -1268,28 +1448,34 @@ public class ImportEndpointsTests
         var userId = await GetUserIdAsync(factory);
         await SeedTransactionsAsync(factory, userId, otherAccount.Id, StatementFormat.Pdf, new DateOnly(2026, 8, 2), new DateOnly(2026, 8, 3));
 
+        // Act
         var parsed = await ParseMBankCsvAsync(client, account.Id);
 
+        // Assert
         Assert.Equal(0, parsed.MixedFormatOverlapCount);
     }
 
     [Fact]
     public async Task Parse_OtherFormatRowsOfAnotherUser_AreNotCounted()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
         var otherUsersAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "333");
         await SeedTransactionsAsync(factory, otherUsersAccount.UserId, otherUsersAccount.Id, StatementFormat.Pdf, new DateOnly(2026, 8, 2), new DateOnly(2026, 8, 3));
 
+        // Act
         var parsed = await ParseMBankCsvAsync(client, account.Id);
 
+        // Assert
         Assert.Equal(0, parsed.MixedFormatOverlapCount);
     }
 
     [Fact]
     public async Task Parse_ZeroParsedRows_ReportsZeroOverlap()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
@@ -1298,8 +1484,11 @@ public class ImportEndpointsTests
 
         // Manual-bank fallback on unrecognizable content: the mBank CSV parser finds no rows.
         using var request = await BuildUploadRequestAsync(client, Encoding.UTF8.GetBytes("not,a,recognizable,export\r\n1,2,3,4\r\n"), account.Id, bank: "mBank");
+
+        // Act
         var response = await client.SendAsync(request);
 
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.NotNull(parsed);
@@ -1328,12 +1517,15 @@ public class ImportEndpointsTests
     [InlineData("Csv", StatementFormat.Csv)]
     public async Task Commit_StoresTheSentSourceFormatOnTheBatch(string sent, StatementFormat expected)
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
+        // Act
         var summary = await CommitSingleRowAsync(client, account.Id, sent, includeSourceFormat: true);
 
+        // Assert
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var batch = await db.ImportBatches.SingleAsync(b => b.Id == summary.ImportBatchId);
@@ -1343,12 +1535,15 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Commit_WithoutSourceFormat_DefaultsToCsv()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
+        // Act
         var summary = await CommitSingleRowAsync(client, account.Id, null, includeSourceFormat: false);
 
+        // Assert
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var batch = await db.ImportBatches.SingleAsync(b => b.Id == summary.ImportBatchId);
@@ -1358,24 +1553,30 @@ public class ImportEndpointsTests
     [Fact]
     public async Task Commit_Then_ParseOtherFormat_WarnsAboutTheCommittedBatch()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
         // A Pdf batch with one row on 2026-08-01, then the mBank CSV (range 08-01..08-05).
         await CommitSingleRowAsync(client, account.Id, "Pdf", includeSourceFormat: true);
+
+        // Act
         var parsed = await ParseMBankCsvAsync(client, account.Id);
 
+        // Assert
         Assert.Equal(1, parsed.MixedFormatOverlapCount);
     }
 
     [Fact]
     public async Task Commit_WithoutAntiforgeryToken_ReturnsBadRequest()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
         var account = await CreateAccountAsync(client, "mBank", "111");
 
+        // Act
         var response = await client.PostAsJsonAsync("/api/import/commit", new
         {
             AccountId = account.Id,
@@ -1383,6 +1584,7 @@ public class ImportEndpointsTests
             Rows = Array.Empty<object>(),
         });
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 }

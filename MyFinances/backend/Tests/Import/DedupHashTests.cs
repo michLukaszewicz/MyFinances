@@ -14,54 +14,78 @@ public class DedupHashTests
     [Fact]
     public void ComputeHash_ReturnsIdenticalHash_ForIdenticalInputs()
     {
+        // Arrange
         var first = DedupHash.ComputeHash(UserId, Date, Amount, Description, AccountId);
+
+        // Act
         var second = DedupHash.ComputeHash(UserId, Date, Amount, Description, AccountId);
 
+        // Assert
         Assert.Equal(first, second);
     }
 
     [Fact]
     public void ComputeHash_Differs_WhenUserIdDiffers()
     {
+        // Arrange
         var baseline = DedupHash.ComputeHash(UserId, Date, Amount, Description, AccountId);
+
+        // Act
         var other = DedupHash.ComputeHash(Guid.Parse("22222222-2222-2222-2222-222222222222"), Date, Amount, Description, AccountId);
 
+        // Assert
         Assert.NotEqual(baseline, other);
     }
 
     [Fact]
     public void ComputeHash_Differs_WhenDateDiffers()
     {
+        // Arrange
         var baseline = DedupHash.ComputeHash(UserId, Date, Amount, Description, AccountId);
+
+        // Act
         var other = DedupHash.ComputeHash(UserId, Date.AddDays(1), Amount, Description, AccountId);
 
+        // Assert
         Assert.NotEqual(baseline, other);
     }
 
     [Fact]
     public void ComputeHash_Differs_WhenAmountDiffers()
     {
+        // Arrange
         var baseline = DedupHash.ComputeHash(UserId, Date, Amount, Description, AccountId);
+
+        // Act
         var other = DedupHash.ComputeHash(UserId, Date, Amount - 1.00m, Description, AccountId);
 
+        // Assert
         Assert.NotEqual(baseline, other);
     }
 
     [Fact]
     public void ComputeHash_Differs_WhenDescriptionDiffers()
     {
+        // Arrange
         var baseline = DedupHash.ComputeHash(UserId, Date, Amount, Description, AccountId);
+
+        // Act
         var other = DedupHash.ComputeHash(UserId, Date, Amount, "OTHER", AccountId);
 
+        // Assert
         Assert.NotEqual(baseline, other);
     }
 
     [Fact]
     public void ComputeHash_Differs_WhenAccountIdDiffers()
     {
+        // Arrange
         var baseline = DedupHash.ComputeHash(UserId, Date, Amount, Description, AccountId);
+
+        // Act
         var other = DedupHash.ComputeHash(UserId, Date, Amount, Description, Guid.Parse("44444444-4444-4444-4444-444444444444"));
 
+        // Assert
         Assert.NotEqual(baseline, other);
     }
 }
