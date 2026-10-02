@@ -204,24 +204,24 @@ None.
 
 #### Automated
 
-- [x] 2.1 New class passes: `dotnet test --filter "FullyQualifiedName~ImportDedupIntegrityTests"` from `MyFinances/backend`
-- [x] 2.2 Whole suite passes: `dotnet test` from `MyFinances/backend`
+- [x] 2.1 New class passes: `dotnet test --filter "FullyQualifiedName~ImportDedupIntegrityTests"` from `MyFinances/backend` — b625cbf
+- [x] 2.2 Whole suite passes: `dotnet test` from `MyFinances/backend` — b625cbf
 
 #### Manual
 
-- [ ] 2.3 Temporarily changing `DedupHash.ComputeHash` makes at least one new test fail; revert afterwards
+- [x] 2.3 Temporarily changing `DedupHash.ComputeHash` makes at least one new test fail; revert afterwards — b625cbf
 
 ### Phase 3: Risk #4 — CSV-vs-PDF overlap with a real paired fixture, and cookbook
 
 #### Automated
 
-- [ ] 3.1 New class passes: `dotnet test --filter "FullyQualifiedName~ImportCrossFormatOverlapTests"` from `MyFinances/backend`
-- [ ] 3.2 Whole suite passes: `dotnet test` from `MyFinances/backend`
+- [x] 3.1 New class passes: `dotnet test --filter "FullyQualifiedName~ImportCrossFormatOverlapTests"` from `MyFinances/backend`
+- [x] 3.2 Whole suite passes: `dotnet test` from `MyFinances/backend`
 
 #### Manual
 
-- [ ] 3.3 Temporarily making the overlap query ignore `SourceFormat` makes the cross-format tests fail; revert afterwards
-- [ ] 3.4 §6.2 in `context/foundation/test-plan.md` reads correctly and references the new test files
+- [x] 3.3 Temporarily making the overlap query ignore `SourceFormat` makes the cross-format tests fail; revert afterwards
+- [x] 3.4 §6.2 in `context/foundation/test-plan.md` reads correctly and references the new test files
 
 ## Amendments (during Phase 2)
 
