@@ -218,21 +218,21 @@ None. First CI in the repo: a PR check, not a required status check until the us
 
 #### Automated
 
-- [x] 1.1 Tool restores: `dotnet tool restore` (from `MyFinances/backend`)
-- [x] 1.2 Stryker version prints: `dotnet stryker --version` (from `MyFinances/backend/Tests`)
-- [x] 1.3 Backend tests still pass: `dotnet test` (from `MyFinances/backend`)
+- [x] 1.1 Tool restores: `dotnet tool restore` (from `MyFinances/backend`) — 8ee975c
+- [x] 1.2 Stryker version prints: `dotnet stryker --version` (from `MyFinances/backend/Tests`) — 8ee975c
+- [x] 1.3 Backend tests still pass: `dotnet test` (from `MyFinances/backend`) — 8ee975c
 
 #### Manual
 
-- [x] 1.4 A mutation run with `--since:main` on a branch with one edited parser file mutates only that file and writes the HTML report
-- [x] 1.5 `git status` shows no `StrykerOutput/` files
+- [x] 1.4 A mutation run with `--since:main` on a branch with one edited parser file mutates only that file and writes the HTML report — 8ee975c
+- [x] 1.5 `git status` shows no `StrykerOutput/` files — 8ee975c
 
 ### Phase 2: GitHub Actions workflow
 
 #### Automated
 
-- [ ] 2.1 Workflow YAML parses: `python -c "import yaml,sys; yaml.safe_load(open('.github/workflows/ci.yml'))"` (from repo root)
-- [ ] 2.2 Backend tests still pass locally: `dotnet test` (from `MyFinances/backend`)
+- [x] 2.1 Workflow YAML parses: `python -c "import yaml,sys; yaml.safe_load(open('.github/workflows/ci.yml'))"` (from repo root)
+- [x] 2.2 Backend tests still pass locally: `dotnet test` (from `MyFinances/backend`)
 
 #### Manual
 
