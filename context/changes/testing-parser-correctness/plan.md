@@ -230,22 +230,22 @@ None. Tests only.
 
 #### Automated
 
-- [x] 2.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`)
-- [x] 2.2 Rejection tests fail when `NumberPattern` is loosened to accept U+2212/NBSP (mutation spot-check, then revert)
+- [x] 2.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`) — 057dda1
+- [x] 2.2 Rejection tests fail when `NumberPattern` is loosened to accept U+2212/NBSP (mutation spot-check, then revert) — 057dda1
 
 #### Manual
 
-- [ ] 2.3 Literal PDF oracles are written from the printed layout, not copied from builder output
-- [ ] 2.4 Characterization tests are clearly named as limitations and say which behavior would justify updating them
+- [x] 2.3 Literal PDF oracles are written from the printed layout, not copied from builder output — 057dda1
+- [x] 2.4 Characterization tests are clearly named as limitations and say which behavior would justify updating them — 057dda1
 
 ### Phase 3: Culture independence
 
 #### Automated
 
-- [ ] 3.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`)
-- [ ] 3.2 Culture test fails if a parser is changed to use `CurrentCulture` (mutation spot-check, then revert)
-- [ ] 3.3 Thread culture is restored after each test (full suite passes in a single run in any order)
+- [x] 3.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`)
+- [x] 3.2 Culture test fails if a parser is changed to use `CurrentCulture` (mutation spot-check, then revert)
+- [x] 3.3 Thread culture is restored after each test (full suite passes in a single run in any order)
 
 #### Manual
 
-- [ ] 3.4 `test-plan.md` Phase 2 row reflects the outcome and remaining limitations
+- [x] 3.4 `test-plan.md` Phase 2 row reflects the outcome and remaining limitations
