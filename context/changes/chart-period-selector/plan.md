@@ -269,9 +269,9 @@ None. No schema change; `currentMonth` on `/api/transactions` is removed and its
 
 #### Automated
 
-- [x] 3.1 Frontend typechecks: `npm run typecheck` (from `MyFinances/frontend`)
-- [x] 3.2 Production build succeeds: `npm run build` (from `MyFinances/frontend`)
-- [x] 3.3 Backend tests still pass: `dotnet test` (from `MyFinances/backend`)
+- [x] 3.1 Frontend typechecks: `npm run typecheck` (from `MyFinances/frontend`) — ee8a66f
+- [x] 3.2 Production build succeeds: `npm run build` (from `MyFinances/frontend`) — ee8a66f
+- [x] 3.3 Backend tests still pass: `dotnet test` (from `MyFinances/backend`) — ee8a66f
 
 #### Manual
 
