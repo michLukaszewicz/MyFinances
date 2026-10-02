@@ -285,6 +285,10 @@ namespace MyFinances.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Bank")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("BankName")
                         .IsRequired()
                         .HasColumnType("text");
