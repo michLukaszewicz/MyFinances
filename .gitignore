@@ -1,3 +1,5 @@
 
 # Stryker.NET mutation reports
 StrykerOutput/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
