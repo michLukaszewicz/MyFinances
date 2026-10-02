@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { apiFetch } from "../lib/api";
+import { apiErrorMessage, apiFetch } from "../lib/api";
+import type { CategoryDto } from "../lib/categories";
 import { periodQuery, type Period } from "../lib/period";
 
 // Mirrors the backend's DashboardContracts.cs CategorySpendDto.
@@ -64,6 +65,10 @@ export function CategorySpendDonut({ kind, period, selectedCategoryId, refreshKe
   const [data, setData] = useState<CategorySpendDto[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Fixed palette slot per category (its position in the shared category list), so colours match the trend chart.
+  const [categories, setCategories] = useState<CategoryDto[]>([]);
+  const periodKey = `${period.from}/${period.to}`;
+  const lastPeriodKey = useRef(periodKey);
   // Read inside the fetch effect without making a selection change re-fetch the chart.
   const selectedRef = useRef(selectedCategoryId);
   selectedRef.current = selectedCategoryId;
@@ -71,6 +76,11 @@ export function CategorySpendDonut({ kind, period, selectedCategoryId, refreshKe
   useEffect(() => {
     let cancelled = false;
     async function load() {
+      if (lastPeriodKey.current !== periodKey) {
+        // Do not show the previous period's slices under the new period label while refetching.
+        lastPeriodKey.current = periodKey;
+        setLoading(true);
+      }
       try {
         const result = await apiFetch<CategorySpendDto[]>(`${copy.endpoint}?${periodQuery(period)}`);
         if (cancelled) return;
@@ -80,8 +90,8 @@ export function CategorySpendDonut({ kind, period, selectedCategoryId, refreshKe
         if (selectedRef.current !== null && !result.some((e) => e.categoryId === selectedRef.current)) {
           onSelectCategory(null, null);
         }
-      } catch {
-        if (!cancelled) setLoadError("Something went wrong loading this chart. Please try again.");
+      } catch (err) {
+        if (!cancelled) setLoadError(await apiErrorMessage(err, "Something went wrong loading this chart. Please try again."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -92,6 +102,24 @@ export function CategorySpendDonut({ kind, period, selectedCategoryId, refreshKe
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey, period.from, period.to]);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch<CategoryDto[]>("/categorization/categories")
+      .then((list) => {
+        if (!cancelled) setCategories(list);
+      })
+      .catch(() => {
+        // Colours fall back to the slice order.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function categorySlot(categoryId: string): number {
+    return categories.findIndex((c) => c.id === categoryId);
+  }
 
   if (loading) {
     return <p className="text-sm text-gray-400">Loading…</p>;
@@ -114,7 +142,7 @@ export function CategorySpendDonut({ kind, period, selectedCategoryId, refreshKe
 
   const chartData = data.map((entry, index) => ({
     ...entry,
-    fill: PALETTE[index % PALETTE.length],
+    fill: PALETTE[(categorySlot(entry.categoryId) >= 0 ? categorySlot(entry.categoryId) : index) % PALETTE.length],
     fillOpacity: selectedCategoryId === null || selectedCategoryId === entry.categoryId ? 1 : 0.35,
   }));
 

@@ -250,6 +250,9 @@ public class CategoryTrendEndpointsTests
     [InlineData("granularity=month&kind=spend&from=2099-03-01&to=2099-03-11")]
     [InlineData("granularity=week&kind=spend&from=2096-01-01&to=2099-03-10")]
     [InlineData("granularity=month&kind=spend&from=2088-01-01&to=2099-03-10")]
+    [InlineData("granularity=month&kind=spend")]
+    [InlineData("granularity=month&kind=spend&from=2099-03-01")]
+    [InlineData("granularity=month&kind=spend&from=not-a-date&to=2099-03-10")]
     public async Task CategoryTrend_WithInvalidParameters_ReturnsBadRequest(string query)
     {
         var (client, _, _, _) = await SetUpAsync(March10);

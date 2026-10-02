@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { apiFetch } from "../lib/api";
+import { apiErrorMessage, apiFetch } from "../lib/api";
 import type { CategoryDto } from "../lib/categories";
 import { toDateInputValue } from "../lib/period";
 
@@ -116,6 +116,8 @@ export function CategoryTrendChart() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [categories, setCategories] = useState<CategoryDto[]>([]);
+  // Colours come from the category list, so hold rendering until it has loaded (or failed) to keep them from shifting.
+  const [categoriesSettled, setCategoriesSettled] = useState(false);
 
   const today = toDateInputValue(new Date());
 
@@ -138,6 +140,8 @@ export function CategoryTrendChart() {
         if (!cancelled) setCategories(list);
       } catch {
         // Colours fall back to the series order; the chart itself does not depend on this list.
+      } finally {
+        if (!cancelled) setCategoriesSettled(true);
       }
     }
     void loadCategories();
@@ -151,6 +155,7 @@ export function CategoryTrendChart() {
     let cancelled = false;
     async function load() {
       setLoading(true);
+      setLoadError(null);
       try {
         const result = await apiFetch<CategoryTrendDto>(
           `/dashboard/category-trend?granularity=${granularity}&kind=${kind}&from=${range.from}&to=${range.to}`,
@@ -161,8 +166,8 @@ export function CategoryTrendChart() {
         // A new kind, range or granularity starts from the highest-spend categories again.
         const top = [...result.series].sort((a, b) => b.total - a.total).slice(0, DEFAULT_SELECTED);
         setSelected(new Set(top.map((s) => s.categoryId)));
-      } catch {
-        if (!cancelled) setLoadError("Something went wrong loading this chart. Please try again.");
+      } catch (err) {
+        if (!cancelled) setLoadError(await apiErrorMessage(err, "Something went wrong loading this chart. Please try again."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -261,13 +266,13 @@ export function CategoryTrendChart() {
 
       {rangeError && <p className="text-center text-sm text-red-400">{rangeError}</p>}
       {!rangeError && loadError && <p className="text-center text-sm text-red-600">{loadError}</p>}
-      {!rangeError && !loadError && loading && <p className="text-center text-sm text-gray-400">Loading…</p>}
+      {!rangeError && !loadError && (loading || !categoriesSettled) && <p className="text-center text-sm text-gray-400">Loading…</p>}
 
-      {!rangeError && !loadError && !loading && data && data.series.length === 0 && (
+      {!rangeError && !loadError && !loading && categoriesSettled && data && data.series.length === 0 && (
         <p className="text-center text-sm text-gray-400">No categorized {kind} in this range.</p>
       )}
 
-      {!rangeError && !loadError && !loading && data && data.series.length > 0 && (
+      {!rangeError && !loadError && !loading && categoriesSettled && data && data.series.length > 0 && (
         <>
           <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1">
             {data.series.map((series, index) => (

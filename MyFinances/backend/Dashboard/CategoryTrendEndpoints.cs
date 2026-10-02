@@ -87,6 +87,7 @@ public static class CategoryTrendEndpoints
             var series = rows
                 .GroupBy(t => t.CategoryId)
                 .OrderBy(g => g.First().Category!.SortOrder)
+                .ThenBy(g => g.First().Category!.Name)
                 .Select(g =>
                 {
                     var amounts = new decimal[buckets.Count];
