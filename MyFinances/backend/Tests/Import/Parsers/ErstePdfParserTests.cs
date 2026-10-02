@@ -472,6 +472,36 @@ public class ErstePdfParserTests
         Assert.Equal(ErsteSampleData.MultiPageRowCount - 1, result.Transactions.Count);
     }
 
+    // Operation dates and amounts as printed in the table of the one-page fixture ("Data operacji"
+    // and "Kwota" columns, newest booking first), written out by hand rather than derived from the
+    // builder's formatting. Row 2 was operated a day before it was booked.
+    [Fact]
+    public void Parse_ReadsEveryOperationDateAndAmount_AsPrintedInTheFixture()
+    {
+        // Arrange
+        (DateOnly Date, decimal Amount)[] printed =
+        [
+            (new DateOnly(2026, 10, 1), -23.40m),
+            (new DateOnly(2026, 9, 30), -12.50m),
+            (new DateOnly(2026, 10, 1), -64.30m),
+            (new DateOnly(2026, 9, 30), -50.00m),
+            (new DateOnly(2026, 9, 30), 29.99m),
+            (new DateOnly(2026, 9, 30), -142.35m),
+            (new DateOnly(2026, 9, 29), -19.99m),
+            (new DateOnly(2026, 9, 29), -19.99m),
+            (new DateOnly(2026, 9, 29), -19.99m),
+            (new DateOnly(2026, 9, 29), 1200.00m),
+            (new DateOnly(2026, 9, 28), -89.99m),
+            (new DateOnly(2026, 9, 28), -158.10m),
+        ];
+
+        // Act
+        var result = Parse(ReadFixture(OnePageFixture));
+
+        // Assert
+        Assert.Equal(printed, result.Transactions.Select(t => (t.Date, t.Amount)).ToArray());
+    }
+
     [Fact]
     public void Parse_Rejects_AnUnknownMonthToken_WithoutADate()
     {
@@ -513,6 +543,51 @@ public class ErstePdfParserTests
 
         // Act & Assert
         AssertRejected(BuildOnePagePdf(WithRow(OnePage, MiddleRow, unreadable)), UnreadableRowCheck, page: 1, operationDate: "30.09.2026");
+    }
+
+    // Characters that look like part of a Polish amount but are not what the parser accepts: the
+    // Unicode minus sign and a dot as the decimal mark. Each must stop the import (the cell is
+    // rejected by the number pattern, before any balance check); none may be read as a wrong number.
+    [Theory]
+    [InlineData("−142,35 PLN")]
+    [InlineData("-142.35 PLN")]
+    public void Parse_Rejects_AnAmountCellWithALookalikeCharacter_InsteadOfReadingAWrongValue(string amountText)
+    {
+        // Arrange
+        var lookalike = OnePage[MiddleRow] with { AmountText = amountText };
+
+        // Act & Assert
+        AssertRejected(BuildOnePagePdf(WithRow(OnePage, MiddleRow, lookalike)), UnreadableRowCheck, page: 1, operationDate: "30.09.2026");
+    }
+
+    [Theory]
+    [InlineData("−1 098,64 PLN")]
+    [InlineData("1 098.64 PLN")]
+    public void Parse_Rejects_ABalanceCellWithALookalikeCharacter_InsteadOfReadingAWrongValue(string balanceText)
+    {
+        // Arrange
+        var lookalike = OnePage[MiddleRow] with { BalanceText = balanceText };
+
+        // Act & Assert
+        AssertRejected(BuildOnePagePdf(WithRow(OnePage, MiddleRow, lookalike)), UnreadableRowCheck, page: 1, operationDate: "30.09.2026");
+    }
+
+    // A no-break space as the thousands separator cannot be rejected by the number pattern: PdfPig
+    // returns it as an ordinary space (the pattern never sees U+00A0), so the cell is read as the
+    // value it prints. Pinned so a change in how the text is extracted shows up as a failing test.
+    [Fact]
+    public void Parse_ReadsANoBreakSpaceThousandsSeparator_AsTheSameValueAsARegularSpace()
+    {
+        // Arrange
+        var nbsp = OnePage[ThousandRow] with { AmountText = "1 200,00 PLN" };
+
+        // Act
+        var result = Parse(BuildOnePagePdf(WithRow(OnePage, ThousandRow, nbsp)));
+
+        // Assert
+        Assert.Equal(1200.00m, result.Transactions[ThousandRow].Amount);
+        Assert.Equal(new DateOnly(2026, 9, 29), result.Transactions[ThousandRow].Date);
+        Assert.Equal(0, result.SkippedErrorCount);
     }
 
     [Fact]

@@ -1037,6 +1037,29 @@ public class ImportEndpointsTests
         var title = document.RootElement.GetProperty("title").GetString();
         Assert.StartsWith("mBank statement rejected", title);
         Assert.False(document.RootElement.TryGetProperty("rows", out _));
+        Assert.Empty(await ImportTestHelpers.GetStoredAsync(factory, account.Id));
+    }
+
+    [Fact]
+    public async Task Parse_MBankPdfWithTamperedClosingBalance_Returns422AndStoresNothing()
+    {
+        // Arrange
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        var rows = MBankSampleData.TwoPageRows;
+        var layout = MBankSampleData.TwoPageLayout with { ClosingBalanceOverride = rows[^1].Balance + 10m };
+        var pdf = MBankPdfBuilder.Build(MBankSampleData.Header, MBankSampleData.OpeningBalance, rows, layout);
+
+        // Act
+        var response = await UploadPdfAsync(client, pdf, account.Id);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.StartsWith("mBank statement rejected", document.RootElement.GetProperty("title").GetString());
+        Assert.Empty(await ImportTestHelpers.GetStoredAsync(factory, account.Id));
     }
 
     [Fact]
