@@ -10,8 +10,10 @@ using MyFinances.Api.Categorization;
 using MyFinances.Api.Import;
 using MyFinances.Api.Transactions;
 using Xunit;
+using MyFinances.Api.Tests.Auth;
+using MyFinances.Api.Tests.Support;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Transactions;
 
 // Coverage for GET /api/transactions: auth, per-user scoping, ordering, pagination
 // boundaries, and the empty result set. Follows ImportEndpointsTests.cs's conventions

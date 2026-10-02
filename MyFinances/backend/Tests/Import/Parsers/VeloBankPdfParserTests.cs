@@ -7,7 +7,7 @@ using UglyToad.PdfPig.Core;
 using UglyToad.PdfPig.Writer;
 using Xunit;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Import.Parsers;
 
 // Runs the parser over the synthetic VeloBank PDFs (committed fixtures and variants generated in
 // memory by VeloBankPdfBuilder). The real statements contain personal data and are only used for a

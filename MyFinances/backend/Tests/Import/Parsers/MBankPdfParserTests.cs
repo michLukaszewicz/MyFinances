@@ -7,7 +7,7 @@ using UglyToad.PdfPig.Core;
 using UglyToad.PdfPig.Writer;
 using Xunit;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Import.Parsers;
 
 // Runs the parser over the synthetic mBank PDFs (committed fixtures and variants generated in
 // memory by MBankPdfBuilder). The real statement contains personal data and is only used for a

@@ -2,8 +2,9 @@ using MyFinances.Api.Import;
 using MyFinances.Api.Tests.Support;
 using MyFinances.Api.Transactions;
 using Xunit;
+using MyFinances.Api.Tests.Auth;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Import;
 
 // Cross-format overlap: an mBank PDF and an mBank CSV of the same account describe the same
 // transactions with different descriptions, so dedup cannot match them; the parse response warns

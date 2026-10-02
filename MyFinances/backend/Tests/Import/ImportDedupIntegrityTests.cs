@@ -7,8 +7,9 @@ using MyFinances.Api.Import;
 using MyFinances.Api.Tests.Support;
 using MyFinances.Api.Transactions;
 using Xunit;
+using MyFinances.Api.Tests.Auth;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Import;
 
 // Dedup integrity: re-imports are flagged, skipped rows leave stored data unchanged, and the
 // weak points of the dedup key (date + amount + description + account) are pinned. Expected

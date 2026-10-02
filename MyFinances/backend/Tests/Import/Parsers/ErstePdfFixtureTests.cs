@@ -6,7 +6,7 @@ using UglyToad.PdfPig.Content;
 using UglyToad.PdfPig.Core;
 using Xunit;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Import.Parsers;
 
 // Guards the synthetic Erste PDF fixtures and the generator behind them: they must open with
 // PdfPig, have the measured table shape, and be rejected by the other banks' parsers.

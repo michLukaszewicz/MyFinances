@@ -7,8 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using MyFinances.Api.Auth;
 using MyFinances.Api.Transactions;
 using Xunit;
+using MyFinances.Api.Tests.Auth;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Accounts;
 
 // Phase 3 coverage for AccountEndpoints: reuses AuthApiFactory's WebApplicationFactory +
 // EF Core InMemory swap (same pattern as ImportEndpointsTests).

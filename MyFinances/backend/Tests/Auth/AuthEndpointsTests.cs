@@ -12,7 +12,7 @@ using MyFinances.Api;
 using MyFinances.Api.Auth;
 using Xunit;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Auth;
 
 /// <summary>
 /// Custom factory: swaps the real Npgsql-backed AppDbContext for a uniquely-named

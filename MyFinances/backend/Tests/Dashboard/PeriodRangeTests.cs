@@ -1,7 +1,7 @@
 using MyFinances.Api;
 using Xunit;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Dashboard;
 
 public class PeriodRangeTests
 {

@@ -3,7 +3,7 @@ using MyFinances.Api.Import;
 using MyFinances.Api.Tests.Support;
 using Xunit;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Import.Parsers;
 
 public class MBankCsvParserTests
 {
