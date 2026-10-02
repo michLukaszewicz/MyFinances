@@ -36,12 +36,12 @@ public class ImportEndpointsTests
     // Creates an account for the currently-authenticated user via the real endpoint (matching
     // AccountEndpointsTests' style), so import tests exercise the same accountId the user would
     // actually have in hand.
-    private static async Task<AccountDto> CreateAccountAsync(HttpClient client, string bankName, string accountNumber)
+    private static async Task<AccountDto> CreateAccountAsync(HttpClient client, string bankName, string accountNumber, string? bank = null)
     {
         var token = await GetAntiforgeryTokenAsync(client);
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/accounts/")
         {
-            Content = JsonContent.Create(new AccountWriteRequest(bankName, accountNumber)),
+            Content = JsonContent.Create(new AccountWriteRequest(bankName, accountNumber, bank)),
         };
         request.Headers.Add("X-XSRF-TOKEN", token);
         var response = await client.SendAsync(request);
@@ -168,11 +168,11 @@ public class ImportEndpointsTests
     }
 
     [Fact]
-    public async Task Parse_AccountBankNameDiffersFromDetectedBank_BankMismatchIsTrue()
+    public async Task Parse_AccountBankDiffersFromDetectedBank_BankMismatchIsTrue()
     {
         using var factory = new AuthApiFactory();
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
-        var account = await CreateAccountAsync(client, "Revolut", "111");
+        var account = await CreateAccountAsync(client, "Revolut", "111", "Santander Bank Polska");
 
         using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
         var response = await client.SendAsync(request);
@@ -181,6 +181,36 @@ public class ImportEndpointsTests
         var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.NotNull(parsed);
         Assert.True(parsed!.BankMismatch);
+    }
+
+    [Fact]
+    public async Task Parse_AccountBankIsOther_BankMismatchIsNeverRaised()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "Revolut", "111", "Other");
+
+        using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.False(parsed!.BankMismatch);
+    }
+
+    [Fact]
+    public async Task Parse_AccountLabelIsATypoButBankIsRight_BankMismatchIsFalse()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mbnak glowne", "111", "mBank");
+
+        using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.False(parsed!.BankMismatch);
     }
 
     // Regression test: two stored transactions can legitimately share the same dedup hash
