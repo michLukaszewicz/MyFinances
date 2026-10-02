@@ -1,10 +1,11 @@
+using MyFinances.Api.Tests.Auth;
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using MyFinances.Api.Auth;
 using Xunit;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Support;
 
 // Shared helper for tests that need an authenticated HttpClient against an AuthApiFactory.
 // Extracted from ImportEndpointsTests so TransactionEndpointsTests can reuse it instead of

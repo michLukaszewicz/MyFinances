@@ -7,8 +7,10 @@ using Microsoft.Extensions.DependencyInjection;
 using MyFinances.Api.Dashboard;
 using MyFinances.Api.Transactions;
 using Xunit;
+using MyFinances.Api.Tests.Auth;
+using MyFinances.Api.Tests.Support;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Dashboard;
 
 // Coverage for GET /api/dashboard/category-trend. Dates sit in 2099/2100 with a fake clock because
 // the auth cookie expires 30 days after "now" and the test client drops cookies expired by the real clock.

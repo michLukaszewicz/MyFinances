@@ -9,6 +9,7 @@ using MyFinances.Api.Auth;
 using MyFinances.Api.Import;
 using MyFinances.Api.Transactions;
 using Xunit;
+using MyFinances.Api.Tests.Auth;
 
 namespace MyFinances.Api.Tests.Support;
 

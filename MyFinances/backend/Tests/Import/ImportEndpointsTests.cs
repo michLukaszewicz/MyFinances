@@ -13,8 +13,9 @@ using MyFinances.Api.Import;
 using MyFinances.Api.Tests.Support;
 using MyFinances.Api.Transactions;
 using Xunit;
+using MyFinances.Api.Tests.Auth;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Import;
 
 // Phase 3 smoke coverage for the parse/commit endpoints: reuses AuthApiFactory's
 // WebApplicationFactory + EF Core InMemory swap. Phase 7 adds full fixture-driven

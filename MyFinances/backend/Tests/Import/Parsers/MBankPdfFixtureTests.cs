@@ -5,7 +5,7 @@ using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 using Xunit;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Import.Parsers;
 
 // Guards the synthetic mBank PDF fixtures and the generator behind them: they must open with
 // PdfPig, have the measured table shape, and be rejected by the other banks' parsers.

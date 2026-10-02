@@ -3,7 +3,7 @@ using MyFinances.Api.Categorization;
 using MyFinances.Api.Transactions;
 using Xunit;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Categorization;
 
 // Unit coverage for TransferDetectionService's match predicate, isolated from the HTTP layer
 // via a dedicated EF Core InMemory AppDbContext per test (fresh Guid database name each time).

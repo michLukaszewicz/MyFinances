@@ -1,7 +1,7 @@
 using MyFinances.Api.Import;
 using Xunit;
 
-namespace MyFinances.Api.Tests;
+namespace MyFinances.Api.Tests.Import;
 
 public class DedupHashTests
 {
