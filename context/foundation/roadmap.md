@@ -3,7 +3,7 @@ project: "MyFinances"
 version: 1
 status: draft
 created: 2026-09-22
-updated: 2026-10-01
+updated: 2026-10-02
 prd_version: 3
 main_goal: market-feedback
 top_blocker: time
@@ -22,9 +22,9 @@ milestone_status: open
 
 **M-1: Full MVP spend-insight loop (mBank, Revolut, Erste, VeloBank)** — Status: open
 
-- **Intent:** Deliver the entire MVP scope in `prd.md` v3 — the full import → dedup → categorize → chart → budget/average-deviation loop, across all four banks (VeloBank via PDF statements, the others via CSV) — as one outcome-scoped milestone. The PRD carries no staged "Etap" split (that framing lived only in the earlier shape-notes draft), so all must-have FRs belong to this single milestone. S-12 and S-13 (mBank and Erste PDF import) are optional follow-ups to S-11 and sit outside this milestone's done criterion.
+- **Intent:** Deliver the entire MVP scope in `prd.md` v3 — the full import → dedup → categorize → chart → budget/average-deviation loop, across all four banks (VeloBank via PDF statements, the others via CSV) — as one outcome-scoped milestone. The PRD carries no staged "Etap" split (that framing lived only in the earlier shape-notes draft), so all must-have FRs belong to this single milestone. S-12 (mBank and Erste PDF import) is an optional follow-up to S-11 and sits outside this milestone's done criterion.
 - **Source materials:** `context/foundation/prd.md` (v3), supplemented by `context/foundation/shape-notes.md`'s `## Forward: technical-roadmap` notes (parser architecture, dedup-hash shape, CSV formats to verify).
-- **Done when:** every F-NN and S-NN below is `done`, except the optional S-12 and S-13.
+- **Done when:** every F-NN and S-NN below is `done`, except the optional S-12.
 
 ## Vision recap
 
@@ -52,8 +52,7 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | S-09  | transaction-history-view         | see a chronological list of their imported/manually-entered transactions on the dashboard (date, description, amount, category) | S-01           | FR-011 (partial)              | done |
 | S-10  | account-management                | add/edit/remove their own bank accounts (account number + bank name) via a settings page, and pick from them when manually entering a transaction | F-01           | FR-009, FR-010                | done |
 | S-11  | pdf-statement-import              | import a VeloBank PDF statement through the same import/dedup/categorize/chart loop | S-01           | FR-018                        | in-progress |
-| S-12  | mbank-pdf-import                  | (optional) import an mBank PDF statement as a second format next to the CSV         | S-11           | FR-018 (PDF format)           | proposed |
-| S-13  | erste-pdf-import                  | (optional) import an Erste Bank Polska PDF statement as a second format next to the CSV | S-11       | FR-018 (PDF format)           | proposed |
+| S-12  | pdf-import                        | (optional) import an mBank or Erste Bank Polska PDF statement as a second format next to the CSV | S-11 | FR-018                        | planning |
 
 ## Streams
 
@@ -63,7 +62,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | ------ | ------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------- |
 | A      | Core spend-insight loop         | `F-01` → `S-01` → `S-03` → `S-04` → `S-05` → `S-06` | The main validation path for `main_goal: market-feedback` — auth, import, categorize, chart, then the two comparison signals. |
 | B      | Manual transaction entry        | `S-02`                                          | Joins Stream A at `S-01` — independent of categorization/chart work, can run in parallel. |
-| C      | Bank coverage expansion         | `S-07` → `S-08` → `S-11` (→ `S-12`, `S-13` optional) | Joins Stream A at `S-01` — Revolut/Erste import, then VeloBank PDF import (`S-11`, which replaces Revolut as the next bank to add — no Revolut sample available). `S-08` no longer waits for `S-07` — the PRD FR-003 sequencing gate was waived by the user on 2026-10-01. `S-12`/`S-13` add the PDF format for mBank/Erste and are optional. |
+| C      | Bank coverage expansion         | `S-07` → `S-08` → `S-11` (→ `S-12` optional) | Joins Stream A at `S-01` — Revolut/Erste import, then VeloBank PDF import (`S-11`, which replaces Revolut as the next bank to add — no Revolut sample available). `S-08` no longer waits for `S-07` — the PRD FR-003 sequencing gate was waived by the user on 2026-10-01. `S-12` adds the PDF format for mBank and Erste and is optional. |
 | D      | Transaction visibility           | `S-09`                                          | Joins Stream A at `S-01` — closes the "no history view" gap flagged during S-01 manual testing (2026-09-25); independent of categorization/chart work, can run in parallel. |
 | E      | Account management              | `S-10`                                          | Joins Stream A at `S-03` — S-03's internal-transfer heuristic (FR-009) consumes S-10's account list; only needs F-01, so it can be built in parallel with S-01/S-02/S-07/S-09. |
 
@@ -233,32 +232,18 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** First bank imported only through PDF — row boundaries come from the table geometry rather than a delimiter, so a misread row would silently skew totals; mitigated by checking the statement's own running balances and rejecting an inconsistent file. Replaces Revolut as the next bank to add because no Revolut sample is available (S-07 stays `proposed`).
 - **Status:** in-progress
 
-### S-12: mBank PDF import (optional)
+### S-12: mBank and Erste Bank Polska PDF import (optional)
 
-- **Outcome:** user can import an mBank PDF statement as a second input format next to the existing CSV import.
-- **Change ID:** mbank-pdf-import
-- **PRD refs:** FR-018 (PDF format; mBank-specific wording to be added to the PRD when planned)
+- **Outcome:** user can import an mBank or Erste Bank Polska PDF statement as a second input format next to the existing CSV import.
+- **Change ID:** pdf-import
+- **PRD refs:** FR-018
 - **Prerequisites:** S-11 (reuses the format-aware import pipeline and the PDF fixture approach)
-- **Parallel with:** S-13
+- **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:**
-  - Cross-format dedup — a bank with both a CSV and a PDF parser needs a policy for the same transaction arriving through either format (descriptions and therefore dedup hashes differ between the two) — Owner: user. Block: no (decide in `/10x-plan`).
-- **Risk:** Optional and outside M-1's done criterion; the risk is double-counting transactions already imported from CSV.
-- **Status:** proposed
-
-### S-13: Erste Bank Polska PDF import (optional)
-
-- **Outcome:** user can import an Erste Bank Polska PDF statement as a second input format next to the existing CSV import.
-- **Change ID:** erste-pdf-import
-- **PRD refs:** FR-018 (PDF format; Erste-specific wording to be added to the PRD when planned)
-- **Prerequisites:** S-11 (reuses the format-aware import pipeline and the PDF fixture approach)
-- **Parallel with:** S-12
-- **Blockers:** —
-- **Unknowns:**
-  - Cross-format dedup (see S-12) — Owner: user. Block: no (decide in `/10x-plan`).
-  - The Erste PDF is lossy versus its CSV (no booking date, counterparty-only description), so the same transaction hashes differently from the CSV import — Owner: user. Block: no.
-- **Risk:** Optional and outside M-1's done criterion; lossy source data makes cross-format duplicate detection the main risk.
-- **Status:** proposed
+  - Cross-format dedup — decided approach: the import batch records its source format (CSV or PDF), and importing a period already imported from the other format on the same account shows a non-blocking overlap warning instead of attempting cross-format hash matching (descriptions, and therefore dedup hashes, differ between the two formats) — Owner: user. Block: no.
+- **Risk:** Optional and outside M-1's done criterion; the risk is double-counting transactions already imported from CSV. The Erste PDF is lossy versus its CSV (no booking date, counterparty-only description), so the same transaction hashes differently from the CSV import — the overlap warning is the mitigation, not exact matching.
+- **Status:** planning
 
 ## Backlog Handoff
 
@@ -276,8 +261,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-09       | transaction-history-view           | Show transaction history list on the dashboard                     | no                     | Depends on S-01 |
 | S-10       | account-management                 | Add/edit/remove user's own bank accounts, use in manual entry       | yes                    | Depends on F-01 only; unblocks S-03's internal-transfer detection |
 | S-11       | pdf-statement-import               | Import a VeloBank PDF statement through the existing loop           | yes                    | Depends on S-01 (done); already planned |
-| S-12       | mbank-pdf-import                   | Import an mBank PDF statement (optional)                            | no                     | Depends on S-11; optional, outside M-1's done criterion |
-| S-13       | erste-pdf-import                   | Import an Erste Bank Polska PDF statement (optional)                | no                     | Depends on S-11; optional, outside M-1's done criterion |
+| S-12       | pdf-import                         | Import mBank and Erste Bank Polska PDF statements (optional)        | no                     | Depends on S-11; optional, outside M-1's done criterion |
 
 ## Open Roadmap Questions
 
