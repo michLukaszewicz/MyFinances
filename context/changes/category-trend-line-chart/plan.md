@@ -164,9 +164,9 @@ None. No schema change; only a new endpoint and component.
 
 #### Automated
 
-- [x] 1.1 Backend builds and all tests pass: `dotnet test` (from `MyFinances/backend`)
-- [x] 1.2 New `CategoryTrendEndpointsTests` cover bucketing, clipping, exclusions and the 400 cases
-- [x] 1.3 Frontend still typechecks: `npm run typecheck` (from `MyFinances/frontend`)
+- [x] 1.1 Backend builds and all tests pass: `dotnet test` (from `MyFinances/backend`) — 8e22707
+- [x] 1.2 New `CategoryTrendEndpointsTests` cover bucketing, clipping, exclusions and the 400 cases — 8e22707
+- [x] 1.3 Frontend still typechecks: `npm run typecheck` (from `MyFinances/frontend`) — 8e22707
 
 #### Manual
 
@@ -177,9 +177,9 @@ None. No schema change; only a new endpoint and component.
 
 #### Automated
 
-- [ ] 2.1 Frontend typechecks: `npm run typecheck` (from `MyFinances/frontend`)
-- [ ] 2.2 Production build succeeds: `npm run build` (from `MyFinances/frontend`)
-- [ ] 2.3 Backend tests still pass: `dotnet test` (from `MyFinances/backend`)
+- [x] 2.1 Frontend typechecks: `npm run typecheck` (from `MyFinances/frontend`)
+- [x] 2.2 Production build succeeds: `npm run build` (from `MyFinances/frontend`)
+- [x] 2.3 Backend tests still pass: `dotnet test` (from `MyFinances/backend`)
 
 #### Manual
 

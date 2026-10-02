@@ -3,6 +3,7 @@ import { Link, useLoaderData } from "react-router";
 import type { Route } from "./+types/home";
 import { AppHeader } from "../components/AppHeader";
 import { CategorySpendDonut, type FlowKind } from "../components/CategorySpendDonut";
+import { CategoryTrendChart } from "../components/CategoryTrendChart";
 import { apiFetch, ApiError } from "../lib/api";
 import { categoriesForAmount, type CategoryDto } from "../lib/categories";
 import {
@@ -746,6 +747,8 @@ export default function Home() {
               onSelectCategory={(id, name) => handleSelectCategory(id, name, "income")}
             />
           </div>
+
+          <CategoryTrendChart />
 
           {hasTransactions ? (
             <div
