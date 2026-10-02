@@ -87,7 +87,7 @@ public static class ErsteSampleData
             E(10, 1, 3, "Sklep Testowy 12 Testowo", -64.30m),
             E(9, 30, 1, "Jan Próbny", -50.00m),
             new(D(9, 30), 3, D(9, 30),
-                ["DOP. MC 000000******0000 ZWROT PŁATNOŚCI KARTĄ 29.99 PLN", "Sklep Testowy 12 Testowo"], 29.99m),
+                ["DOP. MC ZWROT KARTĄ 29.99 PLN", "Sklep Testowy 12 Testowo"], 29.99m),
             E(9, 30, 2, "Market Przykładowy Testowo", -142.35m),
             // A group of rows sharing date, amount and description.
             E(9, 29, 1, "Sklep Internetowy Testowy", -19.99m),
