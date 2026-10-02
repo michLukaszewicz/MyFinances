@@ -472,27 +472,27 @@ One additive migration: `ImportBatches.SourceFormat`, non-null, default `Csv`, b
 
 #### Automated
 
-- [x] 1.1 Roadmap has no S-13 block: `grep -c "^### S-13:" context/foundation/roadmap.md` prints 0 (from repo root)
-- [x] 1.2 Roadmap indexes the merged change and drops the old IDs: `grep -cE "mbank-pdf-import|erste-pdf-import" context/foundation/roadmap.md` prints 0 and `grep -nF "Change ID:** pdf-import" context/foundation/roadmap.md` shows the slice block (from repo root)
-- [x] 1.3 PRD names the banks in FR-018: `grep -n "FR-018" context/foundation/prd.md` shows mBank and Erste in the requirement text (from repo root)
+- [x] 1.1 Roadmap has no S-13 block: `grep -c "^### S-13:" context/foundation/roadmap.md` prints 0 (from repo root) — 85afcc4
+- [x] 1.2 Roadmap indexes the merged change and drops the old IDs: `grep -cE "mbank-pdf-import|erste-pdf-import" context/foundation/roadmap.md` prints 0 and `grep -nF "Change ID:** pdf-import" context/foundation/roadmap.md` shows the slice block (from repo root) — 85afcc4
+- [x] 1.3 PRD names the banks in FR-018: `grep -n "FR-018" context/foundation/prd.md` shows mBank and Erste in the requirement text (from repo root) — 85afcc4
 
 #### Manual
 
-- [x] 1.4 You reviewed the PRD and roadmap diffs and approve the wording (FR-018, non-goal line, merged S-12, M-1 note).
-- [x] 1.5 GitHub issue #29 carries `status: planning` and the merged title, and #30 is closed with the merge comment (per `context/foundation/lessons.md`).
+- [x] 1.4 You reviewed the PRD and roadmap diffs and approve the wording (FR-018, non-goal line, merged S-12, M-1 note). — 85afcc4
+- [x] 1.5 GitHub issue #29 carries `status: planning` and the merged title, and #30 is closed with the merge comment (per `context/foundation/lessons.md`). — 85afcc4
 
 ### Phase 2: Shared PDF helper
 
 #### Automated
 
-- [ ] 2.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 2.2 VeloBank tests pass unchanged: `dotnet test --filter "VeloBankPdfParserTests|VeloBankPdfFixtureTests"` (from `MyFinances/backend`)
-- [ ] 2.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 2.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
+- [x] 2.2 VeloBank tests pass unchanged: `dotnet test --filter "VeloBankPdfParserTests|VeloBankPdfFixtureTests"` (from `MyFinances/backend`)
+- [x] 2.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
 
 #### Manual
 
-- [ ] 2.4 A temporary local test (not committed) run on the real 90-day and one-year VeloBank PDFs still returns 17 and 62 rows with no integrity exception and identical date, amount and description for the 17 shared rows.
-- [ ] 2.5 The refactor did not add any real personal data to the repository.
+- [x] 2.4 A temporary local test (not committed) run on the real 90-day and one-year VeloBank PDFs still returns 17 and 62 rows with no integrity exception and identical date, amount and description for the 17 shared rows.
+- [x] 2.5 The refactor did not add any real personal data to the repository.
 
 ### Phase 3: Source format on import batches and the overlap warning
 
