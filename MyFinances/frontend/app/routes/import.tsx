@@ -14,6 +14,7 @@ interface AccountDto {
   id: string;
   bankName: string;
   accountNumber: string;
+  bank: string;
 }
 
 // Mirrors the backend's ImportContracts.cs (ImportParseResponse / ImportParseRow /
@@ -125,7 +126,7 @@ export default function Import() {
         method: "POST",
         body: formData,
       });
-      setSelectedAccountBankName(accounts.find((a) => a.id === accountId)?.bankName ?? "");
+      setSelectedAccountBankName(accounts.find((a) => a.id === accountId)?.bank ?? "");
       setResult(response);
       setDecisions(new Map());
     } catch (err) {

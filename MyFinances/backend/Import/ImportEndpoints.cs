@@ -108,7 +108,9 @@ public static class ImportEndpoints
                     existing is null ? null : new ExistingTransactionDto(existing.Date, existing.Description, existing.Amount));
             }).ToList();
 
-            var bankMismatch = !string.Equals(parser.BankName, account.BankName, StringComparison.OrdinalIgnoreCase);
+            // Only the account's dropdown bank is compared; "Other" is never checked.
+            var bankMismatch = account.Bank != PolishBanks.Other
+                && !string.Equals(parser.BankName, account.Bank, StringComparison.OrdinalIgnoreCase);
 
             return Results.Ok(new ImportParseResponse(parser.BankName, bankMismatch, rows, parseResult.SkippedErrorCount));
         });

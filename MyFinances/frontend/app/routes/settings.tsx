@@ -14,6 +14,7 @@ interface AccountDto {
   id: string;
   bankName: string;
   accountNumber: string;
+  bank: string;
 }
 
 async function extractErrorMessage(error: unknown): Promise<string> {
@@ -36,6 +37,8 @@ export default function Settings() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [bankName, setBankName] = useState("");
+  const [bank, setBank] = useState("");
+  const [bankOptions, setBankOptions] = useState<string[]>([]);
   const [accountNumber, setAccountNumber] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -52,6 +55,8 @@ export default function Settings() {
 
   useEffect(() => {
     async function loadInitial() {
+      const options = await apiFetch<{ bankNames: string[] }>("/accounts/banks");
+      setBankOptions(options.bankNames);
       await loadAccounts();
       setLoading(false);
     }
@@ -62,6 +67,7 @@ export default function Settings() {
   function closeForm() {
     setIsFormOpen(false);
     setBankName("");
+    setBank("");
     setAccountNumber("");
     setEditingId(null);
     setFormError(null);
@@ -70,6 +76,7 @@ export default function Settings() {
   function startAdd() {
     setEditingId(null);
     setBankName("");
+    setBank("");
     setAccountNumber("");
     setFormError(null);
     setIsFormOpen(true);
@@ -80,6 +87,7 @@ export default function Settings() {
   function startEdit(account: AccountDto) {
     setEditingId(account.id);
     setBankName(account.bankName);
+    setBank(account.bank);
     setAccountNumber(account.accountNumber);
     setFormError(null);
     setIsFormOpen(true);
@@ -94,7 +102,7 @@ export default function Settings() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!bankName || !accountNumber) return;
+    if (!bankName || !bank || !accountNumber) return;
 
     setFormError(null);
     setSubmitting(true);
@@ -103,13 +111,13 @@ export default function Settings() {
         await apiFetch<AccountDto>(`/accounts/${editingId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ BankName: bankName, AccountNumber: accountNumber }),
+          body: JSON.stringify({ BankName: bankName, Bank: bank, AccountNumber: accountNumber }),
         });
       } else {
         await apiFetch<AccountDto>("/accounts/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ BankName: bankName, AccountNumber: accountNumber }),
+          body: JSON.stringify({ BankName: bankName, Bank: bank, AccountNumber: accountNumber }),
         });
       }
       await loadAccounts();
@@ -142,7 +150,7 @@ export default function Settings() {
 
               <div className="space-y-1">
                 <label htmlFor="bankName" className="text-sm text-gray-200">
-                  Bank
+                  Account name
                 </label>
                 <input
                   id="bankName"
@@ -153,6 +161,32 @@ export default function Settings() {
                   onChange={(e) => setBankName(e.target.value)}
                   className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                 />
+              </div>
+
+              <div className="space-y-1">
+                <label htmlFor="bank" className="text-sm text-gray-200">
+                  Bank
+                </label>
+                <select
+                  id="bank"
+                  required
+                  value={bank}
+                  onChange={(e) => setBank(e.target.value)}
+                  className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                >
+                  <option value="" disabled>
+                    Select a bank…
+                  </option>
+                  {bankOptions.map((b) => (
+                    <option key={b} value={b} className="bg-gray-900">
+                      {b}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400">
+                  Used to warn you when an imported file comes from a different bank. Choose Other
+                  to skip that check.
+                </p>
               </div>
 
               <div className="space-y-1">
@@ -213,6 +247,7 @@ export default function Settings() {
                   >
                     <span>
                       {account.bankName} — {account.accountNumber}
+                      <span className="ml-2 text-xs text-gray-400">({account.bank})</span>
                     </span>
                     <div className="flex items-center gap-2">
                       <button
