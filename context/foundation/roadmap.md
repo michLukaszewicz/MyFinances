@@ -3,7 +3,7 @@ project: "MyFinances"
 version: 1
 status: draft
 created: 2026-09-22
-updated: 2026-10-01
+updated: 2026-10-02
 prd_version: 3
 main_goal: market-feedback
 top_blocker: time
@@ -52,8 +52,8 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | S-11  | pdf-statement-import              | import a VeloBank PDF statement through the same import/dedup/categorize/chart loop | S-01           | FR-018                        | in-progress |
 | S-12  | mbank-pdf-import                  | (optional) import an mBank PDF statement as a second format next to the CSV         | S-11           | FR-018 (PDF format)           | proposed |
 | S-13  | erste-pdf-import                  | (optional) import an Erste Bank Polska PDF statement as a second format next to the CSV | S-11       | FR-018 (PDF format)           | proposed |
-| S-14  | chart-period-selector             | pick the period (last 30/90 days, a month, a custom range) shown by both donut charts, the slice drilldown list and the deviation badge | S-04, S-06 | FR-011, FR-012, FR-013, FR-016 | in-progress |
-| S-15  | category-trend-line-chart         | see a line chart of per-category spend/income over time, bucketed by week, month or year | S-04          | FR-011 (data exploration)     | in-progress |
+| S-14  | chart-period-selector             | pick the period (last 30/90 days, a month, a custom range) shown by both donut charts, the slice drilldown list and the deviation badge | S-04, S-06 | FR-011, FR-012, FR-013, FR-016 | done |
+| S-15  | category-trend-line-chart         | see a line chart of per-category spend/income over time, bucketed by week, month or year | S-04          | FR-011 (data exploration)     | done |
 
 ## Streams
 
@@ -246,7 +246,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Replaces the `currentMonth` flag on `/api/transactions` with `from`/`to` and generalises the deviation calculator beyond the current month; the backend and UI phases should land in one PR.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-15: Category trend line chart
 
@@ -258,7 +258,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** New aggregation endpoint (ISO weeks, clipped edge buckets, 120-bucket cap); the dashboard layout may get crowded next to two donuts and a selector.
-- **Status:** in-progress
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -318,3 +318,5 @@ No cross-cutting open questions at this time — PRD's own `## Open Questions` s
 - **S-10: user can add, edit, and remove their own bank accounts (account number + bank name) via a settings page, and pick from their own accounts when manually entering a transaction, instead of a generic bank-name dropdown.** — Archived 2026-09-28 → `context/archive/2026-09-25-account-management/`. Lesson: —.
 - **S-06: user sees, per category, whether current spend is above, below, or in line with that category's historical average — once at least 1 prior month of history exists; before that, the category shows actual spend with no deviation signal.** — Archived 2026-09-30 → `context/archive/2026-09-30-category-average-deviation-signal/`. Lesson: —.
 - **S-08: user can import an Erste Bank Polska CSV statement through the same loop, completing PLN-only coverage of all three target banks.** — Archived 2026-10-01 → `context/archive/2026-10-01-erste-import/`. Lesson: —.
+- **S-14: user can choose the period shown by the spend and income donut charts — last 30 days, last 90 days, a selected month, or a custom date range — with the slice-click transaction list and the average-deviation badge following the same period.** — Archived 2026-10-02 → `context/archive/2026-10-02-chart-period-selector/`. Lesson: —.
+- **S-15: user sees a line chart on the dashboard with time (week, month or year) on the X axis and the summed spend (or income) of each selected category on the Y axis, one line per category.** — Archived 2026-10-02 → `context/archive/2026-10-02-category-trend-line-chart/`. Lesson: —.
