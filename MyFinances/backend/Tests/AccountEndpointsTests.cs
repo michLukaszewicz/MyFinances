@@ -48,23 +48,23 @@ public class AccountEndpointsTests
 
     private record TokenResponse(string Token);
 
-    private static async Task<HttpResponseMessage> PostAccountAsync(HttpClient client, string bank, string number)
+    private static async Task<HttpResponseMessage> PostAccountAsync(HttpClient client, string bank, string number, string? bankChoice = null)
     {
         var token = await GetAntiforgeryTokenAsync(client);
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/accounts/")
         {
-            Content = JsonContent.Create(new AccountWriteRequest(bank, number)),
+            Content = JsonContent.Create(new AccountWriteRequest(bank, number, bankChoice)),
         };
         request.Headers.Add("X-XSRF-TOKEN", token);
         return await client.SendAsync(request);
     }
 
-    private static async Task<HttpResponseMessage> PutAccountAsync(HttpClient client, Guid id, string bank, string number)
+    private static async Task<HttpResponseMessage> PutAccountAsync(HttpClient client, Guid id, string bank, string number, string? bankChoice = null)
     {
         var token = await GetAntiforgeryTokenAsync(client);
         using var request = new HttpRequestMessage(HttpMethod.Put, $"/api/accounts/{id}")
         {
-            Content = JsonContent.Create(new AccountWriteRequest(bank, number)),
+            Content = JsonContent.Create(new AccountWriteRequest(bank, number, bankChoice)),
         };
         request.Headers.Add("X-XSRF-TOKEN", token);
         return await client.SendAsync(request);
@@ -79,7 +79,7 @@ public class AccountEndpointsTests
     }
 
     [Fact]
-    public async Task GetBanks_ReturnsRegisteredParserNamesPlusOther()
+    public async Task GetBanks_ReturnsPolishBanksThenOther_IncludingEveryParserBank()
     {
         using var factory = new AuthApiFactory();
         using var client = await CreateAuthenticatedClientAsync(factory);
@@ -89,7 +89,71 @@ public class AccountEndpointsTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var payload = await response.Content.ReadFromJsonAsync<BankOptionsResponse>(JsonOptions);
         Assert.NotNull(payload);
-        Assert.Equal(new[] { "mBank", "Erste", "VeloBank", "Other" }, payload!.BankNames);
+        Assert.Equal("Other", payload!.BankNames[^1]);
+        Assert.Equal(payload.BankNames.Count, payload.BankNames.Distinct().Count());
+
+        // The import mismatch check compares parser names with the dropdown value, so each
+        // parser's BankName must be selectable verbatim.
+        using var scope = factory.Services.CreateScope();
+        foreach (var parser in scope.ServiceProvider.GetServices<MyFinances.Api.Import.IBankStatementParser>())
+        {
+            Assert.Contains(parser.BankName, payload.BankNames);
+        }
+    }
+
+    [Fact]
+    public async Task Create_WithBankFromTheList_StoresItAndKeepsTheFreeTextLabel()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await CreateAuthenticatedClientAsync(factory);
+
+        var response = await PostAccountAsync(client, "Konto na codzień", "111", "velobank");
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var dto = await response.Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
+        Assert.Equal("Konto na codzień", dto!.BankName);
+        Assert.Equal("VeloBank", dto.Bank);
+    }
+
+    [Fact]
+    public async Task Create_WithBankNotInTheList_ReturnsBadRequest()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await CreateAuthenticatedClientAsync(factory);
+
+        var response = await PostAccountAsync(client, "My account", "111", "velobandk");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Create_WithoutBank_DerivesItFromTheNameWhenItIsAKnownBank_ElseOther()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await CreateAuthenticatedClientAsync(factory);
+
+        var known = await (await PostAccountAsync(client, "mbank", "111")).Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
+        var unknown = await (await PostAccountAsync(client, "velobandk", "222")).Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
+
+        Assert.Equal("mBank", known!.Bank);
+        Assert.Equal("Other", unknown!.Bank);
+    }
+
+    [Fact]
+    public async Task Update_ChangesTheBank_AndRejectsOneNotInTheList()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await CreateAuthenticatedClientAsync(factory);
+        var created = await (await PostAccountAsync(client, "velobandk", "111")).Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
+
+        var bad = await PutAccountAsync(client, created!.Id, "velobandk", "111", "nope");
+        var ok = await PutAccountAsync(client, created.Id, "velobandk", "111", "VeloBank");
+
+        Assert.Equal(HttpStatusCode.BadRequest, bad.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        var updated = await ok.Content.ReadFromJsonAsync<AccountDto>(JsonOptions);
+        Assert.Equal("VeloBank", updated!.Bank);
+        Assert.Equal("velobandk", updated.BankName);
     }
 
     [Fact]
