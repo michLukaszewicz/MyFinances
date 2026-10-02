@@ -31,6 +31,7 @@ public class TransferDetectionServiceTests
     [Fact]
     public async Task DetectAsync_FlagsBothLegs_ForSameUserOppositeAccountOppositeAmountWithinTolerance()
     {
+        // Arrange
         using var db = CreateDb();
         var userId = Guid.NewGuid();
         var accountA = Guid.NewGuid();
@@ -41,8 +42,10 @@ public class TransferDetectionServiceTests
         db.Transactions.AddRange(t1, t2);
         await db.SaveChangesAsync();
 
+        // Act
         await new TransferDetectionService().DetectAsync(userId, db);
 
+        // Assert
         var reloaded1 = await db.Transactions.FindAsync(t1.Id);
         var reloaded2 = await db.Transactions.FindAsync(t2.Id);
         Assert.True(reloaded1!.IsInternalTransfer);
@@ -52,6 +55,7 @@ public class TransferDetectionServiceTests
     [Fact]
     public async Task DetectAsync_DoesNotFlag_WhenTransactionsBelongToDifferentUsers()
     {
+        // Arrange
         using var db = CreateDb();
         var accountA = Guid.NewGuid();
         var accountB = Guid.NewGuid();
@@ -63,9 +67,11 @@ public class TransferDetectionServiceTests
         db.Transactions.AddRange(t1, t2);
         await db.SaveChangesAsync();
 
+        // Act
         await new TransferDetectionService().DetectAsync(userA, db);
         await new TransferDetectionService().DetectAsync(userB, db);
 
+        // Assert
         var reloaded1 = await db.Transactions.FindAsync(t1.Id);
         var reloaded2 = await db.Transactions.FindAsync(t2.Id);
         Assert.False(reloaded1!.IsInternalTransfer);
@@ -75,6 +81,7 @@ public class TransferDetectionServiceTests
     [Fact]
     public async Task DetectAsync_DoesNotFlag_WhenSameAccount()
     {
+        // Arrange
         using var db = CreateDb();
         var userId = Guid.NewGuid();
         var accountA = Guid.NewGuid();
@@ -84,8 +91,10 @@ public class TransferDetectionServiceTests
         db.Transactions.AddRange(t1, t2);
         await db.SaveChangesAsync();
 
+        // Act
         await new TransferDetectionService().DetectAsync(userId, db);
 
+        // Assert
         var reloaded1 = await db.Transactions.FindAsync(t1.Id);
         var reloaded2 = await db.Transactions.FindAsync(t2.Id);
         Assert.False(reloaded1!.IsInternalTransfer);
@@ -95,6 +104,7 @@ public class TransferDetectionServiceTests
     [Fact]
     public async Task DetectAsync_DoesNotFlag_WhenAmountsAreNotExactOpposites()
     {
+        // Arrange
         using var db = CreateDb();
         var userId = Guid.NewGuid();
         var accountA = Guid.NewGuid();
@@ -105,8 +115,10 @@ public class TransferDetectionServiceTests
         db.Transactions.AddRange(t1, t2);
         await db.SaveChangesAsync();
 
+        // Act
         await new TransferDetectionService().DetectAsync(userId, db);
 
+        // Assert
         var reloaded1 = await db.Transactions.FindAsync(t1.Id);
         var reloaded2 = await db.Transactions.FindAsync(t2.Id);
         Assert.False(reloaded1!.IsInternalTransfer);
@@ -116,6 +128,7 @@ public class TransferDetectionServiceTests
     [Fact]
     public async Task DetectAsync_DoesNotFlag_WhenDatesAreOutsideTolerance()
     {
+        // Arrange
         using var db = CreateDb();
         var userId = Guid.NewGuid();
         var accountA = Guid.NewGuid();
@@ -126,8 +139,10 @@ public class TransferDetectionServiceTests
         db.Transactions.AddRange(t1, t2);
         await db.SaveChangesAsync();
 
+        // Act
         await new TransferDetectionService().DetectAsync(userId, db);
 
+        // Assert
         var reloaded1 = await db.Transactions.FindAsync(t1.Id);
         var reloaded2 = await db.Transactions.FindAsync(t2.Id);
         Assert.False(reloaded1!.IsInternalTransfer);
@@ -137,6 +152,7 @@ public class TransferDetectionServiceTests
     [Fact]
     public async Task DetectAsync_NeverOverwrites_ManuallySetFlag()
     {
+        // Arrange
         using var db = CreateDb();
         var userId = Guid.NewGuid();
         var accountA = Guid.NewGuid();
@@ -149,8 +165,10 @@ public class TransferDetectionServiceTests
         db.Transactions.AddRange(t1, t2);
         await db.SaveChangesAsync();
 
+        // Act
         await new TransferDetectionService().DetectAsync(userId, db);
 
+        // Assert
         var reloaded1 = await db.Transactions.FindAsync(t1.Id);
         var reloaded2 = await db.Transactions.FindAsync(t2.Id);
         // t1 was manually decided, so it stays excluded from pairing (and unmatched) —
@@ -162,6 +180,7 @@ public class TransferDetectionServiceTests
     [Fact]
     public async Task DetectAsync_FirstMatchWins_WhenMultipleCandidatesShareDateAndAmount()
     {
+        // Arrange
         using var db = CreateDb();
         var userId = Guid.NewGuid();
         var accountA = Guid.NewGuid();
@@ -174,8 +193,10 @@ public class TransferDetectionServiceTests
         db.Transactions.AddRange(t1, t2, t3);
         await db.SaveChangesAsync();
 
+        // Act
         await new TransferDetectionService().DetectAsync(userId, db);
 
+        // Assert
         var reloaded1 = await db.Transactions.FindAsync(t1.Id);
         var reloaded2 = await db.Transactions.FindAsync(t2.Id);
         var reloaded3 = await db.Transactions.FindAsync(t3.Id);

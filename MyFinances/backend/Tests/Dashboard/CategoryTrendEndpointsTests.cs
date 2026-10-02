@@ -85,25 +85,31 @@ public class CategoryTrendEndpointsTests
     [Fact]
     public async Task CategoryTrend_WithoutAuthCookie_ReturnsUnauthorized()
     {
+        // Arrange
         using var factory = new AuthApiFactory();
         using var client = factory.CreateClient();
 
+        // Act
         var response = await client.GetAsync("/api/dashboard/category-trend?granularity=month&kind=spend&from=2099-01-01&to=2099-03-01");
 
+        // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
     public async Task CategoryTrend_Month_SumsPerBucketAndZeroFillsEmptyOnes()
     {
+        // Arrange
         var (client, factory, userId, accountId) = await SetUpAsync(March10);
         using var _ = client;
         await SeedAsync(factory, userId, accountId, new DateOnly(2099, 1, 5), -10m, GroceriesId);
         await SeedAsync(factory, userId, accountId, new DateOnly(2099, 1, 31), -5m, GroceriesId);
         await SeedAsync(factory, userId, accountId, new DateOnly(2099, 3, 1), -20m, GroceriesId);
 
+        // Act
         var trend = await GetTrendAsync(client, "granularity=month&kind=spend&from=2099-01-01&to=2099-03-10");
 
+        // Assert
         Assert.Equal(3, trend.Buckets.Count);
         Assert.Equal(new DateOnly(2099, 2, 1), trend.Buckets[1].Start);
         Assert.Equal(new DateOnly(2099, 2, 28), trend.Buckets[1].End);
@@ -116,6 +122,7 @@ public class CategoryTrendEndpointsTests
     [Fact]
     public async Task CategoryTrend_Week_StartsOnMondayAndSpansTheYearBoundary()
     {
+        // Arrange
         var (client, factory, userId, accountId) = await SetUpAsync(Jan20);
         using var _ = client;
         // 2099-12-28 and 2100-01-04 are Mondays; the first week straddles New Year.
@@ -123,8 +130,10 @@ public class CategoryTrendEndpointsTests
         await SeedAsync(factory, userId, accountId, new DateOnly(2100, 1, 3), -7m, GroceriesId);
         await SeedAsync(factory, userId, accountId, new DateOnly(2100, 1, 4), -11m, GroceriesId);
 
+        // Act
         var trend = await GetTrendAsync(client, "granularity=week&kind=spend&from=2099-12-28&to=2100-01-10");
 
+        // Assert
         Assert.Equal(2, trend.Buckets.Count);
         Assert.Equal(new DateOnly(2099, 12, 28), trend.Buckets[0].Start);
         Assert.Equal(new DateOnly(2100, 1, 3), trend.Buckets[0].End);
@@ -134,6 +143,7 @@ public class CategoryTrendEndpointsTests
     [Fact]
     public async Task CategoryTrend_EdgeBucketsAreClippedToTheRange()
     {
+        // Arrange
         var (client, factory, userId, accountId) = await SetUpAsync(Jan20);
         using var _ = client;
         await SeedAsync(factory, userId, accountId, new DateOnly(2099, 12, 28), -100m, GroceriesId); // before `from`
@@ -141,8 +151,10 @@ public class CategoryTrendEndpointsTests
         await SeedAsync(factory, userId, accountId, new DateOnly(2100, 1, 6), -4m, GroceriesId);
         await SeedAsync(factory, userId, accountId, new DateOnly(2100, 1, 8), -100m, GroceriesId); // after `to`
 
+        // Act
         var trend = await GetTrendAsync(client, "granularity=week&kind=spend&from=2099-12-30&to=2100-01-07");
 
+        // Assert
         Assert.Equal(new DateOnly(2099, 12, 30), trend.Buckets[0].Start);
         Assert.Equal(new DateOnly(2100, 1, 7), trend.Buckets[^1].End);
         Assert.Equal(7m, Assert.Single(trend.Series).Total);
@@ -151,14 +163,17 @@ public class CategoryTrendEndpointsTests
     [Fact]
     public async Task CategoryTrend_Year_GroupsByCalendarYear()
     {
+        // Arrange
         var (client, factory, userId, accountId) = await SetUpAsync(Jan20);
         using var _ = client;
         await SeedAsync(factory, userId, accountId, new DateOnly(2098, 6, 1), -10m, GroceriesId);
         await SeedAsync(factory, userId, accountId, new DateOnly(2099, 1, 1), -20m, GroceriesId);
         await SeedAsync(factory, userId, accountId, new DateOnly(2099, 12, 31), -30m, GroceriesId);
 
+        // Act
         var trend = await GetTrendAsync(client, "granularity=year&kind=spend&from=2098-01-01&to=2100-01-20");
 
+        // Assert
         Assert.Equal(3, trend.Buckets.Count);
         Assert.Equal(new[] { 10m, 50m, 0m }, Assert.Single(trend.Series).Amounts);
     }
@@ -166,6 +181,7 @@ public class CategoryTrendEndpointsTests
     [Fact]
     public async Task CategoryTrend_ExcludesUncategorizedAndInternalTransfers()
     {
+        // Arrange
         var (client, factory, userId, accountId) = await SetUpAsync(March10);
         using var _ = client;
         var day = new DateOnly(2099, 3, 2);
@@ -173,23 +189,28 @@ public class CategoryTrendEndpointsTests
         await SeedAsync(factory, userId, accountId, day, -300m, GroceriesId, isInternalTransfer: true);
         await SeedAsync(factory, userId, accountId, day, -8m, GroceriesId);
 
+        // Act
         var trend = await GetTrendAsync(client, "granularity=month&kind=spend&from=2099-03-01&to=2099-03-10");
 
+        // Assert
         Assert.Equal(8m, Assert.Single(trend.Series).Total);
     }
 
     [Fact]
     public async Task CategoryTrend_KindSelectsSignAndReportsPositiveMagnitudes()
     {
+        // Arrange
         var (client, factory, userId, accountId) = await SetUpAsync(March10);
         using var _ = client;
         var day = new DateOnly(2099, 3, 2);
         await SeedAsync(factory, userId, accountId, day, -12m, GroceriesId);
         await SeedAsync(factory, userId, accountId, day, 100m, DiningId);
 
+        // Act
         var spend = await GetTrendAsync(client, "granularity=month&kind=spend&from=2099-03-01&to=2099-03-10");
         var income = await GetTrendAsync(client, "granularity=month&kind=income&from=2099-03-01&to=2099-03-10");
 
+        // Assert
         var spendSeries = Assert.Single(spend.Series);
         Assert.Equal(GroceriesId, spendSeries.CategoryId);
         Assert.Equal(12m, spendSeries.Total);
@@ -201,6 +222,7 @@ public class CategoryTrendEndpointsTests
     [Fact]
     public async Task CategoryTrend_OnlyIncludesCallingUsersTransactions()
     {
+        // Arrange
         var (client, factory, userId, accountId) = await SetUpAsync(March10);
         using var _ = client;
         var otherUserId = Guid.NewGuid();
@@ -209,8 +231,10 @@ public class CategoryTrendEndpointsTests
         await SeedAsync(factory, userId, accountId, day, -4m, GroceriesId);
         await SeedAsync(factory, otherUserId, otherAccountId, day, -999m, DiningId);
 
+        // Act
         var trend = await GetTrendAsync(client, "granularity=month&kind=spend&from=2099-03-01&to=2099-03-10");
 
+        // Assert
         var series = Assert.Single(trend.Series);
         Assert.Equal(4m, series.Total);
     }
@@ -218,25 +242,31 @@ public class CategoryTrendEndpointsTests
     [Fact]
     public async Task CategoryTrend_OmitsCategoriesWithNoDataInRange()
     {
+        // Arrange
         var (client, factory, userId, accountId) = await SetUpAsync(March10);
         using var _ = client;
         await SeedAsync(factory, userId, accountId, new DateOnly(2099, 1, 2), -40m, DiningId); // outside range
         await SeedAsync(factory, userId, accountId, new DateOnly(2099, 3, 2), -4m, GroceriesId);
 
+        // Act
         var trend = await GetTrendAsync(client, "granularity=month&kind=spend&from=2099-03-01&to=2099-03-10");
 
+        // Assert
         Assert.DoesNotContain(trend.Series, s => s.CategoryId == DiningId);
     }
 
     [Fact]
     public async Task CategoryTrend_CurrentUnfinishedBucketIsAccepted()
     {
+        // Arrange
         var (client, factory, userId, accountId) = await SetUpAsync(March10);
         using var _ = client;
         await SeedAsync(factory, userId, accountId, new DateOnly(2099, 3, 10), -4m, GroceriesId);
 
+        // Act
         var trend = await GetTrendAsync(client, "granularity=month&kind=spend&from=2099-03-01&to=2099-03-10");
 
+        // Assert
         var bucket = Assert.Single(trend.Buckets);
         Assert.Equal(new DateOnly(2099, 3, 10), bucket.End);
     }
@@ -255,23 +285,29 @@ public class CategoryTrendEndpointsTests
     [InlineData("granularity=month&kind=spend&from=not-a-date&to=2099-03-10")]
     public async Task CategoryTrend_WithInvalidParameters_ReturnsBadRequest(string query)
     {
+        // Arrange
         var (client, _, _, _) = await SetUpAsync(March10);
         using var _c = client;
 
+        // Act
         var response = await client.GetAsync($"/api/dashboard/category-trend?{query}");
 
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task CategoryTrend_ExactlyMaxBuckets_IsAccepted()
     {
+        // Arrange
         var (client, _, _, _) = await SetUpAsync(March10);
         using var _c = client;
 
+        // Act
         // 2089-04 .. 2099-03 is 120 months.
         var trend = await GetTrendAsync(client, "granularity=month&kind=spend&from=2089-04-01&to=2099-03-10");
 
+        // Assert
         Assert.Equal(120, trend.Buckets.Count);
     }
 }
