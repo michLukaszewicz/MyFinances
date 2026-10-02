@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
-using UglyToad.PdfPig;
-using UglyToad.PdfPig.Content;
+using MyFinances.Api.Import.Pdf;
 using UglyToad.PdfPig.Core;
 
 namespace MyFinances.Api.Import;
@@ -51,16 +50,12 @@ public class VeloBankPdfParser(int maxPages = VeloBankPdfParser.DefaultMaxPages)
     private const string BalanceMismatch = "the running balance does not add up";
     private const string CardAmountMismatch = "the card amount in the description differs from the amount column";
 
-    private static readonly byte[] PdfMagic = "%PDF-"u8.ToArray();
-    private static readonly CultureInfo PlPl = CultureInfo.GetCultureInfo("pl-PL");
-
     // Words that page 1 of every VeloBank statement shows: the title, the bank name (footer) and the table header.
     private static readonly string[] RecognitionWords =
         ["Historia", "rachunku", "VeloBank", "TRANSAKCJI", "KSIĘGOWANIA", "KWOTA", "SALDO"];
 
-    // Digit runs are bounded so an absurd number is an unreadable cell, never an OverflowException.
     private static readonly Regex MoneyPattern = new(
-        @"^(?<number>[-+]?(?:[0-9]{1,3}(?: [0-9]{3}){1,5}|[0-9]{1,15}),[0-9]{2}) (?<currency>[A-Z]{3})$",
+        "^(?<number>" + PdfStatementReader.NumberPattern + ") (?<currency>[A-Z]{3})$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     // "Operacja kartą 0000 **** **** 0000 na kwotę 12,34 PLN w <merchant>..." — anchored at the start so a
@@ -106,102 +101,29 @@ public class VeloBankPdfParser(int maxPages = VeloBankPdfParser.DefaultMaxPages)
         return new ParseResult(transactions, rows.Count - transactions.Count);
     }
 
-    // Everything that touches PdfPig sits behind this one catch-all: Open throws on corrupt or
-    // password-protected files, and GetPage/GetWords can throw too (missing font, invalid font data).
-    // Any such failure means "unreadable" (null); only the integrity checks, which run later on the
-    // extracted data, may throw. Never throws, restores a seekable stream's position.
-    private List<PageContent>? TryRead(Stream fileStream, bool allPages)
-    {
-        var startPosition = fileStream.CanSeek ? fileStream.Position : 0;
-        try
-        {
-            using var buffer = new MemoryStream();
-            fileStream.CopyTo(buffer);
-            return Extract(buffer.ToArray(), allPages);
-        }
-        catch (Exception)
-        {
-            return null;
-        }
-        finally
-        {
-            if (fileStream.CanSeek)
-            {
-                fileStream.Position = startPosition;
-            }
-        }
-    }
+    // Page 1 is only recognised as a VeloBank statement when it shows every recognition word.
+    private List<PdfPageContent>? TryRead(Stream fileStream, bool allPages) =>
+        PdfStatementReader.TryRead(fileStream, maxPages, allPages, LooksLikeVeloBankStatement);
 
-    // Opens the PDF from the given byte copy and reads its pages, or returns null when the bytes are
-    // not a PDF, the PDF has too many pages, or page 1 is not a VeloBank statement. Pages after the
-    // first are only read when allPages is set, so recognising an upload stays cheap.
-    private List<PageContent>? Extract(byte[] bytes, bool allPages)
-    {
-        if (!bytes.AsSpan().StartsWith(PdfMagic))
-        {
-            return null;
-        }
+    // Selected by IsFilled and bounding box only: the synthetic fixtures also stroke their
+    // rectangles, the real files do not.
+    private static IEnumerable<PdfRectangle> FilledRectangles(PdfPageContent page) =>
+        page.Shapes.Where(s => s.IsFilled).Select(s => s.Bounds);
 
-        using var document = PdfDocument.Open(bytes);
-        if (document.NumberOfPages < 1 || document.NumberOfPages > maxPages)
-        {
-            return null;
-        }
-
-        var first = ReadPage(document.GetPage(1));
-        if (!LooksLikeVeloBankStatement(first))
-        {
-            return null;
-        }
-
-        var pages = new List<PageContent> { first };
-        if (allPages)
-        {
-            for (var number = 2; number <= document.NumberOfPages; number++)
-            {
-                pages.Add(ReadPage(document.GetPage(number)));
-            }
-        }
-
-        return pages;
-    }
-
-    private static PageContent ReadPage(Page page)
-    {
-        var words = page.GetWords()
-            .Select(w => new PageWord(
-                w.Text,
-                (w.BoundingBox.Left + w.BoundingBox.Right) / 2,
-                (w.BoundingBox.Top + w.BoundingBox.Bottom) / 2,
-                w.Letters.Count > 0 ? w.Letters[0].StartBaseLine.Y : w.BoundingBox.Bottom))
-            .ToList();
-
-        // Selected by IsFilled and bounding box only: the synthetic fixtures also stroke their
-        // rectangles, the real files do not.
-        var filledRectangles = page.Paths
-            .Where(p => p.IsFilled)
-            .Select(p => p.GetBoundingRectangle())
-            .Where(r => r.HasValue)
-            .Select(r => r!.Value)
-            .ToList();
-
-        return new PageContent(page.Number, words, filledRectangles);
-    }
-
-    private static bool LooksLikeVeloBankStatement(PageContent firstPage)
+    private static bool LooksLikeVeloBankStatement(PdfPageContent firstPage)
     {
         var texts = firstPage.Words.Select(w => w.Text).ToHashSet(StringComparer.Ordinal);
         return RecognitionWords.All(texts.Contains);
     }
 
-    private static List<StatementRow> ReadRows(PageContent page) =>
+    private static List<StatementRow> ReadRows(PdfPageContent page) =>
         FindBands(page).Select(band => ReadRow(page.Number, SplitIntoCells(page, band))).ToList();
 
     // Header blocks: five contiguous wide grey cells sharing one top edge (a repeated header block
     // mid-page is just another block, usually with slightly shifted edges).
-    private static List<HeaderBlock> FindHeaderBlocks(PageContent page)
+    private static List<HeaderBlock> FindHeaderBlocks(PdfPageContent page)
     {
-        var cells = page.FilledRectangles
+        var cells = FilledRectangles(page)
             .Where(r => r.Height >= MinHeaderCellHeight && r.Height <= MaxHeaderCellHeight && r.Width >= MinHeaderCellWidth)
             .OrderByDescending(r => r.Top)
             .ToList();
@@ -251,8 +173,8 @@ public class VeloBankPdfParser(int maxPages = VeloBankPdfParser.DefaultMaxPages)
     // One thin filled piece per row spans the first column (the other four columns have their own
     // pieces, and page 1 carries a few full-width rules around the title block). Only the first-column
     // piece is wanted, found by its bounding box against the page's header cells.
-    private static List<PdfRectangle> FindSeparators(PageContent page, IReadOnlyList<HeaderBlock> headers) =>
-        page.FilledRectangles
+    private static List<PdfRectangle> FindSeparators(PdfPageContent page, IReadOnlyList<HeaderBlock> headers) =>
+        FilledRectangles(page)
             .Where(r => r.Height >= MinSeparatorHeight && r.Height <= MaxSeparatorHeight
                 && headers.Any(h => Math.Abs(r.Left - h.Edges[0]) <= EdgeTolerance
                     && Math.Abs(r.Width - (h.Edges[1] - h.Edges[0])) <= EdgeTolerance))
@@ -262,7 +184,7 @@ public class VeloBankPdfParser(int maxPages = VeloBankPdfParser.DefaultMaxPages)
     // band; each separator closes a band at its top edge and the next band starts at its bottom edge.
     // Whatever lies outside a band (title block, header texts, the footer under the last separator)
     // belongs to no row.
-    private static List<Band> FindBands(PageContent page)
+    private static List<Band> FindBands(PdfPageContent page)
     {
         var headers = FindHeaderBlocks(page);
         var dividers = headers.Select(h => new Divider(h.Top, h.Bottom, h))
@@ -289,13 +211,13 @@ public class VeloBankPdfParser(int maxPages = VeloBankPdfParser.DefaultMaxPages)
         return bands;
     }
 
-    private static string[] SplitIntoCells(PageContent page, Band band)
+    private static string[] SplitIntoCells(PdfPageContent page, Band band)
     {
         var inBand = page.Words.Where(w => w.CenterY < band.Top && w.CenterY > band.Bottom).ToList();
         var cells = new string[ColumnCount];
         for (var column = 0; column < ColumnCount; column++)
         {
-            cells[column] = JoinCell(inBand.Where(w => ColumnOf(band.Edges, w.CenterX) == column));
+            cells[column] = PdfStatementReader.JoinCell(inBand.Where(w => ColumnOf(band.Edges, w.CenterX) == column), LineTolerance);
         }
 
         return cells;
@@ -317,26 +239,6 @@ public class VeloBankPdfParser(int maxPages = VeloBankPdfParser.DefaultMaxPages)
         }
 
         return ColumnCount - 1;
-    }
-
-    // Reassembles a cell: words are grouped into lines by baseline (top line first), each line is
-    // read left to right, and everything is joined with single spaces.
-    private static string JoinCell(IEnumerable<PageWord> cellWords)
-    {
-        var lines = new List<List<PageWord>>();
-        foreach (var word in cellWords.OrderByDescending(w => w.Baseline))
-        {
-            if (lines.Count > 0 && lines[^1][0].Baseline - word.Baseline <= LineTolerance)
-            {
-                lines[^1].Add(word);
-            }
-            else
-            {
-                lines.Add([word]);
-            }
-        }
-
-        return string.Join(" ", lines.Select(line => string.Join(" ", line.OrderBy(w => w.CenterX).Select(w => w.Text))));
     }
 
     // A band inside a recognised table that cannot be read is an integrity failure, not a skipped row:
@@ -388,13 +290,10 @@ public class VeloBankPdfParser(int maxPages = VeloBankPdfParser.DefaultMaxPages)
             return false;
         }
 
-        amount = ParseNumber(match.Groups["number"].Value);
+        amount = PdfStatementReader.ParseNumber(match.Groups["number"].Value);
         currency = match.Groups["currency"].Value;
         return true;
     }
-
-    private static decimal ParseNumber(string text) =>
-        decimal.Parse(text.Replace(" ", string.Empty), NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, PlPl);
 
     // Checks run in file order, so the first failure reported is the first one in the statement.
     private static void CheckIntegrity(IReadOnlyList<StatementRow> rows)
@@ -438,26 +337,14 @@ public class VeloBankPdfParser(int maxPages = VeloBankPdfParser.DefaultMaxPages)
             return;
         }
 
-        if (ParseNumber(match.Groups["number"].Value) != Math.Abs(row.Amount))
+        if (PdfStatementReader.ParseNumber(match.Groups["number"].Value) != Math.Abs(row.Amount))
         {
             throw Rejection(CardAmountMismatch, row.Page, row.Date);
         }
     }
 
-    // The message reaches the user as-is: the failing check, the page and (when readable) the row's
-    // transaction date, never an amount, description or name.
-    private static StatementIntegrityException Rejection(string problem, int page, DateOnly? date)
-    {
-        var where = date is { } transactionDate
-            ? $"page {page}, transaction date {transactionDate.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture)}"
-            : $"page {page}";
-        return new StatementIntegrityException(
-            $"VeloBank statement rejected: {problem} ({where}). The PDF may be incomplete, modified or in a layout this app does not support.");
-    }
-
-    private sealed record PageWord(string Text, double CenterX, double CenterY, double Baseline);
-
-    private sealed record PageContent(int Number, IReadOnlyList<PageWord> Words, IReadOnlyList<PdfRectangle> FilledRectangles);
+    private static StatementIntegrityException Rejection(string problem, int page, DateOnly? date) =>
+        PdfStatementReader.Rejection("VeloBank", problem, page, date);
 
     private sealed record HeaderBlock(double Top, double Bottom, double[] Edges);
 
