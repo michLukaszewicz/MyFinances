@@ -1,10 +1,10 @@
 ---
 change_id: account-bank-selection
 title: Account bank dropdown (Polish banks + Other) for the import bank-mismatch check
-status: new
+status: archived
 created: 2026-10-02
 updated: 2026-10-02
-archived_at: null
+archived_at: 2026-10-02T07:29:31Z
 ---
 
 ## Notes
