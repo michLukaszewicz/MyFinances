@@ -12,6 +12,7 @@ public static class ImportServiceCollectionExtensions
         services.AddScoped<IBankStatementParser, MBankCsvParser>();
         services.AddScoped<IBankStatementParser, ErsteCsvParser>();
         services.AddScoped<IBankStatementParser, VeloBankPdfParser>();
+        services.AddScoped<IBankStatementParser, MBankPdfParser>();
         return services;
     }
 }
