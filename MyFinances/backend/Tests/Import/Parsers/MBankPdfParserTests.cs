@@ -244,6 +244,43 @@ public class MBankPdfParserTests
         Assert.Equal(Expected(TwoPage), result.Transactions);
     }
 
+    // Dates and amounts as printed in the table of the committed two-page fixture (booking date
+    // column, "Kwota" column), written out by hand rather than derived from the builder's formatting.
+    [Fact]
+    public void Parse_ReadsEveryBookingDateAndAmount_AsPrintedInTheFixture()
+    {
+        // Arrange
+        (DateOnly Date, decimal Amount)[] printed =
+        [
+            (new DateOnly(2026, 9, 10), -34.20m),
+            (new DateOnly(2026, 9, 10), -12.50m),
+            (new DateOnly(2026, 9, 11), -50.00m),
+            (new DateOnly(2026, 9, 12), -89.99m),
+            (new DateOnly(2026, 9, 12), 25.00m),
+            (new DateOnly(2026, 9, 13), -7.80m),
+            (new DateOnly(2026, 9, 14), -142.35m),
+            (new DateOnly(2026, 9, 14), -23.40m),
+            (new DateOnly(2026, 9, 15), 60.00m),
+            (new DateOnly(2026, 9, 15), -58.10m),
+            (new DateOnly(2026, 9, 16), -19.99m),
+            (new DateOnly(2026, 9, 16), -75.60m),
+            (new DateOnly(2026, 9, 17), 3200.00m),
+            (new DateOnly(2026, 9, 17), -1200.00m),
+            (new DateOnly(2026, 9, 18), -30.00m),
+            (new DateOnly(2026, 9, 19), -310.00m),
+            (new DateOnly(2026, 9, 20), -16.75m),
+            (new DateOnly(2026, 9, 21), -48.30m),
+            (new DateOnly(2026, 9, 22), -102.00m),
+            (new DateOnly(2026, 9, 22), 120.00m),
+        ];
+
+        // Act
+        var result = Parse(ReadFixture(TwoPageFixture));
+
+        // Assert
+        Assert.Equal(printed, result.Transactions.Select(t => (t.Date, t.Amount)).ToArray());
+    }
+
     [Fact]
     public void Parse_ReturnsRowsOldestFirst_WithTheBookingDate()
     {
@@ -489,6 +526,48 @@ public class MBankPdfParserTests
         AssertRejected(BuildTwoPagePdf(TwoPage, layout), SummaryCheck, page: 1, bookingDate: null);
     }
 
+    // What the anchors catch: the statement prints its true closing balance and turnover summary, and
+    // the last row's amount and running balance are altered consistently (+10,00 on both). The
+    // balance chain still adds up, so only the closing balance anchor notices.
+    [Fact]
+    public void Parse_Rejects_AConsistentlyAlteredLastRow_BecauseTheClosingBalanceIsAnchored()
+    {
+        // Arrange
+        var last = TwoPage[^1] with { Amount = TwoPage[^1].Amount + 10m, Balance = TwoPage[^1].Balance + 10m };
+        var rows = TwoPage.Take(TwoPage.Count - 1).Append(last).ToList();
+        var layout = MBankSampleData.TwoPageLayout with
+        {
+            ClosingBalanceOverride = TwoPage[^1].Balance,
+            SummaryOverride = MBankPdfBuilder.ComputeSummary(TwoPage),
+        };
+
+        // Act & Assert
+        AssertRejected(BuildTwoPagePdf(rows, layout), ClosingBalanceCheck, page: 2, bookingDate: null);
+    }
+
+    // What slips through: two offsetting errors. Row 6 (-7,80) is misread as -17,80 and row 7
+    // (-142,35) as -132,35, with the running balance of row 6 lowered by the same 10,00. The chain,
+    // the opening and closing balances, and the turnover counts and sums all still hold, so the
+    // statement is accepted with two wrong amounts. Update this test if the parser starts to
+    // cross-check rows against something other than the chain and the totals (e.g. per-row figures).
+    [Fact]
+    public void Parse_Accepts_TwoOffsettingAmountErrors_KnownLimitation()
+    {
+        // Arrange
+        var rows = TwoPage.ToList();
+        rows[PageOneRow] = rows[PageOneRow] with { Amount = -17.80m, Balance = rows[PageOneRow].Balance - 10m };
+        rows[PageOneRow + 1] = rows[PageOneRow + 1] with { Amount = -132.35m };
+
+        // Act
+        var result = Parse(BuildTwoPagePdf(rows));
+
+        // Assert
+        Assert.Equal(0, result.SkippedErrorCount);
+        Assert.Equal(-17.80m, result.Transactions[PageOneRow].Amount);
+        Assert.Equal(-132.35m, result.Transactions[PageOneRow + 1].Amount);
+        Assert.Equal(TwoPage.Count, result.Transactions.Count);
+    }
+
     [Fact]
     public void Parse_Rejects_AMissingOpeningBalance()
     {
@@ -540,6 +619,51 @@ public class MBankPdfParserTests
 
         // Act & Assert
         AssertRejected(BuildTwoPagePdf(WithRow(PageOneRow, unreadable)), UnreadableRowCheck, page: 1, bookingDate: "13.09.2026");
+    }
+
+    // Characters that look like part of a Polish amount but are not what the parser accepts: the
+    // Unicode minus sign and a dot as the decimal mark. Each must stop the import (the cell is
+    // rejected by the number pattern, before any balance check); none may be read as a wrong number.
+    [Theory]
+    [InlineData("−7,80")]
+    [InlineData("-7.80")]
+    public void Parse_Rejects_AnAmountCellWithALookalikeCharacter_InsteadOfReadingAWrongValue(string amountText)
+    {
+        // Arrange
+        var lookalike = TwoPage[PageOneRow] with { AmountText = amountText };
+
+        // Act & Assert
+        AssertRejected(BuildTwoPagePdf(WithRow(PageOneRow, lookalike)), UnreadableRowCheck, page: 1, bookingDate: "13.09.2026");
+    }
+
+    [Theory]
+    [InlineData("−2 092,20")]
+    [InlineData("2 092.20")]
+    public void Parse_Rejects_ABalanceCellWithALookalikeCharacter_InsteadOfReadingAWrongValue(string balanceText)
+    {
+        // Arrange
+        var lookalike = TwoPage[PageOneRow] with { BalanceText = balanceText };
+
+        // Act & Assert
+        AssertRejected(BuildTwoPagePdf(WithRow(PageOneRow, lookalike)), UnreadableRowCheck, page: 1, bookingDate: "13.09.2026");
+    }
+
+    // A no-break space as the thousands separator cannot be rejected by the number pattern: PdfPig
+    // returns it as an ordinary space (the pattern never sees U+00A0), so the cell is read as the
+    // value it prints. Pinned so a change in how the text is extracted shows up as a failing test.
+    [Fact]
+    public void Parse_ReadsANoBreakSpaceThousandsSeparator_AsTheSameValueAsARegularSpace()
+    {
+        // Arrange
+        var nbsp = TwoPage[IncomingTransferRow] with { AmountText = "3 200,00" };
+
+        // Act
+        var result = Parse(BuildTwoPagePdf(WithRow(IncomingTransferRow, nbsp)));
+
+        // Assert
+        Assert.Equal(3200.00m, result.Transactions[IncomingTransferRow].Amount);
+        Assert.Equal(new DateOnly(2026, 9, 17), result.Transactions[IncomingTransferRow].Date);
+        Assert.Equal(0, result.SkippedErrorCount);
     }
 
     [Fact]
