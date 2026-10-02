@@ -1,10 +1,10 @@
 ---
 change_id: testing-parser-correctness
 title: Parser correctness tests (rollout Phase 2)
-status: implemented
+status: archived
 created: 2026-10-02
 updated: 2026-10-02
-archived_at: null
+archived_at: 2026-10-02T11:19:41Z
 ---
 
 ## Notes
