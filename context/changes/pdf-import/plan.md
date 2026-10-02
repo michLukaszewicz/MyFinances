@@ -543,9 +543,9 @@ One additive migration: `ImportBatches.SourceFormat`, non-null, default `Csv`, b
 
 #### Automated
 
-- [x] 6.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [x] 6.2 Fixture tests pass: `dotnet test --filter ErstePdfFixtureTests` (from `MyFinances/backend`)
-- [x] 6.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 6.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — db84e8b
+- [x] 6.2 Fixture tests pass: `dotnet test --filter ErstePdfFixtureTests` (from `MyFinances/backend`) — db84e8b
+- [x] 6.3 Full suite passes: `dotnet test` (from `MyFinances/backend`) — db84e8b
 
 #### Manual
 
@@ -556,11 +556,11 @@ One additive migration: `ImportBatches.SourceFormat`, non-null, default `Csv`, b
 
 #### Automated
 
-- [ ] 7.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 7.2 Parser tests pass: `dotnet test --filter ErstePdfParserTests` (from `MyFinances/backend`)
-- [ ] 7.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
-- [ ] 7.4 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`)
-- [ ] 7.5 Frontend builds: `npm run build` (from `MyFinances/frontend`)
+- [x] 7.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
+- [x] 7.2 Parser tests pass: `dotnet test --filter ErstePdfParserTests` (from `MyFinances/backend`)
+- [x] 7.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 7.4 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`)
+- [x] 7.5 Frontend builds: `npm run build` (from `MyFinances/frontend`)
 
 #### Manual
 
