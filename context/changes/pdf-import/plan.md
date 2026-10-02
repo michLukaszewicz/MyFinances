@@ -527,10 +527,10 @@ One additive migration: `ImportBatches.SourceFormat`, non-null, default `Csv`, b
 
 #### Automated
 
-- [x] 5.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [x] 5.2 Parser tests pass: `dotnet test --filter MBankPdfParserTests` (from `MyFinances/backend`)
-- [x] 5.3 Import endpoint and account tests pass: `dotnet test --filter "ImportEndpointsTests|AccountEndpointsTests"` (from `MyFinances/backend`)
-- [x] 5.4 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 5.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — bec4f14
+- [x] 5.2 Parser tests pass: `dotnet test --filter MBankPdfParserTests` (from `MyFinances/backend`) — bec4f14
+- [x] 5.3 Import endpoint and account tests pass: `dotnet test --filter "ImportEndpointsTests|AccountEndpointsTests"` (from `MyFinances/backend`) — bec4f14
+- [x] 5.4 Full suite passes: `dotnet test` (from `MyFinances/backend`) — bec4f14
 
 #### Manual
 
@@ -543,9 +543,9 @@ One additive migration: `ImportBatches.SourceFormat`, non-null, default `Csv`, b
 
 #### Automated
 
-- [ ] 6.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 6.2 Fixture tests pass: `dotnet test --filter ErstePdfFixtureTests` (from `MyFinances/backend`)
-- [ ] 6.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 6.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
+- [x] 6.2 Fixture tests pass: `dotnet test --filter ErstePdfFixtureTests` (from `MyFinances/backend`)
+- [x] 6.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
 
 #### Manual
 
