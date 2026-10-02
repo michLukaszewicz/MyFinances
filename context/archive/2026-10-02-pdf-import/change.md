@@ -1,10 +1,10 @@
 ---
 change_id: pdf-import
 title: PDF statement import for mBank and Erste Bank Polska
-status: implemented
+status: archived
 created: 2026-10-02
 updated: 2026-10-02
-archived_at: null
+archived_at: 2026-10-02T07:29:31Z
 ---
 
 ## Notes
