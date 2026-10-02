@@ -11,7 +11,10 @@ public record ImportParseRow(DateOnly Date, string Description, decimal Amount, 
 
 // BankMismatch: true when the detected/selected parser's BankName differs from the chosen
 // account's Bank (never true when that is "Other"). Non-blocking — the caller decides whether to proceed anyway.
-public record ImportParseResponse(string Bank, bool BankMismatch, IReadOnlyList<ImportParseRow> Rows, int SkippedErrorCount);
+// Format: the parser's statement format, echoed back by the client on commit (SourceFormat).
+// MixedFormatOverlapCount: the user's transactions on this account imported from the other format
+// within the parsed rows' date range — a non-blocking warning, since their hashes cannot collide.
+public record ImportParseResponse(string Bank, bool BankMismatch, IReadOnlyList<ImportParseRow> Rows, int SkippedErrorCount, StatementFormat Format, int MixedFormatOverlapCount);
 
 // String-serialized (not the S.T.Json default of numeric) so the wire contract matches the
 // plan's own notation (Decision: Keep|Skip) and stays self-describing for the frontend.
@@ -24,6 +27,7 @@ public enum RowDecision
 
 public record ImportCommitRow(DateOnly Date, string Description, decimal Amount, RowDecision Decision);
 
-public record ImportCommitRequest(Guid AccountId, int SkippedErrorCount, IReadOnlyList<ImportCommitRow> Rows);
+// SourceFormat is optional for older clients (a missing value binds to Csv, the enum's default).
+public record ImportCommitRequest(Guid AccountId, int SkippedErrorCount, IReadOnlyList<ImportCommitRow> Rows, StatementFormat SourceFormat = StatementFormat.Csv);
 
 public record ImportSummaryDto(Guid ImportBatchId, Guid AccountId, DateTime ImportedAtUtc, int ImportedCount, int SkippedDuplicateCount, int SkippedErrorCount);
