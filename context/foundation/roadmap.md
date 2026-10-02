@@ -20,9 +20,9 @@ milestone_status: open
 
 ## Milestone
 
-**M-1: Full MVP spend-insight loop (mBank, Revolut, Erste, VeloBank)** — Status: open
+**M-1: Full MVP spend-insight loop (mBank, Erste, VeloBank)** — Status: open
 
-- **Intent:** Deliver the entire MVP scope in `prd.md` v3 — the full import → dedup → categorize → chart → budget/average-deviation loop, across all four banks (VeloBank via PDF statements, the others via CSV) — as one outcome-scoped milestone. The PRD carries no staged "Etap" split (that framing lived only in the earlier shape-notes draft), so all must-have FRs belong to this single milestone. S-12 and S-13 (mBank and Erste PDF import) are optional follow-ups to S-11 and sit outside this milestone's done criterion.
+- **Intent:** Deliver the entire MVP scope in `prd.md` v3 — the full import → dedup → categorize → chart → average-deviation loop, across the three remaining banks (mBank, Erste, VeloBank; Revolut dropped 2026-10-02) (VeloBank via PDF statements, the others via CSV) — as one outcome-scoped milestone. The PRD carries no staged "Etap" split (that framing lived only in the earlier shape-notes draft), so all must-have FRs belong to this single milestone. S-12 and S-13 (mBank and Erste PDF import) are optional follow-ups to S-11 and sit outside this milestone's done criterion.
 - **Source materials:** `context/foundation/prd.md` (v3), supplemented by `context/foundation/shape-notes.md`'s `## Forward: technical-roadmap` notes (parser architecture, dedup-hash shape, CSV formats to verify).
 - **Done when:** every F-NN and S-NN below is `done`, except the optional S-12 and S-13.
 
@@ -45,15 +45,15 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | S-02  | manual-transaction-entry         | manually add, edit, and delete transactions without creating import duplicates      | S-01           | FR-010                        | done |
 | S-03  | categorization-queue             | categorize queued transactions, with internal transfers auto-flagged (overridable)  | S-01, S-10     | FR-007, FR-009, FR-015, US-01 | done |
 | S-04  | category-spend-donut-chart       | see a donut chart of category spend for the current month, filterable by category   | S-03           | FR-011, FR-012, US-01         | done |
-| S-05  | category-budget-vs-actual        | optionally set a per-category budget and see actual-vs-budget alongside the chart   | S-04           | FR-017                        | proposed |
 | S-06  | category-average-deviation-signal| see a category's spend flagged as above/below/in line with its historical average   | S-04           | FR-013                        | done |
-| S-07  | revolut-import                   | import a Revolut CSV statement through the same import/dedup/categorize/chart loop  | S-01           | FR-003                        | proposed |
 | S-08  | erste-import                     | import an Erste Bank Polska CSV statement through the same loop                     | S-01           | FR-003                        | done |
 | S-09  | transaction-history-view         | see a chronological list of their imported/manually-entered transactions on the dashboard (date, description, amount, category) | S-01           | FR-011 (partial)              | done |
 | S-10  | account-management                | add/edit/remove their own bank accounts (account number + bank name) via a settings page, and pick from them when manually entering a transaction | F-01           | FR-009, FR-010                | done |
 | S-11  | pdf-statement-import              | import a VeloBank PDF statement through the same import/dedup/categorize/chart loop | S-01           | FR-018                        | in-progress |
 | S-12  | mbank-pdf-import                  | (optional) import an mBank PDF statement as a second format next to the CSV         | S-11           | FR-018 (PDF format)           | proposed |
 | S-13  | erste-pdf-import                  | (optional) import an Erste Bank Polska PDF statement as a second format next to the CSV | S-11       | FR-018 (PDF format)           | proposed |
+| S-14  | chart-period-selector             | pick the period (last 30/90 days, a month, a custom range) shown by both donut charts, the slice drilldown list and the deviation badge | S-04, S-06 | FR-011, FR-012, FR-013, FR-016 | in-progress |
+| S-15  | category-trend-line-chart         | see a line chart of per-category spend/income over time, bucketed by week, month or year | S-04          | FR-011 (data exploration)     | in-progress |
 
 ## Streams
 
@@ -61,10 +61,11 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 
 | Stream | Theme                          | Chain                                          | Note                                                                 |
 | ------ | ------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------- |
-| A      | Core spend-insight loop         | `F-01` → `S-01` → `S-03` → `S-04` → `S-05` → `S-06` | The main validation path for `main_goal: market-feedback` — auth, import, categorize, chart, then the two comparison signals. |
+| A      | Core spend-insight loop         | `F-01` → `S-01` → `S-03` → `S-04` → `S-06` | The main validation path for `main_goal: market-feedback` — auth, import, categorize, chart, then the average-deviation signal. |
 | B      | Manual transaction entry        | `S-02`                                          | Joins Stream A at `S-01` — independent of categorization/chart work, can run in parallel. |
-| C      | Bank coverage expansion         | `S-07` → `S-08` → `S-11` (→ `S-12`, `S-13` optional) | Joins Stream A at `S-01` — Revolut/Erste import, then VeloBank PDF import (`S-11`, which replaces Revolut as the next bank to add — no Revolut sample available). `S-08` no longer waits for `S-07` — the PRD FR-003 sequencing gate was waived by the user on 2026-10-01. `S-12`/`S-13` add the PDF format for mBank/Erste and are optional. |
+| C      | Bank coverage expansion         | `S-08` → `S-11` (→ `S-12`, `S-13` optional) | Joins Stream A at `S-01` — Erste import, then VeloBank PDF import (`S-11`). Revolut import (`S-07`) was dropped on 2026-10-02 (parked); the PRD FR-003 sequencing gate on it was waived by the user on 2026-10-01. `S-12`/`S-13` add the PDF format for mBank/Erste and are optional. |
 | D      | Transaction visibility           | `S-09`                                          | Joins Stream A at `S-01` — closes the "no history view" gap flagged during S-01 manual testing (2026-09-25); independent of categorization/chart work, can run in parallel. |
+| F      | Data exploration                | `S-14`, `S-15`                                  | Joins Stream A at `S-04`/`S-06` — added 2026-10-02 in place of the dropped S-05 (budget-vs-actual); the two slices are independent (the line chart has its own range control) and can run in parallel. |
 | E      | Account management              | `S-10`                                          | Joins Stream A at `S-03` — S-03's internal-transfer heuristic (FR-009) consumes S-10's account list; only needs F-01, so it can be built in parallel with S-01/S-02/S-07/S-09. |
 
 ## Baseline
@@ -86,7 +87,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Outcome:** (foundation) user can register and log in with email/password; the session persists across visits; every API endpoint requires auth and scopes data to the logged-in user.
 - **Change ID:** minimal-auth-scaffold
 - **PRD refs:** FR-001, Access Control (flat user model, data scoped per user), NFR (financial data never visible to another user)
-- **Unlocks:** S-01, S-02, S-03, S-04, S-05, S-06, S-07, S-08 — every vertical slice persists or reads user-scoped data, so none can be built safely before this lands.
+- **Unlocks:** S-01, S-02, S-03, S-04, S-06, S-08 — every vertical slice persists or reads user-scoped data, so none can be built safely before this lands.
 - **Prerequisites:** — (Baseline: backend/frontend scaffolds present; auth is the one absent layer blocking everything else.)
 - **Parallel with:** —
 - **Blockers:** —
@@ -115,7 +116,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Change ID:** manual-transaction-entry
 - **PRD refs:** FR-010
 - **Prerequisites:** S-01 (reuses the dedup mechanism established there)
-- **Parallel with:** S-03, S-07
+- **Parallel with:** S-03
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Low risk — extends the dedup mechanism from S-01 to a second entry path rather than building new detection logic.
@@ -127,7 +128,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Change ID:** categorization-queue
 - **PRD refs:** FR-007, FR-009, FR-015, US-01 (When/Then)
 - **Prerequisites:** S-01, S-10 (needs the user's own known-accounts list from S-10 to identify internal transfers)
-- **Parallel with:** S-02, S-07
+- **Parallel with:** S-02
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Internal-transfer auto-detection heuristic needs the user's known accounts to be identifiable across banks — worth confirming the heuristic's accuracy against real data early, since it directly affects chart totals (S-04).
@@ -140,23 +141,11 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Change ID:** category-spend-donut-chart
 - **PRD refs:** FR-011, FR-012, US-01 (Then, Acceptance Criteria)
 - **Prerequisites:** S-03
-- **Parallel with:** S-07
+- **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:** — (S-09, transaction-history-view, has landed and resolved the static empty-state gap this used to track.)
 - **Risk:** This is the slice the PRD's Primary Success Criterion is built around — correctness here depends entirely on S-03's categorization and internal-transfer flagging being right first.
 - **Status:** done
-
-### S-05: Category budget vs. actual
-
-- **Outcome:** user can optionally set a monthly budget per category; when set, actual spend is shown against that budget alongside the average-based signal; categories without a budget show no such comparison and are never prompted to set one.
-- **Change ID:** category-budget-vs-actual
-- **PRD refs:** FR-017 (Secondary Success Criterion)
-- **Prerequisites:** S-04
-- **Parallel with:** S-06
-- **Blockers:** —
-- **Unknowns:** —
-- **Risk:** Purely additive to the chart view — low risk of disrupting the budget-free path, since PRD is explicit that unset-budget categories must never be prompted.
-- **Status:** proposed
 
 ### S-06: Category average-deviation signal
 
@@ -164,24 +153,11 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Change ID:** category-average-deviation-signal
 - **PRD refs:** FR-013 (core Business Logic differentiator)
 - **Prerequisites:** S-04
-- **Parallel with:** S-05
+- **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Can only be verified end-to-end once real usage spans more than 1 month; plan and implement it, but full verification is naturally delayed relative to the other slices.
 - **Status:** done
-
-### S-07: Revolut import
-
-- **Outcome:** user can import a Revolut CSV statement through the same import → dedup → categorize → chart loop already proven for mBank.
-- **Change ID:** revolut-import
-- **PRD refs:** FR-003 (Revolut portion)
-- **Prerequisites:** S-01 (PRD: gated on mBank import working end-to-end)
-- **Parallel with:** S-02, S-03, S-04
-- **Blockers:** —
-- **Unknowns:**
-  - Exact Revolut CSV export format (app vs. web export may differ) — Owner: user. Block: no.
-- **Risk:** Second implementation of the `IBankStatementParser` pattern (per shape-notes) — validates that the parser abstraction generalizes beyond mBank before a third bank is added.
-- **Status:** proposed
 
 ### S-08: Erste Bank Polska import
 
@@ -189,7 +165,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Change ID:** erste-import
 - **PRD refs:** FR-003 (Erste portion)
 - **Prerequisites:** S-01 (the PRD FR-003 gate on Revolut working first was waived by the user on 2026-10-01)
-- **Parallel with:** S-05, S-06
+- **Parallel with:** S-06
 - **Blockers:** —
 - **Unknowns:**
   - Exact Erste CSV export format ("Historia → export", semicolon separator per shape-notes) — Owner: user. Block: no.
@@ -202,7 +178,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Change ID:** transaction-history-view
 - **PRD refs:** FR-011 (partial — the list itself; the category/current-month filter portion of FR-011 stays with S-04, since it depends on categorization)
 - **Prerequisites:** S-01
-- **Parallel with:** S-02, S-03, S-07
+- **Parallel with:** S-02, S-03
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Low risk — read-only listing over data S-01 already persists; no new write paths or dedup logic involved.
@@ -214,7 +190,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Change ID:** account-management
 - **PRD refs:** FR-009 (the "user's own known accounts" concept internal-transfer detection needs), FR-010 (manual-entry integration)
 - **Prerequisites:** F-01 (needs auth/user-scoping; does not touch transaction data, so no dependency on S-01)
-- **Parallel with:** S-01, S-02, S-07, S-09
+- **Parallel with:** S-01, S-02, S-09
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Deferred out of S-02's `/10x-plan` scope (S-02 shipped with a minimal bank-name dropdown instead); sequenced ahead of S-03 because S-03's internal-transfer heuristic (FR-009) needs a stable list of the user's own accounts to match transfers against. S-02 can optionally be revisited later to consume this account list instead of its original dropdown, but that's not required for S-10 to land.
@@ -226,11 +202,11 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Change ID:** pdf-statement-import
 - **PRD refs:** FR-018
 - **Prerequisites:** S-01 (reuses the import and dedup pipeline; adds a format-aware parser selection)
-- **Parallel with:** S-05, S-07
+- **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:**
   - Whether a pending payment and its later booked row carry the same description and amount (a card hold may settle for a different amount) — if not, a payment imported while pending would be counted twice. **Open follow-up (post-merge):** once the bank has booked the two payments that were pending on 2026-10-01, export again and import; both should be flagged as duplicates. If either is not, reopen the pending-row decision — Owner: user. Block: no.
-- **Risk:** First bank imported only through PDF — row boundaries come from the table geometry rather than a delimiter, so a misread row would silently skew totals; mitigated by checking the statement's own running balances and rejecting an inconsistent file. Replaces Revolut as the next bank to add because no Revolut sample is available (S-07 stays `proposed`).
+- **Risk:** First bank imported only through PDF — row boundaries come from the table geometry rather than a delimiter, so a misread row would silently skew totals; mitigated by checking the statement's own running balances and rejecting an inconsistent file. Revolut (S-07) was dropped from the MVP, so VeloBank is the last bank added.
 - **Status:** in-progress
 
 ### S-12: mBank PDF import (optional)
@@ -260,6 +236,30 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Optional and outside M-1's done criterion; lossy source data makes cross-format duplicate detection the main risk.
 - **Status:** proposed
 
+### S-14: Chart period selector
+
+- **Outcome:** user can choose the period shown by the spend and income donut charts — last 30 days, last 90 days, a selected month, or a custom date range — with the slice-click transaction list and the average-deviation badge following the same period.
+- **Change ID:** chart-period-selector
+- **PRD refs:** FR-011, FR-012, FR-013; also covers the parked FR-016 (arbitrary date-range filter) for the charts
+- **Prerequisites:** S-04, S-06
+- **Parallel with:** S-15
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** Replaces the `currentMonth` flag on `/api/transactions` with `from`/`to` and generalises the deviation calculator beyond the current month; the backend and UI phases should land in one PR.
+- **Status:** in-progress
+
+### S-15: Category trend line chart
+
+- **Outcome:** user sees a line chart on the dashboard with time (week, month or year) on the X axis and the summed spend (or income) of each selected category on the Y axis, one line per category.
+- **Change ID:** category-trend-line-chart
+- **PRD refs:** FR-011 (data exploration; not a separate PRD requirement)
+- **Prerequisites:** S-04
+- **Parallel with:** S-14
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** New aggregation endpoint (ISO weeks, clipped edge buckets, 120-bucket cap); the dashboard layout may get crowded next to two donuts and a selector.
+- **Status:** in-progress
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID                        | Suggested issue title                                          | Ready for `/10x-plan` | Notes |
@@ -269,22 +269,25 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-02       | manual-transaction-entry           | Manual transaction add/edit/delete with dedup-hash parity         | no                     | Depends on S-01 |
 | S-03       | categorization-queue               | Categorization queue with internal-transfer auto-flag              | no                     | Depends on S-01, S-10 |
 | S-04       | category-spend-donut-chart         | Donut chart of category spend, current-month filter                | no                     | Depends on S-03 |
-| S-05       | category-budget-vs-actual          | Optional per-category budget vs. actual                            | no                     | Depends on S-04 |
 | S-06       | category-average-deviation-signal  | Historical-average deviation signal per category                   | no                     | Depends on S-04 |
-| S-07       | revolut-import                     | Import Revolut CSV through the existing loop                       | no                     | Depends on S-01 |
-| S-08       | erste-import                       | Import Erste Bank Polska CSV through the existing loop             | no                     | Depends on S-01 (FR-003 gate on S-07 waived 2026-10-01) |
+| S-08       | erste-import                       | Import Erste Bank Polska CSV through the existing loop             | no                     | Depends on S-01 (FR-003 gate on Revolut waived 2026-10-01) |
 | S-09       | transaction-history-view           | Show transaction history list on the dashboard                     | no                     | Depends on S-01 |
 | S-10       | account-management                 | Add/edit/remove user's own bank accounts, use in manual entry       | yes                    | Depends on F-01 only; unblocks S-03's internal-transfer detection |
 | S-11       | pdf-statement-import               | Import a VeloBank PDF statement through the existing loop           | yes                    | Depends on S-01 (done); already planned |
 | S-12       | mbank-pdf-import                   | Import an mBank PDF statement (optional)                            | no                     | Depends on S-11; optional, outside M-1's done criterion |
 | S-13       | erste-pdf-import                   | Import an Erste Bank Polska PDF statement (optional)                | no                     | Depends on S-11; optional, outside M-1's done criterion |
+| S-14       | chart-period-selector              | Period selector for the spend/income donut charts                   | yes                    | Depends on S-04, S-06 (done); planned |
+| S-15       | category-trend-line-chart          | Per-category spend/income line chart by week/month/year             | yes                    | Depends on S-04 (done); planned |
 
 ## Open Roadmap Questions
 
-No cross-cutting open questions at this time — PRD's own `## Open Questions` section is empty ("None outstanding"). The remaining unknowns (exact CSV export formats per bank) are scoped to their individual slices above (S-01, S-07, S-08) and don't block sequencing.
+No cross-cutting open questions at this time — PRD's own `## Open Questions` section is empty ("None outstanding"). The remaining unknowns (exact CSV export formats per bank) are scoped to their individual slices above (S-01, S-08) and don't block sequencing.
 
 ## Parked
 
+- **S-07 / Revolut CSV import (FR-003, Revolut portion)** — Why parked: dropped from the MVP on 2026-10-02 for lack of time (and no Revolut sample available). Not a PRD Non-Goal — PRD v3 FR-003 still lists Revolut and should be updated if this is permanent; can be revived later.
+
+- **S-05 / FR-017 (optional per-category budget vs. actual)** — Why parked: dropped from the MVP on 2026-10-02 for lack of time; effort goes to richer data exploration (period selector on the charts, category trend line chart) instead. Not a PRD Non-Goal — can be revived later.
 - **FR-016 (arbitrary date-range transaction filter)** — Why parked: priority nice-to-have in PRD; the current-month filter (FR-011, folded into S-04) already covers the "audit the chart's numbers" need the PRD calls out.
 - **Open Banking/PSD2 bank API integration** — Why parked: PRD Non-Goal; CSV import only, avoids compliance burden.
 - **Multi-currency support** — Why parked: PRD Non-Goal; PLN-only, non-PLN transactions filtered at import with a skipped-count.
