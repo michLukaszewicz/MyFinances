@@ -1,10 +1,10 @@
 ---
 change_id: homepage-visual-refresh
 title: Visual refresh of the homepage with logo and animation
-status: impl_reviewed
+status: archived
 created: 2026-09-24
-updated: 2026-09-24
-archived_at: null
+updated: 2026-10-02
+archived_at: 2026-10-02T07:29:31Z
 ---
 
 ## Notes
