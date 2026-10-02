@@ -5,6 +5,17 @@ import { AppHeader } from "../components/AppHeader";
 import { CategorySpendDonut, type FlowKind } from "../components/CategorySpendDonut";
 import { apiFetch, ApiError } from "../lib/api";
 import { categoriesForAmount, type CategoryDto } from "../lib/categories";
+import {
+  PRESET_LABELS,
+  defaultSelection,
+  periodQuery,
+  resolvePeriod,
+  toDateInputValue,
+  toMonthInputValue,
+  type Period,
+  type PeriodPreset,
+  type PeriodSelection,
+} from "../lib/period";
 
 const valueProps = [
   {
@@ -87,10 +98,10 @@ function todayDateInputValue(): string {
   return `${now.getFullYear()}-${month}-${day}`;
 }
 
-// Query-string suffix restricting the transaction list to one category in the current month.
-function categoryFilterQuery(categoryId: string | null, kind: FlowKind): string {
+// Query-string suffix restricting the transaction list to one category in the chosen period.
+function categoryFilterQuery(categoryId: string | null, kind: FlowKind, period: Period): string {
   return categoryId
-    ? `&categoryId=${encodeURIComponent(categoryId)}&currentMonth=true&kind=${kind}`
+    ? `&categoryId=${encodeURIComponent(categoryId)}&${periodQuery(period)}&kind=${kind}`
     : "";
 }
 
@@ -168,6 +179,10 @@ export default function Home() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedCategoryName, setSelectedCategoryName] = useState<string | null>(null);
   const [selectedKind, setSelectedKind] = useState<FlowKind>("spend");
+  // Draft is what the selector controls show; `period` is the last valid resolution and drives the
+  // charts and the slice list, so a half-typed custom range never triggers a request.
+  const [periodSelection, setPeriodSelection] = useState<PeriodSelection>(() => defaultSelection());
+  const [period, setPeriod] = useState<Period>(() => resolvePeriod(defaultSelection())!);
   const [filterLoading, setFilterLoading] = useState(false);
   const isFirstFilterRun = useRef(true);
   // Bumped on every filter change so in-flight load-more/refresh responses fetched under the
@@ -190,7 +205,7 @@ export default function Home() {
       setFilterLoading(true);
       try {
         const response = await apiFetch<TransactionListResponseDto>(
-          `/transactions?skip=0&take=${TRANSACTIONS_PAGE_SIZE}${categoryFilterQuery(selectedCategoryId, selectedKind)}`,
+          `/transactions?skip=0&take=${TRANSACTIONS_PAGE_SIZE}${categoryFilterQuery(selectedCategoryId, selectedKind, period)}`,
         );
         if (cancelled) return;
         setItems(response.items);
@@ -310,13 +325,33 @@ export default function Home() {
     setSelectedKind(kind);
   }
 
+  function handlePeriodSelectionChange(next: PeriodSelection) {
+    setPeriodSelection(next);
+    const resolved = resolvePeriod(next);
+    if (resolved && (resolved.from !== period.from || resolved.to !== period.to)) {
+      setPeriod(resolved);
+      // The slice list is scoped to the period, so an active slice selection no longer applies.
+      handleSelectCategory(null, null);
+    }
+  }
+
+  function handlePresetChange(preset: PeriodPreset) {
+    handlePeriodSelectionChange({ ...periodSelection, preset });
+  }
+
+  const todayValue = toDateInputValue(new Date());
+  const periodInputClass =
+    "rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
+  const customRangeInvalid =
+    periodSelection.preset === "custom" && resolvePeriod(periodSelection) === null;
+
   async function handleLoadMore() {
     setLoadMoreError(null);
     setLoadingMore(true);
     const generation = listGeneration.current;
     try {
       const response = await apiFetch<TransactionListResponseDto>(
-        `/transactions?skip=${items.length}&take=${TRANSACTIONS_PAGE_SIZE}${categoryFilterQuery(selectedCategoryId, selectedKind)}`,
+        `/transactions?skip=${items.length}&take=${TRANSACTIONS_PAGE_SIZE}${categoryFilterQuery(selectedCategoryId, selectedKind, period)}`,
       );
       if (generation !== listGeneration.current) return;
       setItems((prev) => [...prev, ...response.items]);
@@ -334,7 +369,7 @@ export default function Home() {
     try {
       const take = Math.max(items.length, TRANSACTIONS_PAGE_SIZE);
       const response = await apiFetch<TransactionListResponseDto>(
-        `/transactions?skip=0&take=${take}${categoryFilterQuery(selectedCategoryId, selectedKind)}`,
+        `/transactions?skip=0&take=${take}${categoryFilterQuery(selectedCategoryId, selectedKind, period)}`,
       );
       if (generation !== listGeneration.current) return;
       setItems(response.items);
@@ -640,15 +675,72 @@ export default function Home() {
             Welcome back, {user.email}
           </h1>
 
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <label htmlFor="periodPreset" className="text-sm text-gray-400">
+              Period
+            </label>
+            <select
+              id="periodPreset"
+              value={periodSelection.preset}
+              onChange={(e) => handlePresetChange(e.target.value as PeriodPreset)}
+              className={periodInputClass}
+            >
+              {(Object.keys(PRESET_LABELS) as PeriodPreset[]).map((preset) => (
+                <option key={preset} value={preset}>
+                  {PRESET_LABELS[preset]}
+                </option>
+              ))}
+            </select>
+            {periodSelection.preset === "month" && (
+              <input
+                type="month"
+                aria-label="Month"
+                value={periodSelection.month}
+                max={toMonthInputValue(new Date())}
+                onChange={(e) => handlePeriodSelectionChange({ ...periodSelection, month: e.target.value })}
+                className={periodInputClass}
+              />
+            )}
+            {periodSelection.preset === "custom" && (
+              <>
+                <input
+                  type="date"
+                  aria-label="From"
+                  value={periodSelection.customFrom}
+                  max={periodSelection.customTo || todayValue}
+                  onChange={(e) => handlePeriodSelectionChange({ ...periodSelection, customFrom: e.target.value })}
+                  className={periodInputClass}
+                />
+                <span className="text-sm text-gray-400">–</span>
+                <input
+                  type="date"
+                  aria-label="To"
+                  value={periodSelection.customTo}
+                  min={periodSelection.customFrom || undefined}
+                  max={todayValue}
+                  onChange={(e) => handlePeriodSelectionChange({ ...periodSelection, customTo: e.target.value })}
+                  className={periodInputClass}
+                />
+              </>
+            )}
+          </div>
+          {customRangeInvalid && (
+            <p className="text-center text-sm text-red-400">
+              Pick a start date on or before the end date, neither in the future.
+            </p>
+          )}
+
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <CategorySpendDonut
               kind="spend"
+              period={period}
               selectedCategoryId={selectedKind === "spend" ? selectedCategoryId : null}
               refreshKey={chartRefreshKey}
               onSelectCategory={(id, name) => handleSelectCategory(id, name, "spend")}
             />
             <CategorySpendDonut
               kind="income"
+              period={period}
               selectedCategoryId={selectedKind === "income" ? selectedCategoryId : null}
               refreshKey={chartRefreshKey}
               onSelectCategory={(id, name) => handleSelectCategory(id, name, "income")}
@@ -665,7 +757,7 @@ export default function Home() {
               {selectedCategoryId && (
                 <div className="flex items-center gap-2 text-sm text-gray-400">
                   <span>
-                    Filtering by: <span className="text-gray-200">{selectedCategoryName}</span> ({selectedKind}) · this month
+                    Filtering by: <span className="text-gray-200">{selectedCategoryName}</span> ({selectedKind}) · {period.label}
                   </span>
                   <button
                     type="button"
@@ -680,7 +772,7 @@ export default function Home() {
               {filterLoading && <p className="text-sm text-gray-400">Loading…</p>}
 
               {!filterLoading && items.length === 0 && (
-                <p className="text-center text-sm text-gray-400">No transactions in this category this month.</p>
+                <p className="text-center text-sm text-gray-400">No transactions in this category for {period.label}.</p>
               )}
 
               <ul className="space-y-2">
