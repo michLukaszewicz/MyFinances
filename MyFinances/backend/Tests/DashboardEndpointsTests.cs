@@ -376,6 +376,135 @@ public class DashboardEndpointsTests
         Assert.False(element.TryGetProperty("deviation", out _));
     }
 
+    private static async Task<HttpResponseMessage> GetPeriodAsync(HttpClient client, string kind, string from, string to) =>
+        await client.GetAsync($"/api/dashboard/category-{kind}?from={from}&to={to}");
+
+    [Fact]
+    public async Task CategorySpend_WithPeriod_IncludesBothEndsAndExcludesOutside()
+    {
+        using var baseFactory = new AuthApiFactory();
+        var factory = WithClock(baseFactory, March10);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var userId = await GetUserIdAsync(factory);
+        var accountId = await SeedAccountAsync(factory, userId, "111");
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 2, 9), -1000m, GroceriesId);
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 2, 10), -1m, GroceriesId);
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 2, 20), -2m, GroceriesId);
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 2, 25), -4m, GroceriesId);
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 2, 26), -1000m, GroceriesId);
+
+        var response = await GetPeriodAsync(client, "spend", "2099-02-10", "2099-02-25");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var item = Assert.Single((await response.Content.ReadFromJsonAsync<List<CategorySpendSignalDto>>(JsonOptions))!);
+        Assert.Equal(7m, item.Amount);
+    }
+
+    [Fact]
+    public async Task CategoryIncome_WithPeriod_FiltersByRange()
+    {
+        using var baseFactory = new AuthApiFactory();
+        var factory = WithClock(baseFactory, March10);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var userId = await GetUserIdAsync(factory);
+        var accountId = await SeedAccountAsync(factory, userId, "111");
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 2, 10), 40m, GroceriesId);
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 3, 2), 900m, GroceriesId);
+
+        var response = await GetPeriodAsync(client, "income", "2099-02-01", "2099-02-28");
+
+        var item = Assert.Single((await response.Content.ReadFromJsonAsync<List<CategorySpendDto>>(JsonOptions))!);
+        Assert.Equal(40m, item.Amount);
+    }
+
+    [Fact]
+    public async Task CategorySpend_WithoutPeriod_EqualsExplicitCurrentMonth()
+    {
+        using var baseFactory = new AuthApiFactory();
+        var factory = WithClock(baseFactory, March10);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var userId = await GetUserIdAsync(factory);
+        var accountId = await SeedAccountAsync(factory, userId, "111");
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 2, 28), -100m, GroceriesId);
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 3, 3), -30m, GroceriesId);
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 3, 25), -12m, GroceriesId);
+
+        var implicitMonth = await client.GetStringAsync("/api/dashboard/category-spend");
+        var explicitMonth = await client.GetStringAsync("/api/dashboard/category-spend?from=2099-03-01&to=2099-03-31");
+
+        Assert.Equal(implicitMonth, explicitMonth);
+        Assert.Contains("42", implicitMonth);
+    }
+
+    [Fact]
+    public async Task CategorySpend_WithInvalidPeriod_ReturnsBadRequest()
+    {
+        using var baseFactory = new AuthApiFactory();
+        var factory = WithClock(baseFactory, March10);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/dashboard/category-spend?from=2099-03-01")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/dashboard/category-spend?to=2099-03-01")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await GetPeriodAsync(client, "spend", "2099-03-05", "2099-03-01")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await GetPeriodAsync(client, "spend", "2099-03-11", "2099-03-20")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await GetPeriodAsync(client, "income", "2099-02-01", "2099-03-20")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await GetPeriodAsync(client, "income", "2099-03-05", "2099-03-01")).StatusCode);
+    }
+
+    [Fact]
+    public async Task CategorySpend_CurrentCalendarMonthWithFutureEnd_CountsFutureDatedRow()
+    {
+        using var baseFactory = new AuthApiFactory();
+        var factory = WithClock(baseFactory, March10);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var userId = await GetUserIdAsync(factory);
+        var accountId = await SeedAccountAsync(factory, userId, "111");
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 3, 28), -9m, GroceriesId);
+
+        var response = await GetPeriodAsync(client, "spend", "2099-03-01", "2099-03-31");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var item = Assert.Single((await response.Content.ReadFromJsonAsync<List<CategorySpendSignalDto>>(JsonOptions))!);
+        Assert.Equal(9m, item.Amount);
+    }
+
+    [Fact]
+    public async Task CategorySpend_PeriodAcrossYearBoundary_SumsBothYears()
+    {
+        using var baseFactory = new AuthApiFactory();
+        var factory = WithClock(baseFactory, new DateTimeOffset(2100, 1, 10, 12, 0, 0, TimeSpan.Zero));
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var userId = await GetUserIdAsync(factory);
+        var accountId = await SeedAccountAsync(factory, userId, "111");
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 12, 20), -5m, GroceriesId);
+        await SeedAsync(factory, userId, accountId, new DateOnly(2100, 1, 5), -6m, GroceriesId);
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 12, 19), -100m, GroceriesId);
+
+        var response = await GetPeriodAsync(client, "spend", "2099-12-20", "2100-01-05");
+
+        var item = Assert.Single((await response.Content.ReadFromJsonAsync<List<CategorySpendSignalDto>>(JsonOptions))!);
+        Assert.Equal(11m, item.Amount);
+    }
+
+    [Fact]
+    public async Task CategorySpend_PeriodIsolatedPerUser()
+    {
+        using var baseFactory = new AuthApiFactory();
+        var factory = WithClock(baseFactory, March10);
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var userId = await GetUserIdAsync(factory);
+        var accountId = await SeedAccountAsync(factory, userId, "111");
+        var otherUserId = Guid.NewGuid();
+        var otherAccountId = await SeedAccountAsync(factory, otherUserId, "222");
+        await SeedAsync(factory, userId, accountId, new DateOnly(2099, 2, 10), -3m, GroceriesId);
+        await SeedAsync(factory, otherUserId, otherAccountId, new DateOnly(2099, 2, 10), -999m, GroceriesId);
+
+        var response = await GetPeriodAsync(client, "spend", "2099-02-01", "2099-02-28");
+
+        var item = Assert.Single((await response.Content.ReadFromJsonAsync<List<CategorySpendSignalDto>>(JsonOptions))!);
+        Assert.Equal(3m, item.Amount);
+    }
+
     [Fact]
     public async Task CategoryIncome_WithoutAuthCookie_ReturnsUnauthorized()
     {

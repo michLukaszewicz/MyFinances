@@ -20,8 +20,10 @@ public static class DashboardEndpoints
             TransferDetectionService transferDetection,
             UserManager<AppUser> userManager,
             ClaimsPrincipal principal,
-            TimeProvider clock) =>
-            GetCategoryTotalsAsync(db, transferDetection, userManager, principal, clock, income: false));
+            TimeProvider clock,
+            DateOnly? from,
+            DateOnly? to) =>
+            GetCategoryTotalsAsync(db, transferDetection, userManager, principal, clock, from, to, income: false));
 
         // Income: positive amounts (salary, refunds, ...), categorized and non-transfer.
         dashboard.MapGet("/category-income", (
@@ -29,8 +31,10 @@ public static class DashboardEndpoints
             TransferDetectionService transferDetection,
             UserManager<AppUser> userManager,
             ClaimsPrincipal principal,
-            TimeProvider clock) =>
-            GetCategoryTotalsAsync(db, transferDetection, userManager, principal, clock, income: true));
+            TimeProvider clock,
+            DateOnly? from,
+            DateOnly? to) =>
+            GetCategoryTotalsAsync(db, transferDetection, userManager, principal, clock, from, to, income: true));
     }
 
     private static async Task<IResult> GetCategoryTotalsAsync(
@@ -39,17 +43,22 @@ public static class DashboardEndpoints
         UserManager<AppUser> userManager,
         ClaimsPrincipal principal,
         TimeProvider clock,
+        DateOnly? from,
+        DateOnly? to,
         bool income)
     {
         var userId = principal.GetUserId(userManager);
 
+        // Read the clock once so `today` and the period can never straddle a boundary.
+        var today = CurrentMonthRange.Today(clock);
+        if (!PeriodRange.TryResolve(from, to, today, out var range, out var error))
+        {
+            return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: error);
+        }
+
         // Transfer detection must run before the query executes (same ordering as
         // CategorizationEndpoints), so IsInternalTransfer is current when we exclude it.
         await transferDetection.DetectAsync(userId, db);
-
-        // Read the clock once so `today` and the month range can never straddle a boundary.
-        var today = CurrentMonthRange.Today(clock);
-        var range = CurrentMonthRange.MonthOf(today);
 
         var rows = await db.Transactions
             .AsNoTracking()

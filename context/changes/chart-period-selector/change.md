@@ -1,7 +1,7 @@
 ---
 change_id: chart-period-selector
 title: Period selector for the existing spend and income donut charts
-status: planned
+status: implementing
 created: 2026-10-02
 updated: 2026-10-02
 archived_at: null
