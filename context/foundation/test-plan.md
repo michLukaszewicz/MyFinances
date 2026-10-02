@@ -66,7 +66,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|----------------|------------|--------|---------------|
-| 1 | Import integrity and dedup | Re-imports and CSV-vs-PDF overlaps never double-count and always surface duplicates | #1, #4 | integration | researched | context/changes/testing-import-integrity-dedup/ |
+| 1 | Import integrity and dedup | Re-imports and CSV-vs-PDF overlaps never double-count and always surface duplicates | #1, #4 | integration | planned | context/changes/testing-import-integrity-dedup/ |
 | 2 | Parser correctness | Parsed amounts and dates equal an independent source, independent of culture | #2 | unit with fixtures | not started | — |
 | 3 | Data ownership | A user can never read or change another user's data | #3 | integration (two users) | not started | — |
 | 4 | Quality-gates wiring | Lock the floor: run the suite automatically in the agent loop and in CI (none exists today) | cross-cutting | gates (hook, CI) | not started | — |
