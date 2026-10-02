@@ -63,7 +63,7 @@ Explicitly single-user for MVP — no multi-tenant, no data sharing (see Non-Goa
   > Socratic: Counter-argument considered: "manual entry alone could validate the categorization flow without import complexity." Resolution: kept as written — import needed to prove value on real bulk data.
 - FR-003: User can import CSV statements from Revolut, then Erste Bank Polska, added one bank at a time — each gated on the prior bank's import working end-to-end — PLN-only (other currencies filtered with a skipped-count). Priority: must-have
   > Socratic: Counter-argument considered: "adding two more parsers at once adds format-risk before core value is proven on one bank." Resolution: revised — banks now added sequentially (Revolut, then Erste), each gated on the previous one working, instead of both landing together at once.
-- FR-018: User can import a PDF statement from VeloBank (which offers no CSV export) through the same import, duplicate-review and categorization flow as the CSV banks — PLN-only (other currencies filtered with a skipped-count). A statement whose printed running balances do not add up is rejected with an explanation instead of being imported. Priority: must-have
+- FR-018: User can import a PDF statement from mBank, Erste Bank Polska or VeloBank (VeloBank offers no CSV export; mBank and Erste can also be imported from CSV) through the same import, duplicate-review and categorization flow as the CSV banks — PLN-only (other currencies filtered with a skipped-count). A statement whose printed running balances do not add up is rejected with an explanation instead of being imported. Importing a period already imported from the other format (CSV or PDF) on the same account shows a non-blocking overlap warning. Priority: must-have
   > Socratic: Counter-argument considered: "a PDF is a presentation format, not a data export — a misread row would silently skew totals and duplicate detection, and the user would never notice." Resolution: revised — the statement's own running balances are checked on import and an inconsistent file is rejected rather than imported, so a misread row cannot slip into the totals.
 
 ### Duplicate handling
@@ -119,7 +119,7 @@ Login via email + password, with an authenticated session that persists across v
 - **Data sharing between users** — strictly single-user data; no shared households/accounts.
 - **Email/push notifications** — no notification system of any kind.
 - **Mobile app** — web only, no native mobile app.
-- **Banks other than mBank, Revolut, Erste Bank Polska, and VeloBank** — no support for any other bank's statement format; VeloBank is supported through PDF statements only (it offers no CSV export).
+- **Banks other than mBank, Revolut, Erste Bank Polska, and VeloBank** — no support for any other bank's statement format; mBank and Erste Bank Polska are supported through CSV and PDF statements; VeloBank through PDF statements only (it offers no CSV export).
 - **Login via Google/OAuth** — email+password only.
 
 ## Open Questions
