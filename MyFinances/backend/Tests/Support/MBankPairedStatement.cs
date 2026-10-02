@@ -36,11 +36,9 @@ public static class MBankPairedStatement
 
     public static decimal AmountSum(IEnumerable<MBankPairedTransaction> transactions) => transactions.Sum(t => t.Amount);
 
-    // Three rows on page 1 and two on page 2. A statement that fits on one page is not used on
-    // purpose: the parser finds the table's column edges on a grid line that carries exactly five
-    // segments, and on a single page every such line is shared by two adjacent rows, so it reads
-    // no rows at all. Real exports span at least two pages.
-    public static MBankPdfLayout Layout { get; } = new() { FirstPageRows = 3 };
+    // All five rows fit on one page, drawn the way the real export draws them (one cell per row with
+    // a small gap), so this also exercises the single-page path of the parser.
+    public static MBankPdfLayout Layout { get; } = new() { FirstPageRows = 5, RowGap = 0.5 };
 
     public static byte[] BuildPdf()
     {

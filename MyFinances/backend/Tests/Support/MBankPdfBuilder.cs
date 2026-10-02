@@ -38,6 +38,11 @@ public sealed record MBankPdfLayout
     public int FirstPageRows { get; init; } = 13;
     public int RowsPerPage { get; init; } = 24;
 
+    // Vertical gap between the cells of neighbouring rows. 0 draws one shared border per pair of rows;
+    // the real export draws every row as its own cell with a gap of about 0.5 pt, so each grid line
+    // carries exactly one run of five segments. Set it to build a statement that fits on one page.
+    public double RowGap { get; init; }
+
     // Printed instead of the figures computed from the rows.
     public MBankPdfSummary? SummaryOverride { get; init; }
     public decimal? ClosingBalanceOverride { get; init; }
@@ -133,7 +138,7 @@ public static class MBankPdfBuilder
             }
 
             foreach (var row in pages[pageIndex])
-                y = DrawRow(painter, y, row);
+                y = DrawRow(painter, y, row, layout.RowGap);
 
             if (y < MinTableBottom)
                 throw new InvalidOperationException($"The rows on page {pageIndex + 1} run into the footer; use more pages.");
@@ -277,8 +282,9 @@ public static class MBankPdfBuilder
 
     // Draws one row band; the date line carries both dates, the first description line, amount and
     // balance, further description lines follow below. Returns the next band's top.
-    private static double DrawRow(Painter p, double top, MBankPdfRow row)
+    private static double DrawRow(Painter p, double top, MBankPdfRow row, double gap)
     {
+        top -= gap;
         var height = RowHeight(row.DescriptionLines.Count);
         var bottom = top - height;
         p.CellGrid(ColumnEdges, top, bottom);
