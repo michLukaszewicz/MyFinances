@@ -351,6 +351,7 @@ public class ImportEndpointsTests
             Assert.Equal(1, batch.ImportedCount);
             Assert.Equal(1, batch.SkippedDuplicateCount);
             Assert.Equal(1, batch.SkippedErrorCount);
+            Assert.Equal(StatementFormat.Csv, batch.SourceFormat);
         }
     }
 
@@ -520,18 +521,32 @@ public class ImportEndpointsTests
         factory.WithWebHostBuilder(b => b.ConfigureServices(services =>
             services.AddScoped<IBankStatementParser>(_ => new IntegrityFailingPdfParser())));
 
+    // Stands in for a bank that reads CSV only: every real bank has a PDF parser now.
+    private sealed class CsvOnlyParser : IBankStatementParser
+    {
+        public string BankName => "StubCsvBank";
+
+        public StatementFormat Format => StatementFormat.Csv;
+
+        public bool CanParse(Stream fileStream) => false;
+
+        public ParseResult Parse(Stream fileStream) => new([], 0);
+    }
+
     [Fact]
     public async Task Parse_PdfWithBankThatHasNoPdfParser_ReturnsBadRequestNamingBankAndFormat()
     {
-        using var factory = new AuthApiFactory();
+        using var baseFactory = new AuthApiFactory();
+        var factory = baseFactory.WithWebHostBuilder(b => b.ConfigureServices(services =>
+            services.AddScoped<IBankStatementParser>(_ => new CsvOnlyParser())));
         using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
-        var account = await CreateAccountAsync(client, "mBank", "111");
+        var account = await CreateAccountAsync(client, "StubCsvBank", "111");
 
-        using var request = await BuildUploadRequestAsync(client, PdfBytes, account.Id, bank: "mBank", fileName: "statement.pdf", contentType: "application/pdf");
+        using var request = await BuildUploadRequestAsync(client, PdfBytes, account.Id, bank: "StubCsvBank", fileName: "statement.pdf", contentType: "application/pdf");
         var response = await client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Equal("mBank import does not support PDF files.", await ReadProblemTitleAsync(response));
+        Assert.Equal("StubCsvBank import does not support PDF files.", await ReadProblemTitleAsync(response));
     }
 
     [Fact]
@@ -767,6 +782,591 @@ public class ImportEndpointsTests
         var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
         Assert.NotNull(parsed);
         Assert.Equal("VeloBank", parsed!.Bank);
+    }
+
+    private const string MBankPdfFixture = "mbank-pdf-sample-synthetic.pdf";
+
+    private static byte[] ReadMBankPdfFixture() =>
+        File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", MBankPdfFixture));
+
+    private static async Task<ImportParseResponse> ParseMBankPdfAsync(HttpClient client, byte[] pdf, Guid accountId)
+    {
+        var response = await UploadPdfAsync(client, pdf, accountId);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.NotNull(parsed);
+        return parsed!;
+    }
+
+    [Fact]
+    public async Task Parse_MBankPdfWithMBankAccount_ReturnsRowsAsPdfWithoutBankMismatch()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        var parsed = await ParseMBankPdfAsync(client, ReadMBankPdfFixture(), account.Id);
+
+        Assert.Equal("mBank", parsed.Bank);
+        Assert.False(parsed.BankMismatch);
+        Assert.Equal(StatementFormat.Pdf, parsed.Format);
+        Assert.Equal(MBankSampleData.TwoPageRowCount, parsed.Rows.Count);
+        Assert.All(parsed.Rows, row => Assert.False(row.IsDuplicate));
+        Assert.Contains(parsed.Rows, row => row.Date == new DateOnly(2026, 9, 17) && row.Amount == 3200.00m);
+    }
+
+    [Fact]
+    public async Task Parse_MBankMultiPagePdf_ReturnsAllRows()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        var parsed = await ParseMBankPdfAsync(client, MBankSampleData.BuildMultiPagePdf(), account.Id);
+
+        Assert.Equal("mBank", parsed.Bank);
+        Assert.Equal(MBankSampleData.MultiPageRowCount, parsed.Rows.Count);
+    }
+
+    [Fact]
+    public async Task Parse_MBankPdfWithVeloBankAccount_BankMismatchIsTrue()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "VeloBank", "111");
+
+        var parsed = await ParseMBankPdfAsync(client, ReadMBankPdfFixture(), account.Id);
+
+        Assert.Equal("mBank", parsed.Bank);
+        Assert.True(parsed.BankMismatch);
+    }
+
+    [Fact]
+    public async Task Parse_MBankPdfAfterCommit_FlagsEveryCommittedRowAsDuplicate()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var pdf = ReadMBankPdfFixture();
+
+        var firstParsed = await ParseMBankPdfAsync(client, pdf, account.Id);
+        Assert.All(firstParsed.Rows, row => Assert.False(row.IsDuplicate));
+
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+        using var commitRequest = new HttpRequestMessage(HttpMethod.Post, "/api/import/commit");
+        commitRequest.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
+        commitRequest.Content = JsonContent.Create(new
+        {
+            AccountId = account.Id,
+            SkippedErrorCount = firstParsed.SkippedErrorCount,
+            SourceFormat = firstParsed.Format.ToString(),
+            Rows = firstParsed.Rows.Select(r => new { r.Date, r.Description, r.Amount, Decision = "Keep" }),
+        });
+        var commitResponse = await client.SendAsync(commitRequest);
+        Assert.Equal(HttpStatusCode.OK, commitResponse.StatusCode);
+
+        var secondParsed = await ParseMBankPdfAsync(client, pdf, account.Id);
+
+        Assert.Equal(MBankSampleData.TwoPageRowCount, secondParsed.Rows.Count);
+        Assert.All(secondParsed.Rows, row => Assert.True(row.IsDuplicate));
+    }
+
+    [Fact]
+    public async Task Parse_MBankPdfWithTamperedBalance_Returns422WithIntegrityMessageAndNoRows()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        var rows = MBankSampleData.TwoPageRows.ToList();
+        rows[5] = rows[5] with { Balance = rows[5].Balance + 1.00m };
+        var pdf = MBankPdfBuilder.Build(MBankSampleData.Header, MBankSampleData.OpeningBalance, rows, MBankSampleData.TwoPageLayout);
+
+        var response = await UploadPdfAsync(client, pdf, account.Id);
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var title = document.RootElement.GetProperty("title").GetString();
+        Assert.StartsWith("mBank statement rejected", title);
+        Assert.False(document.RootElement.TryGetProperty("rows", out _));
+    }
+
+    [Fact]
+    public async Task Parse_MBankChosenWithCorruptPdf_ReturnsOkWithZeroRows()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        var response = await UploadPdfAsync(client, PdfBytes, account.Id, bank: "mBank");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.NotNull(parsed);
+        Assert.Equal("mBank", parsed!.Bank);
+        Assert.Equal(StatementFormat.Pdf, parsed.Format);
+        Assert.Empty(parsed.Rows);
+    }
+
+    private const string ErstePdfFixture = "erste-pdf-sample-synthetic.pdf";
+
+    private static byte[] ReadErstePdfFixture() =>
+        File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", ErstePdfFixture));
+
+    private static async Task<ImportParseResponse> ParseErstePdfAsync(HttpClient client, byte[] pdf, Guid accountId)
+    {
+        var response = await UploadPdfAsync(client, pdf, accountId);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.NotNull(parsed);
+        return parsed!;
+    }
+
+    [Fact]
+    public async Task Parse_ErstePdfWithErsteAccount_ReturnsRowsAsPdfWithoutBankMismatch()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "Erste", "111");
+
+        var parsed = await ParseErstePdfAsync(client, ReadErstePdfFixture(), account.Id);
+
+        Assert.Equal("Erste", parsed.Bank);
+        Assert.False(parsed.BankMismatch);
+        Assert.Equal(StatementFormat.Pdf, parsed.Format);
+        Assert.Equal(ErsteSampleData.OnePageRowCount, parsed.Rows.Count);
+        Assert.All(parsed.Rows, row => Assert.False(row.IsDuplicate));
+        Assert.Contains(parsed.Rows, row => row.Date == new DateOnly(2026, 9, 29) && row.Amount == 1200.00m);
+    }
+
+    [Fact]
+    public async Task Parse_ErsteMultiPagePdf_ReturnsAllRows()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "Erste", "111");
+
+        var parsed = await ParseErstePdfAsync(client, ErsteSampleData.BuildMultiPagePdf(), account.Id);
+
+        Assert.Equal("Erste", parsed.Bank);
+        Assert.Equal(ErsteSampleData.MultiPageRowCount, parsed.Rows.Count);
+    }
+
+    [Fact]
+    public async Task Parse_ErstePdfWithMBankAccount_BankMismatchIsTrue()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        var parsed = await ParseErstePdfAsync(client, ReadErstePdfFixture(), account.Id);
+
+        Assert.Equal("Erste", parsed.Bank);
+        Assert.True(parsed.BankMismatch);
+    }
+
+    // The three identical-key rows of the fixture (same date, amount and description) must all be
+    // flagged on re-import, as for CSV.
+    [Fact]
+    public async Task Parse_ErstePdfAfterCommit_FlagsEveryCommittedRowAsDuplicate()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "Erste", "111");
+        var pdf = ReadErstePdfFixture();
+
+        var firstParsed = await ParseErstePdfAsync(client, pdf, account.Id);
+        Assert.All(firstParsed.Rows, row => Assert.False(row.IsDuplicate));
+        Assert.Equal(3, firstParsed.Rows.Count(r => r.Description == "Sklep Internetowy Testowy" && r.Amount == -19.99m));
+
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+        using var commitRequest = new HttpRequestMessage(HttpMethod.Post, "/api/import/commit");
+        commitRequest.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
+        commitRequest.Content = JsonContent.Create(new
+        {
+            AccountId = account.Id,
+            SkippedErrorCount = firstParsed.SkippedErrorCount,
+            SourceFormat = firstParsed.Format.ToString(),
+            Rows = firstParsed.Rows.Select(r => new { r.Date, r.Description, r.Amount, Decision = "Keep" }),
+        });
+        var commitResponse = await client.SendAsync(commitRequest);
+        Assert.Equal(HttpStatusCode.OK, commitResponse.StatusCode);
+
+        var secondParsed = await ParseErstePdfAsync(client, pdf, account.Id);
+
+        Assert.Equal(ErsteSampleData.OnePageRowCount, secondParsed.Rows.Count);
+        Assert.All(secondParsed.Rows, row => Assert.True(row.IsDuplicate));
+    }
+
+    [Fact]
+    public async Task Parse_ErstePdfWithTamperedBalance_Returns422WithIntegrityMessageAndNoRows()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "Erste", "111");
+
+        var rows = ErsteSampleData.OnePageRows.ToList();
+        rows[5] = rows[5] with { Balance = rows[5].Balance + 1.00m };
+        var pdf = ErstePdfBuilder.Build(ErsteSampleData.Header, rows, ErsteSampleData.OnePageLayout);
+
+        var response = await UploadPdfAsync(client, pdf, account.Id);
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var title = document.RootElement.GetProperty("title").GetString();
+        Assert.StartsWith("Erste statement rejected", title);
+        Assert.False(document.RootElement.TryGetProperty("rows", out _));
+    }
+
+    [Fact]
+    public async Task Parse_ErsteChosenWithCorruptPdf_ReturnsOkWithZeroRows()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "Erste", "111");
+
+        var response = await UploadPdfAsync(client, PdfBytes, account.Id, bank: "Erste");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.NotNull(parsed);
+        Assert.Equal("Erste", parsed!.Bank);
+        Assert.Equal(StatementFormat.Pdf, parsed.Format);
+        Assert.Empty(parsed.Rows);
+    }
+
+    // With three PDF parsers competing, every fixture family must resolve to its own bank, whatever
+    // bank was chosen on the page.
+    [Fact]
+    public async Task Parse_EachPdfFixtureFamily_AutoDetectsToItsOwnBank()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "Other", "111");
+
+        var cases = new (string Bank, byte[] Pdf)[]
+        {
+            ("mBank", ReadMBankPdfFixture()),
+            ("Erste", ReadErstePdfFixture()),
+            ("VeloBank", VeloBankSampleData.BuildOnePagePdf()),
+            ("mBank", MBankSampleData.BuildMultiPagePdf()),
+            ("Erste", ErsteSampleData.BuildMultiPagePdf()),
+            ("VeloBank", VeloBankSampleData.BuildMultiPagePdf()),
+        };
+
+        foreach (var (bank, pdf) in cases)
+        {
+            var parsed = await ParseErstePdfAsync(client, pdf, account.Id);
+
+            Assert.Equal(bank, parsed.Bank);
+            Assert.Equal(StatementFormat.Pdf, parsed.Format);
+            Assert.NotEmpty(parsed.Rows);
+        }
+    }
+
+    [Fact]
+    public async Task Parse_MBankCsvIntoAccountHoldingAnOverlappingPdfBatch_WarnsAboutTheOverlap()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        await SeedTransactionsAsync(factory, userId, account.Id, StatementFormat.Pdf, new DateOnly(2026, 8, 3));
+
+        var parsed = await ParseMBankCsvAsync(client, account.Id);
+
+        Assert.Equal("mBank", parsed.Bank);
+        Assert.Equal(StatementFormat.Csv, parsed.Format);
+        Assert.True(parsed.MixedFormatOverlapCount > 0);
+    }
+
+    // The mBank CSV fixture parses to four rows dated 2026-08-01 .. 2026-08-05 (the fifth is skipped).
+    private static readonly DateOnly FixtureFirstDate = new(2026, 8, 1);
+    private static readonly DateOnly FixtureLastDate = new(2026, 8, 5);
+
+    private static async Task<Guid> GetUserIdAsync(AuthApiFactory factory)
+    {
+        using var scope = factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+        var user = await userManager.FindByEmailAsync(AuthApiFactory.AllowedEmail);
+        return user!.Id;
+    }
+
+    // Seeds one transaction per date; with a source format they hang off a new batch of that
+    // format, with null they are manual entries (no batch).
+    private static async Task SeedTransactionsAsync(
+        AuthApiFactory factory,
+        Guid userId,
+        Guid accountId,
+        StatementFormat? sourceFormat,
+        params DateOnly[] dates)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        Guid? batchId = null;
+        if (sourceFormat is not null)
+        {
+            var batch = new ImportBatch
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                AccountId = accountId,
+                ImportedAtUtc = DateTime.UtcNow,
+                ImportedCount = dates.Length,
+                SourceFormat = sourceFormat.Value,
+            };
+            db.ImportBatches.Add(batch);
+            batchId = batch.Id;
+        }
+
+        foreach (var date in dates)
+        {
+            var description = $"Seeded {Guid.NewGuid()}";
+            db.Transactions.Add(new Transaction
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                AccountId = accountId,
+                Date = date,
+                Description = description,
+                Amount = -1.00m,
+                Hash = DedupHash.ComputeHash(userId, date, -1.00m, description, accountId),
+                ImportBatchId = batchId,
+            });
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task<ImportParseResponse> ParseMBankCsvAsync(HttpClient client, Guid accountId)
+    {
+        using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), accountId);
+        var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.NotNull(parsed);
+        return parsed!;
+    }
+
+    [Fact]
+    public async Task Parse_CsvUpload_ReportsCsvFormatAndNoOverlapWhenAccountIsEmpty()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        var parsed = await ParseMBankCsvAsync(client, account.Id);
+
+        Assert.Equal(StatementFormat.Csv, parsed.Format);
+        Assert.Equal(0, parsed.MixedFormatOverlapCount);
+    }
+
+    [Fact]
+    public async Task Parse_VeloBankPdfUpload_ReportsPdfFormat()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "VeloBank", "111");
+
+        var parsed = await ParseVeloBankPdfAsync(client, VeloBankSampleData.BuildOnePagePdf(), account.Id);
+
+        Assert.Equal(StatementFormat.Pdf, parsed.Format);
+    }
+
+    [Fact]
+    public async Task Parse_FormatIsSerializedAsAString()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        using var request = await BuildUploadRequestAsync(client, await File.ReadAllBytesAsync(FixturePath), account.Id);
+        var response = await client.SendAsync(request);
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Csv", document.RootElement.GetProperty("format").GetString());
+    }
+
+    [Fact]
+    public async Task Parse_OtherFormatRowsInsideRange_AreCounted()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        await SeedTransactionsAsync(factory, userId, account.Id, StatementFormat.Pdf, new DateOnly(2026, 8, 2), new DateOnly(2026, 8, 3), new DateOnly(2026, 8, 4));
+
+        var parsed = await ParseMBankCsvAsync(client, account.Id);
+
+        Assert.Equal(3, parsed.MixedFormatOverlapCount);
+    }
+
+    [Fact]
+    public async Task Parse_OtherFormatRowsExactlyAtRangeBoundaries_AreCounted()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        await SeedTransactionsAsync(factory, userId, account.Id, StatementFormat.Pdf, FixtureFirstDate, FixtureLastDate);
+
+        var parsed = await ParseMBankCsvAsync(client, account.Id);
+
+        Assert.Equal(2, parsed.MixedFormatOverlapCount);
+    }
+
+    [Fact]
+    public async Task Parse_OtherFormatRowsOutsideRange_AreNotCounted()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        await SeedTransactionsAsync(factory, userId, account.Id, StatementFormat.Pdf, FixtureFirstDate.AddDays(-1), FixtureLastDate.AddDays(1));
+
+        var parsed = await ParseMBankCsvAsync(client, account.Id);
+
+        Assert.Equal(0, parsed.MixedFormatOverlapCount);
+    }
+
+    [Fact]
+    public async Task Parse_SameFormatRowsInsideRange_AreNotCounted()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        await SeedTransactionsAsync(factory, userId, account.Id, StatementFormat.Csv, new DateOnly(2026, 8, 2), new DateOnly(2026, 8, 3));
+
+        var parsed = await ParseMBankCsvAsync(client, account.Id);
+
+        Assert.Equal(0, parsed.MixedFormatOverlapCount);
+    }
+
+    [Fact]
+    public async Task Parse_ManualEntriesInsideRange_AreNotCounted()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        await SeedTransactionsAsync(factory, userId, account.Id, null, new DateOnly(2026, 8, 2), new DateOnly(2026, 8, 3));
+
+        var parsed = await ParseMBankCsvAsync(client, account.Id);
+
+        Assert.Equal(0, parsed.MixedFormatOverlapCount);
+    }
+
+    [Fact]
+    public async Task Parse_OtherFormatRowsOnAnotherAccountOfTheSameUser_AreNotCounted()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var otherAccount = await CreateAccountAsync(client, "mBank", "222");
+        var userId = await GetUserIdAsync(factory);
+        await SeedTransactionsAsync(factory, userId, otherAccount.Id, StatementFormat.Pdf, new DateOnly(2026, 8, 2), new DateOnly(2026, 8, 3));
+
+        var parsed = await ParseMBankCsvAsync(client, account.Id);
+
+        Assert.Equal(0, parsed.MixedFormatOverlapCount);
+    }
+
+    [Fact]
+    public async Task Parse_OtherFormatRowsOfAnotherUser_AreNotCounted()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var otherUsersAccount = await InsertAccountForOtherUserAsync(factory, "mBank", "333");
+        await SeedTransactionsAsync(factory, otherUsersAccount.UserId, otherUsersAccount.Id, StatementFormat.Pdf, new DateOnly(2026, 8, 2), new DateOnly(2026, 8, 3));
+
+        var parsed = await ParseMBankCsvAsync(client, account.Id);
+
+        Assert.Equal(0, parsed.MixedFormatOverlapCount);
+    }
+
+    [Fact]
+    public async Task Parse_ZeroParsedRows_ReportsZeroOverlap()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        await SeedTransactionsAsync(factory, userId, account.Id, StatementFormat.Pdf, new DateOnly(2026, 8, 2));
+
+        // Manual-bank fallback on unrecognizable content: the mBank CSV parser finds no rows.
+        using var request = await BuildUploadRequestAsync(client, Encoding.UTF8.GetBytes("not,a,recognizable,export\r\n1,2,3,4\r\n"), account.Id, bank: "mBank");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var parsed = await response.Content.ReadFromJsonAsync<ImportParseResponse>(JsonOptions);
+        Assert.NotNull(parsed);
+        Assert.Empty(parsed!.Rows);
+        Assert.Equal(0, parsed.MixedFormatOverlapCount);
+    }
+
+    private static async Task<ImportSummaryDto> CommitSingleRowAsync(HttpClient client, Guid accountId, object? sourceFormat, bool includeSourceFormat)
+    {
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+        using var commitRequest = new HttpRequestMessage(HttpMethod.Post, "/api/import/commit");
+        commitRequest.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
+        var rows = new[] { new { Date = "2026-08-01", Description = "Some row", Amount = 10.00m, Decision = "Keep" } };
+        commitRequest.Content = includeSourceFormat
+            ? JsonContent.Create(new { AccountId = accountId, SkippedErrorCount = 0, Rows = rows, SourceFormat = sourceFormat })
+            : JsonContent.Create(new { AccountId = accountId, SkippedErrorCount = 0, Rows = rows });
+
+        var response = await client.SendAsync(commitRequest);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var summary = await response.Content.ReadFromJsonAsync<ImportSummaryDto>(JsonOptions);
+        return summary!;
+    }
+
+    [Theory]
+    [InlineData("Pdf", StatementFormat.Pdf)]
+    [InlineData("Csv", StatementFormat.Csv)]
+    public async Task Commit_StoresTheSentSourceFormatOnTheBatch(string sent, StatementFormat expected)
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        var summary = await CommitSingleRowAsync(client, account.Id, sent, includeSourceFormat: true);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var batch = await db.ImportBatches.SingleAsync(b => b.Id == summary.ImportBatchId);
+        Assert.Equal(expected, batch.SourceFormat);
+    }
+
+    [Fact]
+    public async Task Commit_WithoutSourceFormat_DefaultsToCsv()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        var summary = await CommitSingleRowAsync(client, account.Id, null, includeSourceFormat: false);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var batch = await db.ImportBatches.SingleAsync(b => b.Id == summary.ImportBatchId);
+        Assert.Equal(StatementFormat.Csv, batch.SourceFormat);
+    }
+
+    [Fact]
+    public async Task Commit_Then_ParseOtherFormat_WarnsAboutTheCommittedBatch()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+
+        // A Pdf batch with one row on 2026-08-01, then the mBank CSV (range 08-01..08-05).
+        await CommitSingleRowAsync(client, account.Id, "Pdf", includeSourceFormat: true);
+        var parsed = await ParseMBankCsvAsync(client, account.Id);
+
+        Assert.Equal(1, parsed.MixedFormatOverlapCount);
     }
 
     [Fact]

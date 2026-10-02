@@ -472,100 +472,100 @@ One additive migration: `ImportBatches.SourceFormat`, non-null, default `Csv`, b
 
 #### Automated
 
-- [ ] 1.1 Roadmap has no S-13 block: `grep -c "^### S-13:" context/foundation/roadmap.md` prints 0 (from repo root)
-- [ ] 1.2 Roadmap indexes the merged change and drops the old IDs: `grep -cE "mbank-pdf-import|erste-pdf-import" context/foundation/roadmap.md` prints 0 and `grep -nF "Change ID:** pdf-import" context/foundation/roadmap.md` shows the slice block (from repo root)
-- [ ] 1.3 PRD names the banks in FR-018: `grep -n "FR-018" context/foundation/prd.md` shows mBank and Erste in the requirement text (from repo root)
+- [x] 1.1 Roadmap has no S-13 block: `grep -c "^### S-13:" context/foundation/roadmap.md` prints 0 (from repo root) — 85afcc4
+- [x] 1.2 Roadmap indexes the merged change and drops the old IDs: `grep -cE "mbank-pdf-import|erste-pdf-import" context/foundation/roadmap.md` prints 0 and `grep -nF "Change ID:** pdf-import" context/foundation/roadmap.md` shows the slice block (from repo root) — 85afcc4
+- [x] 1.3 PRD names the banks in FR-018: `grep -n "FR-018" context/foundation/prd.md` shows mBank and Erste in the requirement text (from repo root) — 85afcc4
 
 #### Manual
 
-- [ ] 1.4 You reviewed the PRD and roadmap diffs and approve the wording (FR-018, non-goal line, merged S-12, M-1 note).
-- [ ] 1.5 GitHub issue #29 carries `status: planning` and the merged title, and #30 is closed with the merge comment (per `context/foundation/lessons.md`).
+- [x] 1.4 You reviewed the PRD and roadmap diffs and approve the wording (FR-018, non-goal line, merged S-12, M-1 note). — 85afcc4
+- [x] 1.5 GitHub issue #29 carries `status: planning` and the merged title, and #30 is closed with the merge comment (per `context/foundation/lessons.md`). — 85afcc4
 
 ### Phase 2: Shared PDF helper
 
 #### Automated
 
-- [ ] 2.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 2.2 VeloBank tests pass unchanged: `dotnet test --filter "VeloBankPdfParserTests|VeloBankPdfFixtureTests"` (from `MyFinances/backend`)
-- [ ] 2.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 2.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — 0d6a918
+- [x] 2.2 VeloBank tests pass unchanged: `dotnet test --filter "VeloBankPdfParserTests|VeloBankPdfFixtureTests"` (from `MyFinances/backend`) — 0d6a918
+- [x] 2.3 Full suite passes: `dotnet test` (from `MyFinances/backend`) — 0d6a918
 
 #### Manual
 
-- [ ] 2.4 A temporary local test (not committed) run on the real 90-day and one-year VeloBank PDFs still returns 17 and 62 rows with no integrity exception and identical date, amount and description for the 17 shared rows.
-- [ ] 2.5 The refactor did not add any real personal data to the repository.
+- [x] 2.4 A temporary local test (not committed) run on the real 90-day and one-year VeloBank PDFs still returns 17 and 62 rows with no integrity exception and identical date, amount and description for the 17 shared rows. — 0d6a918
+- [x] 2.5 The refactor did not add any real personal data to the repository. — 0d6a918
 
 ### Phase 3: Source format on import batches and the overlap warning
 
 #### Automated
 
-- [ ] 3.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 3.2 Import endpoint tests pass: `dotnet test --filter ImportEndpointsTests` (from `MyFinances/backend`)
-- [ ] 3.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
-- [ ] 3.4 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`)
-- [ ] 3.5 Frontend builds: `npm run build` (from `MyFinances/frontend`)
+- [x] 3.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — 333b83c
+- [x] 3.2 Import endpoint tests pass: `dotnet test --filter ImportEndpointsTests` (from `MyFinances/backend`) — 333b83c
+- [x] 3.3 Full suite passes: `dotnet test` (from `MyFinances/backend`) — 333b83c
+- [x] 3.4 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`) — 333b83c
+- [x] 3.5 Frontend builds: `npm run build` (from `MyFinances/frontend`) — 333b83c
 
 #### Manual
 
-- [ ] 3.6 After the migration on the dev database, existing batches on VeloBank accounts show `Pdf` and all others `Csv`.
-- [ ] 3.7 With a dev batch's `SourceFormat` flipped to `Pdf` by SQL, re-uploading the same mBank CSV into that account shows the amber overlap banner with the right count and the import can still be committed; with the original value restored the banner is gone.
-- [ ] 3.8 Importing an mBank CSV, a VeloBank PDF and re-importing both behaves as before apart from the banner.
+- [x] 3.6 After the migration on the dev database, existing batches on VeloBank accounts show `Pdf` and all others `Csv`. — 333b83c
+- [x] 3.7 With a dev batch's `SourceFormat` flipped to `Pdf` by SQL, re-uploading the same mBank CSV into that account shows the amber overlap banner with the right count and the import can still be committed; with the original value restored the banner is gone. — 333b83c
+- [x] 3.8 Importing an mBank CSV, a VeloBank PDF and re-importing both behaves as before apart from the banner. — 333b83c
 
 ### Phase 4: mBank synthetic PDF fixtures
 
 #### Automated
 
-- [ ] 4.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 4.2 Fixture tests pass: `dotnet test --filter MBankPdfFixtureTests` (from `MyFinances/backend`)
-- [ ] 4.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 4.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — 37f4e2d
+- [x] 4.2 Fixture tests pass: `dotnet test --filter MBankPdfFixtureTests` (from `MyFinances/backend`) — 37f4e2d
+- [x] 4.3 Full suite passes: `dotnet test` (from `MyFinances/backend`) — 37f4e2d
 
 #### Manual
 
-- [ ] 4.4 Both fixture PDFs open in a PDF viewer and look like the real mBank statement in shape (letterhead, summary table, grid, per-page header, footer).
-- [ ] 4.5 The fixtures and generator contain no real name, address, account number, card number or counterparty from `mbank.pdf`.
+- [x] 4.4 Both fixture PDFs open in a PDF viewer and look like the real mBank statement in shape (letterhead, summary table, grid, per-page header, footer).
+- [x] 4.5 The fixtures and generator contain no real name, address, account number, card number or counterparty from `mbank.pdf`.
 
 ### Phase 5: mBank PDF parser and wiring
 
 #### Automated
 
-- [ ] 5.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 5.2 Parser tests pass: `dotnet test --filter MBankPdfParserTests` (from `MyFinances/backend`)
-- [ ] 5.3 Import endpoint and account tests pass: `dotnet test --filter "ImportEndpointsTests|AccountEndpointsTests"` (from `MyFinances/backend`)
-- [ ] 5.4 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 5.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — bec4f14
+- [x] 5.2 Parser tests pass: `dotnet test --filter MBankPdfParserTests` (from `MyFinances/backend`) — bec4f14
+- [x] 5.3 Import endpoint and account tests pass: `dotnet test --filter "ImportEndpointsTests|AccountEndpointsTests"` (from `MyFinances/backend`) — bec4f14
+- [x] 5.4 Full suite passes: `dotnet test` (from `MyFinances/backend`) — bec4f14
 
 #### Manual
 
-- [ ] 5.5 A temporary local test (not committed) on the real `mbank.pdf` returns 32 rows with no integrity exception, and the credit/debit/total counts and sums equal the statement's 7 / 4 274,36, 25 / 2 484,84 and 32 / 1 789,52.
-- [ ] 5.6 On the import page, uploading `mbank.pdf` into an mBank account auto-detects mBank and lists the 32 rows; committing and re-uploading flags every row as a duplicate; a tampered synthetic PDF is rejected with the explanatory message and no bank picker.
-- [ ] 5.7 Importing an mBank CSV whose dates overlap the committed PDF rows (or vice versa) shows the overlap banner with a plausible count.
-- [ ] 5.8 No real personal data was added to the repository by this phase.
+- [x] 5.5 A temporary local test (not committed) on the real `mbank.pdf` returns 32 rows with no integrity exception, and the credit/debit/total counts and sums equal the statement's 7 / 4 274,36, 25 / 2 484,84 and 32 / 1 789,52.
+- [x] 5.6 On the import page, uploading `mbank.pdf` into an mBank account auto-detects mBank and lists the 32 rows; committing and re-uploading flags every row as a duplicate; a tampered synthetic PDF is rejected with the explanatory message and no bank picker.
+- [x] 5.7 Importing an mBank CSV whose dates overlap the committed PDF rows (or vice versa) shows the overlap banner with a plausible count.
+- [x] 5.8 No real personal data was added to the repository by this phase.
 
 ### Phase 6: Erste synthetic PDF fixtures
 
 #### Automated
 
-- [ ] 6.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 6.2 Fixture tests pass: `dotnet test --filter ErstePdfFixtureTests` (from `MyFinances/backend`)
-- [ ] 6.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
+- [x] 6.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — db84e8b
+- [x] 6.2 Fixture tests pass: `dotnet test --filter ErstePdfFixtureTests` (from `MyFinances/backend`) — db84e8b
+- [x] 6.3 Full suite passes: `dotnet test` (from `MyFinances/backend`) — db84e8b
 
 #### Manual
 
-- [ ] 6.4 Both fixture PDFs open in a PDF viewer and look like the real Erste statement in shape.
-- [ ] 6.5 The fixtures and generator contain no real name, account number or counterparty from `erste.pdf`.
+- [x] 6.4 Both fixture PDFs open in a PDF viewer and look like the real Erste statement in shape.
+- [x] 6.5 The fixtures and generator contain no real name, account number or counterparty from `erste.pdf`.
 
 ### Phase 7: Erste PDF parser and wiring
 
 #### Automated
 
-- [ ] 7.1 Backend builds: `dotnet build` (from `MyFinances/backend`)
-- [ ] 7.2 Parser tests pass: `dotnet test --filter ErstePdfParserTests` (from `MyFinances/backend`)
-- [ ] 7.3 Full suite passes: `dotnet test` (from `MyFinances/backend`)
-- [ ] 7.4 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`)
-- [ ] 7.5 Frontend builds: `npm run build` (from `MyFinances/frontend`)
+- [x] 7.1 Backend builds: `dotnet build` (from `MyFinances/backend`) — 8112efa
+- [x] 7.2 Parser tests pass: `dotnet test --filter ErstePdfParserTests` (from `MyFinances/backend`) — 8112efa
+- [x] 7.3 Full suite passes: `dotnet test` (from `MyFinances/backend`) — 8112efa
+- [x] 7.4 Frontend types check: `npm run typecheck` (from `MyFinances/frontend`) — 8112efa
+- [x] 7.5 Frontend builds: `npm run build` (from `MyFinances/frontend`) — 8112efa
 
 #### Manual
 
-- [ ] 7.6 A temporary local test (not committed) on the real `erste.pdf` returns 55 rows with no integrity exception and no unreadable row.
-- [ ] 7.7 On the import page, uploading `erste.pdf` into an Erste account auto-detects Erste and lists the rows; committing and re-uploading flags every row as a duplicate; importing an Erste CSV for an overlapping period shows the overlap banner.
-- [ ] 7.8 mBank CSV, Erste CSV, VeloBank PDF and mBank PDF imports still behave as before.
-- [ ] 7.9 Imported rows appear in the categorization queue and the dashboard history with their dates.
-- [ ] 7.10 No real personal data was added to the repository by this phase.
+- [x] 7.6 A temporary local test (not committed) on the real `erste.pdf` returns 55 rows with no integrity exception and no unreadable row.
+- [x] 7.7 On the import page, uploading `erste.pdf` into an Erste account auto-detects Erste and lists the rows; committing and re-uploading flags every row as a duplicate; importing an Erste CSV for an overlapping period shows the overlap banner.
+- [x] 7.8 mBank CSV, Erste CSV, VeloBank PDF and mBank PDF imports still behave as before.
+- [x] 7.9 Imported rows appear in the categorization queue and the dashboard history with their dates.
+- [x] 7.10 No real personal data was added to the repository by this phase.
