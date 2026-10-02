@@ -17,13 +17,13 @@ timeline_budget:
 
 ## Vision & Problem Statement
 
-An individual manages personal finances across several bank accounts (mBank, Revolut, Erste Bank Polska) and has no visibility into what they actually spend, per category, without manually tracking every transaction or committing to a budget up front. The moment they feel this: at the end of a week or month, wanting to know "how much did I really spend and where" — and finding that answer requires either manual spreadsheet work or trusting a bank's own (usually shallow) categorization.
+An individual manages personal finances across several bank accounts (mBank, Revolut, Erste Bank Polska, VeloBank) and has no visibility into what they actually spend, per category, without manually tracking every transaction or committing to a budget up front. The moment they feel this: at the end of a week or month, wanting to know "how much did I really spend and where" — and finding that answer requires either manual spreadsheet work or trusting a bank's own (usually shallow) categorization.
 
 The insight: categorization quality can come from the user's own accumulated decisions rather than either a fully manual process or a black-box auto-categorizer the user can't correct — each category choice is a deliberate call the user makes themselves. Spending gets compared against a derived historical average per category, so the user gets a meaningful "is this normal for me" signal without first having to define a budget.
 
 ## User & Persona
 
-**Primary persona**: A single named user (the builder) managing their own personal finances across multiple bank accounts (mBank, Revolut, Erste Bank Polska). Reaches for the product periodically (weekly/monthly) to import new transactions, clear the categorization queue, and check spending trends — not an always-on or real-time tool.
+**Primary persona**: A single named user (the builder) managing their own personal finances across multiple bank accounts (mBank, Revolut, Erste Bank Polska, VeloBank). Reaches for the product periodically (weekly/monthly) to import new transactions, clear the categorization queue, and check spending trends — not an always-on or real-time tool.
 
 Explicitly single-user for MVP — no multi-tenant, no data sharing (see Non-Goals below).
 
@@ -63,6 +63,8 @@ Explicitly single-user for MVP — no multi-tenant, no data sharing (see Non-Goa
   > Socratic: Counter-argument considered: "manual entry alone could validate the categorization flow without import complexity." Resolution: kept as written — import needed to prove value on real bulk data.
 - FR-003: User can import CSV statements from Revolut, then Erste Bank Polska, added one bank at a time — each gated on the prior bank's import working end-to-end — PLN-only (other currencies filtered with a skipped-count). Priority: must-have
   > Socratic: Counter-argument considered: "adding two more parsers at once adds format-risk before core value is proven on one bank." Resolution: revised — banks now added sequentially (Revolut, then Erste), each gated on the previous one working, instead of both landing together at once.
+- FR-018: User can import a PDF statement from VeloBank (which offers no CSV export) through the same import, duplicate-review and categorization flow as the CSV banks — PLN-only (other currencies filtered with a skipped-count). A statement whose printed running balances do not add up is rejected with an explanation instead of being imported. Priority: must-have
+  > Socratic: Counter-argument considered: "a PDF is a presentation format, not a data export — a misread row would silently skew totals and duplicate detection, and the user would never notice." Resolution: revised — the statement's own running balances are checked on import and an inconsistent file is rejected rather than imported, so a misread row cannot slip into the totals.
 
 ### Duplicate handling
 - FR-004: For every detected duplicate transaction during import, the system shows the user both the existing and the incoming transaction side-by-side and lets them decide whether to skip or keep it. Priority: must-have
@@ -117,7 +119,7 @@ Login via email + password, with an authenticated session that persists across v
 - **Data sharing between users** — strictly single-user data; no shared households/accounts.
 - **Email/push notifications** — no notification system of any kind.
 - **Mobile app** — web only, no native mobile app.
-- **Banks other than mBank, Revolut, and Erste Bank Polska** — no support for any other bank's CSV format.
+- **Banks other than mBank, Revolut, Erste Bank Polska, and VeloBank** — no support for any other bank's statement format; VeloBank is supported through PDF statements only (it offers no CSV export).
 - **Login via Google/OAuth** — email+password only.
 
 ## Open Questions

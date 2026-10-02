@@ -20,6 +20,8 @@ public class ErsteCsvParser : IBankStatementParser
 
     public string BankName => "Erste";
 
+    public StatementFormat Format => StatementFormat.Csv;
+
     // Lenient on purpose: every registered parser's CanParse runs on every upload, including
     // cp1250 mBank files, so invalid UTF-8 must degrade to replacement characters, never throw.
     private static string ReadAllText(Stream fileStream)

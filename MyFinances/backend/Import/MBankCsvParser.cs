@@ -31,6 +31,8 @@ public class MBankCsvParser : IBankStatementParser
 
     public string BankName => "mBank";
 
+    public StatementFormat Format => StatementFormat.Csv;
+
     // Some mBank exports arrive as genuine cp1250 bytes; others have been round-tripped through
     // a tool that decoded the original cp1250 bytes as Windows-1252 and re-saved as UTF-8. Undo
     // that by decoding as UTF-8, then re-encoding via Windows-1252 (its exact inverse — this also

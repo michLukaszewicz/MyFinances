@@ -50,8 +50,8 @@ interface ImportSummaryDto {
   skippedErrorCount: number;
 }
 
-// mBank and Erste are supported today — extend this list as more parsers ship.
-const SUPPORTED_BANKS = ["mBank", "Erste"];
+// mBank, Erste and VeloBank are supported today — extend this list as more parsers ship.
+const SUPPORTED_BANKS = ["mBank", "Erste", "VeloBank"];
 
 // Mirrors the backend's RowDecision enum (ImportContracts.cs) — the value Phase 6
 // will send per duplicate row in the /import/commit request.
@@ -129,9 +129,11 @@ export default function Import() {
       setResult(response);
       setDecisions(new Map());
     } catch (err) {
-      // /import/parse only ever returns 400 when no parser recognized the file and no
-      // `bank` fallback was given — any other failure (network, 401, 500) shouldn't
-      // reveal the picker, since retrying with a bank won't fix those.
+      // /import/parse returns 400 when the file is not recognised or the chosen bank has no
+      // parser for its format — the only case where the picker helps. 422 (a recognised
+      // statement that failed its integrity checks) shows its message without the picker, and
+      // any other failure (network, 401, 500) shouldn't reveal it either, since retrying with a
+      // bank won't fix those.
       if (err instanceof ApiError && err.response.status === 400) {
         setShowBankPicker(true);
       }
@@ -413,12 +415,12 @@ export default function Import() {
 
               <div className="space-y-1">
                 <label htmlFor="file" className="text-sm text-gray-200">
-                  Bank statement CSV
+                  Bank statement (CSV or PDF)
                 </label>
                 <input
                   id="file"
                   type="file"
-                  accept=".csv"
+                  accept=".csv,.pdf"
                   required
                   onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                   className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 file:mr-2 file:rounded-md file:border-0 file:bg-brand-500 file:px-3 file:py-1.5 file:text-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
