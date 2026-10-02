@@ -105,4 +105,83 @@ public class CategoryDeviationTests
         Assert.Equal(100m, result!.Value.AverageToDate);
         Assert.Equal("above", result.Value.Deviation);
     }
+
+    [Fact]
+    public void Calculate_PastMonthAsOfMonthEnd_ComparesFullMonthAgainstEarlierMonths()
+    {
+        // Displayed month is Feb (as-of Feb 28): Dec 100, Jan 0 (zero month counts) -> N=2, average 50.
+        var prior = new[] { Row(2025, 12, 31, 100m) };
+
+        var result = CategoryDeviation.Calculate(prior, 80m, new DateOnly(2026, 2, 28), fullMonth: true);
+
+        Assert.Equal(50m, result!.Value.AverageToDate);
+        Assert.Equal("above", result.Value.Deviation);
+    }
+
+    [Fact]
+    public void Calculate_PastMonthWithNoEarlierMonth_ReturnsNull()
+    {
+        var prior = new[] { Row(2026, 2, 3, 100m) };
+
+        Assert.Null(CategoryDeviation.Calculate(prior, 80m, new DateOnly(2026, 2, 28), fullMonth: true));
+    }
+
+    [Fact]
+    public void CalculateWindow_NoPriorSpend_ReturnsNull()
+    {
+        Assert.Null(CategoryDeviation.CalculateWindow([], 100m, new DateOnly(2026, 3, 1), 30));
+    }
+
+    [Fact]
+    public void CalculateWindow_ExactMultipleOfWindows_AveragesPerWindow()
+    {
+        // First spend 60 days before `from` -> exactly 2 windows of 30 days; 200 / 2 = 100.
+        var from = new DateOnly(2026, 3, 1);
+        var prior = new[] { Row(2026, 1, 1, 120m), Row(2026, 2, 10, 80m) };
+
+        var result = CategoryDeviation.CalculateWindow(prior, 150m, from, 30);
+
+        Assert.Equal(100m, result!.Value.AverageToDate);
+        Assert.Equal("above", result.Value.Deviation);
+    }
+
+    [Fact]
+    public void CalculateWindow_PartialFirstWindow_CountsItAsAWholeWindow()
+    {
+        // 39 days back -> ceil(39/30) = 2 windows.
+        var from = new DateOnly(2026, 2, 9);
+        var prior = new[] { Row(2026, 1, 1, 200m) };
+
+        var result = CategoryDeviation.CalculateWindow(prior, 100m, from, 30);
+
+        Assert.Equal(100m, result!.Value.AverageToDate);
+        Assert.Equal("inLine", result.Value.Deviation);
+    }
+
+    [Theory]
+    [InlineData(110, "inLine")]
+    [InlineData(111, "above")]
+    [InlineData(90, "inLine")]
+    [InlineData(89, "below")]
+    public void CalculateWindow_BandEdgesAreInclusive(int total, string expected)
+    {
+        var from = new DateOnly(2026, 2, 1);
+        var prior = new[] { Row(2026, 1, 2, 100m) };
+
+        var result = CategoryDeviation.CalculateWindow(prior, total, from, 30);
+
+        Assert.Equal(expected, result!.Value.Deviation);
+    }
+
+    [Fact]
+    public void CalculateWindow_AcrossYearBoundary_UsesDayDifference()
+    {
+        // 2025-12-02 .. 2026-01-01 is exactly 30 days -> one window.
+        var prior = new[] { Row(2025, 12, 2, 60m) };
+
+        var result = CategoryDeviation.CalculateWindow(prior, 60m, new DateOnly(2026, 1, 1), 30);
+
+        Assert.Equal(60m, result!.Value.AverageToDate);
+        Assert.Equal("inLine", result.Value.Deviation);
+    }
 }
