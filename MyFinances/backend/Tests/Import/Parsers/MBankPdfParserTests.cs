@@ -370,6 +370,29 @@ public class MBankPdfParserTests
         Assert.Equal(Expected(MBankSampleData.MultiPageRows), result.Transactions);
     }
 
+    // The real single-page export (checked manually; it holds personal data and stays outside the
+    // repository) draws every row as its own cell with a small gap, so the table has grid lines that
+    // carry exactly five segments. The builder reproduces that with RowGap.
+    [Theory]
+    [InlineData(1)]
+    [InlineData(4)]
+    [InlineData(8)]
+    public void Parse_ReadsAStatementThatFitsOnOnePage(int rowCount)
+    {
+        // Arrange
+        var rows = MBankSampleData.WithRunningBalances(MBankSampleData.OpeningBalance, MBankSampleData.TwoPageRows.Take(rowCount).ToList());
+        var layout = new MBankPdfLayout { FirstPageRows = rowCount, RowGap = 0.5 };
+        var pdf = MBankPdfBuilder.Build(MBankSampleData.Header, MBankSampleData.OpeningBalance, rows, layout);
+
+        // Act
+        var result = Parse(pdf);
+
+        // Assert
+        Assert.True(CanParse(pdf));
+        Assert.Equal(Expected(rows), result.Transactions);
+        Assert.Equal(0, result.SkippedErrorCount);
+    }
+
     [Fact]
     public void Parse_ReadsAStatementWithoutAnyRow()
     {
