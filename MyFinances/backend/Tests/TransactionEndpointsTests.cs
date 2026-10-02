@@ -39,6 +39,12 @@ public class TransactionEndpointsTests
 
     private record TokenResponse(string Token);
 
+    private static string MonthQuery()
+    {
+        var (start, end) = CurrentMonthRange.Get();
+        return $"from={start:yyyy-MM-dd}&to={end:yyyy-MM-dd}";
+    }
+
     // Seeds `count` transactions directly via AppDbContext, dated so that a higher index is
     // newer (baseDate + index days) — matches the endpoint's newest-first ordering contract.
     private static async Task SeedTransactionsAsync(AuthApiFactory factory, Guid userId, Guid accountId, int count, DateOnly baseDate)
@@ -336,7 +342,7 @@ public class TransactionEndpointsTests
         await SeedCategorizedTransactionAsync(factory, userId, account.Id, start.AddDays(-1), null);
         await SeedCategorizedTransactionAsync(factory, userId, account.Id, end.AddDays(1), null);
 
-        var filtered = await (await client.GetAsync("/api/transactions?currentMonth=true&take=100")).Content
+        var filtered = await (await client.GetAsync($"/api/transactions?{MonthQuery()}&take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
         var unfiltered = await (await client.GetAsync("/api/transactions?take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
@@ -362,7 +368,7 @@ public class TransactionEndpointsTests
         await SeedCategorizedTransactionAsync(factory, userId, account.Id, start.AddDays(-1), target);
         await SeedCategorizedTransactionAsync(factory, userId, account.Id, start, other);
 
-        var result = await (await client.GetAsync($"/api/transactions?categoryId={target}&currentMonth=true&take=100")).Content
+        var result = await (await client.GetAsync($"/api/transactions?categoryId={target}&{MonthQuery()}&take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
 
         var item = Assert.Single(result!.Items);
@@ -400,7 +406,7 @@ public class TransactionEndpointsTests
             await db.SaveChangesAsync();
         }
 
-        var slice = await (await client.GetAsync($"/api/transactions?categoryId={target}&currentMonth=true&take=100")).Content
+        var slice = await (await client.GetAsync($"/api/transactions?categoryId={target}&{MonthQuery()}&take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
         var categoryOnly = await (await client.GetAsync($"/api/transactions?categoryId={target}&take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
@@ -408,6 +414,86 @@ public class TransactionEndpointsTests
         var item = Assert.Single(slice!.Items);
         Assert.Equal(-10m, item.Amount);
         Assert.Equal(3, categoryOnly!.Items.Count);
+    }
+
+    [Fact]
+    public async Task List_WithFromAndTo_IncludesBothEndsAndExcludesOutside()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        foreach (var day in new[] { 9, 10, 11, 12 })
+        {
+            await InsertTransactionAsync(factory, userId, account.Id, new DateOnly(2020, 3, day), -5m);
+        }
+
+        var result = await (await client.GetAsync("/api/transactions?from=2020-03-10&to=2020-03-11&take=100")).Content
+            .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
+
+        Assert.Equal(2, result!.Items.Count);
+        Assert.All(result.Items, i => Assert.InRange(i.Date, new DateOnly(2020, 3, 10), new DateOnly(2020, 3, 11)));
+    }
+
+    [Fact]
+    public async Task List_WithRangeAcrossYearBoundary_ReturnsRowsFromBothYears()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        foreach (var date in new[] { new DateOnly(2019, 12, 30), new DateOnly(2020, 1, 2), new DateOnly(2020, 1, 3) })
+        {
+            await InsertTransactionAsync(factory, userId, account.Id, date, -5m);
+        }
+
+        var result = await (await client.GetAsync("/api/transactions?from=2019-12-30&to=2020-01-02&take=100")).Content
+            .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
+
+        Assert.Equal(2, result!.Items.Count);
+    }
+
+    [Fact]
+    public async Task List_WithInvalidPeriod_ReturnsBadRequest()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var future = CurrentMonthRange.Get().Start.AddMonths(2);
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/transactions?from=2020-03-10")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/transactions?to=2020-03-10")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/transactions?from=2020-03-11&to=2020-03-10")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync($"/api/transactions?from={future:yyyy-MM-dd}&to={future:yyyy-MM-dd}")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync($"/api/transactions?from=2020-03-10&to={future:yyyy-MM-dd}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task List_WithCategoryIdAndCustomPeriod_AppliesSliceRule()
+    {
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var userId = await GetUserIdAsync(factory);
+        var target = await GetFirstCategoryIdAsync(client);
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            foreach (var amount in new[] { -10m, 25m })
+            {
+                db.Transactions.Add(new Transaction
+                {
+                    Id = Guid.NewGuid(), UserId = userId, AccountId = account.Id, Date = new DateOnly(2020, 3, 10),
+                    Description = "x", Amount = amount, Hash = Guid.NewGuid().ToString(), CategoryId = target,
+                });
+            }
+
+            await db.SaveChangesAsync();
+        }
+
+        var spend = await (await client.GetAsync($"/api/transactions?categoryId={target}&from=2020-03-01&to=2020-03-31&take=100")).Content
+            .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
+
+        Assert.Equal(-10m, Assert.Single(spend!.Items).Amount);
     }
 
     [Fact]
@@ -458,7 +544,7 @@ public class TransactionEndpointsTests
             await db.SaveChangesAsync();
         }
 
-        var income = await (await client.GetAsync($"/api/transactions?categoryId={target}&currentMonth=true&kind=income&take=100")).Content
+        var income = await (await client.GetAsync($"/api/transactions?categoryId={target}&{MonthQuery()}&kind=income&take=100")).Content
             .ReadFromJsonAsync<TransactionListResponseDto>(JsonOptions);
 
         var item = Assert.Single(income!.Items);
