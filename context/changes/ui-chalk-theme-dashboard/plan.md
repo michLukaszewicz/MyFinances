@@ -323,9 +323,9 @@ No data migration. Global effects of this change on out-of-scope routes: new fon
 
 #### Automated
 
-- [x] 4.1 Type checking passes: `npm run typecheck`
-- [x] 4.2 Production build passes: `npm run build`
-- [x] 4.3 Backend untouched: `git diff --stat main -- MyFinances/backend` shows no changes
+- [x] 4.1 Type checking passes: `npm run typecheck` — 7ced6ba
+- [x] 4.2 Production build passes: `npm run build` — 7ced6ba
+- [x] 4.3 Backend untouched: `git diff --stat main -- MyFinances/backend` shows no changes — 7ced6ba
 
 #### Manual
 
