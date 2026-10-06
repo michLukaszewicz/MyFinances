@@ -279,10 +279,10 @@ No data migration. Global effects of this change on out-of-scope routes: new fon
 
 #### Automated
 
-- [ ] 1.1 Dependencies install cleanly: `npm install` (from `MyFinances/frontend`)
-- [ ] 1.2 Type checking passes: `npm run typecheck`
-- [ ] 1.3 Production build passes: `npm run build`
-- [ ] 1.4 Tokens present in `app.css`: background, primary, destructive, success, warning, chart-1 through chart-12 and their `--color-*` mappings
+- [x] 1.1 Dependencies install cleanly: `npm install` (from `MyFinances/frontend`)
+- [x] 1.2 Type checking passes: `npm run typecheck`
+- [x] 1.3 Production build passes: `npm run build`
+- [x] 1.4 Tokens present in `app.css`: background, primary, destructive, success, warning, chart-1 through chart-12 and their `--color-*` mappings
 
 #### Manual
 
