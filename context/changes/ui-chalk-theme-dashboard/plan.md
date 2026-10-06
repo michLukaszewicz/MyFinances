@@ -279,10 +279,10 @@ No data migration. Global effects of this change on out-of-scope routes: new fon
 
 #### Automated
 
-- [x] 1.1 Dependencies install cleanly: `npm install` (from `MyFinances/frontend`)
-- [x] 1.2 Type checking passes: `npm run typecheck`
-- [x] 1.3 Production build passes: `npm run build`
-- [x] 1.4 Tokens present in `app.css`: background, primary, destructive, success, warning, chart-1 through chart-12 and their `--color-*` mappings
+- [x] 1.1 Dependencies install cleanly: `npm install` (from `MyFinances/frontend`) — 8e048ba
+- [x] 1.2 Type checking passes: `npm run typecheck` — 8e048ba
+- [x] 1.3 Production build passes: `npm run build` — 8e048ba
+- [x] 1.4 Tokens present in `app.css`: background, primary, destructive, success, warning, chart-1 through chart-12 and their `--color-*` mappings — 8e048ba
 
 #### Manual
 
@@ -294,9 +294,9 @@ No data migration. Global effects of this change on out-of-scope routes: new fon
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npm run typecheck`
-- [ ] 2.2 Production build passes: `npm run build`
-- [ ] 2.3 No hex literals or gray/red/green palette utilities remain in the two chart files (grep returns no lines)
+- [x] 2.1 Type checking passes: `npm run typecheck`
+- [x] 2.2 Production build passes: `npm run build`
+- [x] 2.3 No hex literals or gray/red/green palette utilities remain in the two chart files (grep returns no lines)
 
 #### Manual
 
