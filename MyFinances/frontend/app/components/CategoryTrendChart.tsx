@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 import { apiErrorMessage, apiFetch } from "../lib/api";
 import type { CategoryDto } from "../lib/categories";
+import { chartColor } from "../lib/chartPalette";
 import { toDateInputValue } from "../lib/period";
 
 // Mirrors the backend's CategoryTrendEndpoints.cs DTOs.
@@ -29,22 +32,6 @@ const MAX_BUCKETS = 120;
 const DEFAULT_SELECTED = 5;
 
 const GRANULARITY_LABELS: Record<Granularity, string> = { week: "Week", month: "Month", year: "Year" };
-
-// Same palette as CategorySpendDonut so a category keeps its colour across both charts.
-const PALETTE = [
-  "#6366f1",
-  "#f59e0b",
-  "#10b981",
-  "#ef4444",
-  "#3b82f6",
-  "#ec4899",
-  "#14b8a6",
-  "#f97316",
-  "#8b5cf6",
-  "#84cc16",
-  "#06b6d4",
-  "#eab308",
-];
 
 function parseDate(value: string): Date {
   const [y, m, d] = value.split("-").map(Number);
@@ -98,14 +85,7 @@ function formatAmount(amount: number): string {
   return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-const controlClass =
-  "rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
-
-function toggleClass(active: boolean): string {
-  return `rounded-md px-3 py-1 text-sm font-medium transition-colors ${
-    active ? "bg-brand-600 text-white" : "text-gray-300 hover:bg-white/5"
-  }`;
-}
+const dateInputClass = "w-auto [color-scheme:dark]";
 
 export function CategoryTrendChart() {
   const [granularity, setGranularity] = useState<Granularity>("month");
@@ -180,7 +160,7 @@ export function CategoryTrendChart() {
 
   function colorFor(categoryId: string, fallbackIndex: number): string {
     const index = categories.findIndex((c) => c.id === categoryId);
-    return PALETTE[(index >= 0 ? index : fallbackIndex) % PALETTE.length];
+    return chartColor(index >= 0 ? index : fallbackIndex);
   }
 
   const chartData = useMemo(() => {
@@ -211,65 +191,67 @@ export function CategoryTrendChart() {
 
   return (
     <section className="space-y-3 text-left" aria-labelledby="categoryTrendHeading">
-      <h2 id="categoryTrendHeading" className="text-center text-sm font-medium text-gray-200">
+      <h2 id="categoryTrendHeading" className="text-center text-sm font-medium text-foreground">
         Category trend
       </h2>
 
       <div className="flex flex-wrap items-center justify-center gap-3">
         <div className="flex gap-1" role="group" aria-label="Granularity">
           {(Object.keys(GRANULARITY_LABELS) as Granularity[]).map((g) => (
-            <button
+            <Button
               key={g}
               type="button"
+              size="sm"
+              variant={granularity === g ? "default" : "ghost"}
               aria-pressed={granularity === g}
               onClick={() => changeGranularity(g)}
-              className={toggleClass(granularity === g)}
             >
               {GRANULARITY_LABELS[g]}
-            </button>
+            </Button>
           ))}
         </div>
         <div className="flex gap-1" role="group" aria-label="Kind">
           {(["spend", "income"] as Kind[]).map((k) => (
-            <button
+            <Button
               key={k}
               type="button"
+              size="sm"
+              variant={kind === k ? "default" : "ghost"}
               aria-pressed={kind === k}
               onClick={() => setKind(k)}
-              className={toggleClass(kind === k)}
             >
               {k === "spend" ? "Spend" : "Income"}
-            </button>
+            </Button>
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="date"
             aria-label="Trend from"
             value={range.from}
             max={range.to || today}
             onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))}
-            className={controlClass}
+            className={dateInputClass}
           />
-          <span className="text-sm text-gray-400">–</span>
-          <input
+          <span className="text-sm text-muted-foreground">–</span>
+          <Input
             type="date"
             aria-label="Trend to"
             value={range.to}
             min={range.from || undefined}
             max={today}
             onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))}
-            className={controlClass}
+            className={dateInputClass}
           />
         </div>
       </div>
 
-      {rangeError && <p className="text-center text-sm text-red-400">{rangeError}</p>}
-      {!rangeError && loadError && <p className="text-center text-sm text-red-600">{loadError}</p>}
-      {!rangeError && !loadError && (loading || !categoriesSettled) && <p className="text-center text-sm text-gray-400">Loading…</p>}
+      {rangeError && <p className="text-center text-sm text-destructive">{rangeError}</p>}
+      {!rangeError && loadError && <p className="text-center text-sm text-destructive">{loadError}</p>}
+      {!rangeError && !loadError && (loading || !categoriesSettled) && <p className="text-center text-sm text-muted-foreground">Loading…</p>}
 
       {!rangeError && !loadError && !loading && categoriesSettled && data && data.series.length === 0 && (
-        <p className="text-center text-sm text-gray-400">No categorized {kind} in this range.</p>
+        <p className="text-center text-sm text-muted-foreground">No categorized {kind} in this range.</p>
       )}
 
       {!rangeError && !loadError && !loading && categoriesSettled && data && data.series.length > 0 && (
@@ -277,7 +259,7 @@ export function CategoryTrendChart() {
           <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1">
             {data.series.map((series, index) => (
               <li key={series.categoryId}>
-                <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-200">
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
                   <input
                     type="checkbox"
                     checked={selected.has(series.categoryId)}
@@ -295,16 +277,16 @@ export function CategoryTrendChart() {
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
-                <CartesianGrid stroke="#374151" strokeDasharray="3 3" />
-                <XAxis dataKey="label" stroke="#9ca3af" tick={{ fontSize: 12 }} />
-                <YAxis stroke="#9ca3af" tick={{ fontSize: 12 }} />
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                <XAxis dataKey="label" stroke="var(--muted-foreground)" tick={{ fontSize: 12 }} />
+                <YAxis stroke="var(--muted-foreground)" tick={{ fontSize: 12 }} />
                 <Tooltip
                   formatter={(value) => formatAmount(Number(value))}
-                  contentStyle={{ backgroundColor: "#111827", border: "1px solid #374151", borderRadius: 8 }}
-                  itemStyle={{ color: "#e5e7eb" }}
-                  labelStyle={{ color: "#e5e7eb" }}
+                  contentStyle={{ backgroundColor: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }}
+                  itemStyle={{ color: "var(--popover-foreground)" }}
+                  labelStyle={{ color: "var(--popover-foreground)" }}
                 />
-                <Legend formatter={(value) => <span style={{ color: "#e5e7eb" }}>{value}</span>} />
+                <Legend formatter={(value) => <span style={{ color: "var(--foreground)" }}>{value}</span>} />
                 {visibleSeries.map((series) => (
                   <Line
                     key={series.categoryId}
