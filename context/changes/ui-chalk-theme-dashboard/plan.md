@@ -308,9 +308,9 @@ No data migration. Global effects of this change on out-of-scope routes: new fon
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npm run typecheck`
-- [x] 3.2 Production build passes: `npm run build`
-- [x] 3.3 No literal colours remain in the four dashboard files (grep returns no lines)
+- [x] 3.1 Type checking passes: `npm run typecheck` — 97f8939
+- [x] 3.2 Production build passes: `npm run build` — 97f8939
+- [x] 3.3 No literal colours remain in the four dashboard files (grep returns no lines) — 97f8939
 
 #### Manual
 
@@ -323,9 +323,9 @@ No data migration. Global effects of this change on out-of-scope routes: new fon
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `npm run typecheck`
-- [ ] 4.2 Production build passes: `npm run build`
-- [ ] 4.3 Backend untouched: `git diff --stat main -- MyFinances/backend` shows no changes
+- [x] 4.1 Type checking passes: `npm run typecheck`
+- [x] 4.2 Production build passes: `npm run build`
+- [x] 4.3 Backend untouched: `git diff --stat main -- MyFinances/backend` shows no changes
 
 #### Manual
 

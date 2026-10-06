@@ -41,6 +41,14 @@ npm run typecheck    # react-router typegen && tsc
 
 Backend has an xUnit test suite (`MyFinances/backend/Tests`, run via `dotnet test` from `MyFinances/backend`). No frontend test framework exists yet.
 
+## UI conventions
+
+- The app is dark-only (Chalk theme, `<html class="dark">`); no light-mode wiring or theme toggle.
+- Colour comes only from semantic tokens in [app/app.css](MyFinances/frontend/app/app.css) (`bg-background`, `text-muted-foreground`, `border-border`, `bg-primary`, `text-destructive`, `text-success`, `text-warning`, ...). No `gray-*`/`red-*`/`emerald-*`/`amber-*` utilities or hex literals in migrated views (currently the dashboard: `home.tsx`, `AppHeader`, `CategorySpendDonut`, `CategoryTrendChart`).
+- Use the shared components in `app/components/ui` (Button, Input, Card; native `<select>` uses `selectClassName`). Add new ones through the shadcn CLI, not by hand-copying.
+- Chart series colours come from `chartColor(slot)` in `app/lib/chartPalette.ts` (`--chart-1..12`); keep it in sync with the tokens.
+- `--color-brand-*` stays only on not-yet-migrated routes (import, categorize, settings, login, register).
+
 ## 10xDevs AI Toolkit context
 
 This repo was scaffolded using the `/10x-*` skill chain (`10x-init` → `10x-shape` → `10x-prd` → `10x-tech-stack-selector` → `10x-bootstrapper`). Key hand-off artifacts:
