@@ -294,9 +294,9 @@ No data migration. Global effects of this change on out-of-scope routes: new fon
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npm run typecheck`
-- [x] 2.2 Production build passes: `npm run build`
-- [x] 2.3 No hex literals or gray/red/green palette utilities remain in the two chart files (grep returns no lines)
+- [x] 2.1 Type checking passes: `npm run typecheck` — 78a6fed
+- [x] 2.2 Production build passes: `npm run build` — 78a6fed
+- [x] 2.3 No hex literals or gray/red/green palette utilities remain in the two chart files (grep returns no lines) — 78a6fed
 
 #### Manual
 
@@ -308,9 +308,9 @@ No data migration. Global effects of this change on out-of-scope routes: new fon
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npm run typecheck`
-- [ ] 3.2 Production build passes: `npm run build`
-- [ ] 3.3 No literal colours remain in the four dashboard files (grep returns no lines)
+- [x] 3.1 Type checking passes: `npm run typecheck`
+- [x] 3.2 Production build passes: `npm run build`
+- [x] 3.3 No literal colours remain in the four dashboard files (grep returns no lines)
 
 #### Manual
 
