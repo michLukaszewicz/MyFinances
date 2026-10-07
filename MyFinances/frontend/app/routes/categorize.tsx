@@ -3,6 +3,9 @@ import { redirect } from "react-router";
 import { apiFetch, ApiError } from "../lib/api";
 import { categoriesForAmount, type CategoryDto } from "../lib/categories";
 import { AppHeader } from "../components/AppHeader";
+import { Button } from "../components/ui/button";
+import { Card, CardContent } from "../components/ui/card";
+import { selectClassName } from "../components/ui/input";
 
 export async function clientLoader() {
   const res = await fetch("/api/auth/me", { credentials: "include" });
@@ -109,35 +112,34 @@ export default function Categorize() {
       <AppHeader authenticated />
       <main className="flex items-center justify-center pb-4">
         <div className="w-full max-w-2xl space-y-8 px-4">
-          <h1 className="text-center text-lg font-semibold text-gray-200">Categorize</h1>
+          <h1 className="text-center text-lg font-semibold text-foreground">Categorize</h1>
 
           {loading ? (
-            <p className="text-center text-sm text-gray-400">Loading…</p>
+            <p className="text-center text-sm text-muted-foreground">Loading…</p>
           ) : loadError ? (
-            <p className="text-center text-sm text-red-600">{loadError}</p>
+            <p className="text-center text-sm text-destructive">{loadError}</p>
           ) : (
             <>
               <section className="space-y-2">
-                {upNext && <h2 className="text-sm font-medium text-gray-200">Up next</h2>}
+                {upNext && <h2 className="text-sm font-medium text-foreground">Up next</h2>}
                 {upNext ? (
-                  <form
-                    onSubmit={handleSaveUpNext}
-                    className="space-y-4 rounded-lg border border-gray-800 p-4"
-                  >
-                    <div className="flex items-center justify-between text-sm text-gray-200">
+                  <Card>
+                    <CardContent>
+                  <form onSubmit={handleSaveUpNext} className="space-y-4">
+                    <div className="flex items-center justify-between text-sm text-foreground">
                       <span>
                         {upNext.date} — {upNext.description}
                       </span>
-                      <span className={upNext.amount < 0 ? "text-red-500" : "text-emerald-500"}>
+                      <span className={upNext.amount < 0 ? "text-destructive" : "text-success"}>
                         {upNext.amount.toFixed(2)}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-muted-foreground">
                       {upNext.bankName} — {upNext.accountNumber}
                     </p>
 
                     <div className="space-y-1">
-                      <label htmlFor="upNextCategory" className="text-sm text-gray-200">
+                      <label htmlFor="upNextCategory" className="text-sm text-foreground">
                         Category
                       </label>
                       <select
@@ -145,7 +147,7 @@ export default function Categorize() {
                         value={upNextCategoryId}
                         disabled={upNextTransfer}
                         onChange={(e) => setUpNextCategoryId(e.target.value)}
-                        className="w-full rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:opacity-50"
+                        className={selectClassName}
                       >
                         <option value="">Select a category…</option>
                         {categoriesForAmount(categories, upNext.amount).map((category) => (
@@ -156,51 +158,51 @@ export default function Categorize() {
                       </select>
                     </div>
 
-                    <label className="flex items-center gap-2 text-sm text-gray-200">
+                    <label className="flex items-center gap-2 text-sm text-foreground">
                       <input
                         type="checkbox"
                         checked={upNextTransfer}
                         onChange={(e) => setUpNextTransfer(e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-700 bg-transparent text-brand-500 focus:ring-brand-500"
+                        className="h-4 w-4 cursor-pointer rounded border-input accent-primary outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                       />
                       This is an internal transfer between my own accounts
                     </label>
 
-                    {upNextError && <p className="text-sm text-red-600">{upNextError}</p>}
+                    {upNextError && <p className="text-sm text-destructive">{upNextError}</p>}
 
-                    <button
+                    <Button
                       type="submit"
                       disabled={savingUpNext || (!upNextTransfer && !upNextCategoryId)}
-                      className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
                     >
                       {savingUpNext ? "Saving…" : "Save"}
-                    </button>
+                    </Button>
                   </form>
+                    </CardContent>
+                  </Card>
                 ) : (
-                  <p className="text-center text-sm text-gray-400">Yay, all done! 🎉</p>
+                  <p className="text-center text-sm text-muted-foreground">Yay, all done! 🎉</p>
                 )}
               </section>
 
               {queue.length > 1 && (
                 <section className="space-y-2">
-                  <h2 className="text-sm font-medium text-gray-200">Remaining</h2>
+                  <h2 className="text-sm font-medium text-foreground">Remaining</h2>
                   <ul className="space-y-2">
                     {queue.slice(1).map((item) => (
-                      <li
-                        key={item.id}
-                        className="space-y-1 rounded-lg border border-gray-800 p-3 text-sm text-gray-200"
-                      >
+                      <li key={item.id}>
+                        <Card className="gap-1 p-3 text-sm text-foreground">
                         <div className="flex items-center justify-between">
                           <span>
                             {item.date} — {item.description}
                           </span>
-                          <span className={item.amount < 0 ? "text-red-500" : "text-emerald-500"}>
+                          <span className={item.amount < 0 ? "text-destructive" : "text-success"}>
                             {item.amount.toFixed(2)}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-muted-foreground">
                           {item.bankName} — {item.accountNumber}
                         </p>
+                        </Card>
                       </li>
                     ))}
                   </ul>

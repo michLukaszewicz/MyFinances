@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { apiErrorMessage, apiFetch } from "../lib/api";
 import type { CategoryDto } from "../lib/categories";
+import { chartColor } from "../lib/chartPalette";
 import { periodQuery, type Period } from "../lib/period";
 
 // Mirrors the backend's DashboardContracts.cs CategorySpendDto.
@@ -18,9 +19,9 @@ interface CategorySpendDto {
 type Deviation = "above" | "below" | "inLine";
 
 const DEVIATION_BADGE: Record<Deviation, { label: string; className: string }> = {
-  above: { label: "Above average", className: "bg-red-900/40 text-red-300" },
-  below: { label: "Below average", className: "bg-green-900/40 text-green-300" },
-  inLine: { label: "In line", className: "bg-gray-700 text-gray-300" },
+  above: { label: "Above average", className: "bg-destructive/20 text-destructive" },
+  below: { label: "Below average", className: "bg-success/20 text-success" },
+  inLine: { label: "In line", className: "bg-muted text-muted-foreground" },
 };
 
 export type FlowKind = "spend" | "income";
@@ -39,22 +40,6 @@ interface CategorySpendDonutProps {
   // categoryName is passed alongside the id so the parent can label the active filter.
   onSelectCategory: (categoryId: string | null, categoryName: string | null) => void;
 }
-
-// At least 12 entries (12 seeded categories); indexed by position modulo length.
-const PALETTE = [
-  "#6366f1",
-  "#f59e0b",
-  "#10b981",
-  "#ef4444",
-  "#3b82f6",
-  "#ec4899",
-  "#14b8a6",
-  "#f97316",
-  "#8b5cf6",
-  "#84cc16",
-  "#06b6d4",
-  "#eab308",
-];
 
 function formatAmount(amount: number): string {
   return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -122,18 +107,18 @@ export function CategorySpendDonut({ kind, period, selectedCategoryId, refreshKe
   }
 
   if (loading) {
-    return <p className="text-sm text-gray-400">Loading…</p>;
+    return <p className="text-sm text-muted-foreground">Loading…</p>;
   }
 
   if (loadError) {
-    return <p className="text-sm text-red-600">{loadError}</p>;
+    return <p className="text-sm text-destructive">{loadError}</p>;
   }
 
   if (!data || data.length === 0) {
     return (
-      <p className="text-center text-sm text-gray-400">
+      <p className="text-center text-sm text-muted-foreground">
         No categorized {copy.noun} for {period.label} yet.{" "}
-        <Link to="/categorize" className="text-brand-400 hover:text-brand-300">
+        <Link to="/categorize" className="text-primary hover:text-primary/80">
           Categorize transactions
         </Link>
       </p>
@@ -142,7 +127,7 @@ export function CategorySpendDonut({ kind, period, selectedCategoryId, refreshKe
 
   const chartData = data.map((entry, index) => ({
     ...entry,
-    fill: PALETTE[(categorySlot(entry.categoryId) >= 0 ? categorySlot(entry.categoryId) : index) % PALETTE.length],
+    fill: chartColor(categorySlot(entry.categoryId) >= 0 ? categorySlot(entry.categoryId) : index),
     fillOpacity: selectedCategoryId === null || selectedCategoryId === entry.categoryId ? 1 : 0.35,
   }));
 
@@ -162,7 +147,7 @@ export function CategorySpendDonut({ kind, period, selectedCategoryId, refreshKe
 
   return (
     <div className="space-y-2">
-      <h2 className="text-center text-sm font-medium text-gray-200">{copy.title} — {period.label}</h2>
+      <h2 className="text-center text-sm font-medium text-foreground">{copy.title} — {period.label}</h2>
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -178,12 +163,12 @@ export function CategorySpendDonut({ kind, period, selectedCategoryId, refreshKe
             />
             <Tooltip
               formatter={(value) => formatAmount(Number(value))}
-              contentStyle={{ backgroundColor: "#111827", border: "1px solid #374151", borderRadius: 8 }}
-              itemStyle={{ color: "#e5e7eb" }}
-              labelStyle={{ color: "#e5e7eb" }}
+              contentStyle={{ backgroundColor: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }}
+              itemStyle={{ color: "var(--popover-foreground)" }}
+              labelStyle={{ color: "var(--popover-foreground)" }}
             />
             <Legend
-              formatter={(value) => <span style={{ color: "#e5e7eb" }}>{value}</span>}
+              formatter={(value) => <span style={{ color: "var(--foreground)" }}>{value}</span>}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -198,20 +183,20 @@ export function CategorySpendDonut({ kind, period, selectedCategoryId, refreshKe
                   type="button"
                   onClick={() => toggleEntry(entry)}
                   aria-pressed={selectedCategoryId === entry.categoryId}
-                  className="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-sm hover:bg-gray-800"
+                  className="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-sm hover:bg-accent"
                 >
                   {/* Only the dot dims with the slices; dimming the text would drop it below readable contrast. */}
                   <span
                     className="h-3 w-3 shrink-0 rounded-full"
                     style={{ backgroundColor: entry.fill, opacity: entry.fillOpacity }}
                   />
-                  <span className="min-w-0 flex-1 truncate text-gray-200">{entry.categoryName}</span>
-                  <span className="text-gray-200">{formatAmount(entry.amount)}</span>
+                  <span className="min-w-0 flex-1 truncate text-foreground">{entry.categoryName}</span>
+                  <span className="text-foreground">{formatAmount(entry.amount)}</span>
                   {badge && (
                     <span className="flex flex-col items-end">
                       <span className={`rounded px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
                       {entry.averageToDate != null && (
-                        <span className="text-xs text-gray-400">{period.isCurrentMonth ? "avg by this day" : "avg for comparable period"}: {formatAmount(entry.averageToDate)}</span>
+                        <span className="text-xs text-muted-foreground">{period.isCurrentMonth ? "avg by this day" : "avg for comparable period"}: {formatAmount(entry.averageToDate)}</span>
                       )}
                     </span>
                   )}

@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { redirect } from "react-router";
 import { apiFetch, ApiError } from "../lib/api";
 import { AppHeader } from "../components/AppHeader";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
+import { Input, selectClassName } from "~/components/ui/input";
 
 export async function clientLoader() {
   const res = await fetch("/api/auth/me", { credentials: "include" });
@@ -220,7 +223,7 @@ export default function Import() {
       <main className="flex items-center justify-center pb-4">
         <div className={`w-full space-y-6 px-4 ${result ? "max-w-2xl" : "max-w-[300px]"}`}>
           <h1
-            className="text-center text-lg font-semibold text-gray-200 animate-[fade-slide-in_600ms_ease-out_both]"
+            className="text-center text-lg font-semibold text-foreground animate-[fade-slide-in_600ms_ease-out_both]"
             style={{ animationDelay: "0ms" }}
           >
             Import statement
@@ -231,7 +234,7 @@ export default function Import() {
               className="space-y-4 animate-[fade-slide-in_600ms_ease-out_both]"
               style={{ animationDelay: "50ms" }}
             >
-              <div className="space-y-1 rounded-lg border border-gray-800 p-3 text-sm text-gray-200">
+              <Card className="gap-1 p-3 text-sm text-foreground">
                 <p>
                   Imported <strong>{summary.importedCount}</strong> row(s) into{" "}
                   <strong>
@@ -241,16 +244,16 @@ export default function Import() {
                   .
                 </p>
                 {summary.skippedDuplicateCount > 0 && (
-                  <p className="text-gray-400">
+                  <p className="text-muted-foreground">
                     {summary.skippedDuplicateCount} duplicate row(s) skipped.
                   </p>
                 )}
                 {summary.skippedErrorCount > 0 && (
-                  <p className="text-gray-400">
+                  <p className="text-muted-foreground">
                     {summary.skippedErrorCount} row(s) skipped due to parse errors.
                   </p>
                 )}
-              </div>
+              </Card>
             </div>
           ) : result ? (
             <div
@@ -258,7 +261,7 @@ export default function Import() {
               style={{ animationDelay: "50ms" }}
             >
               {result.bankMismatch && (
-                <div className="space-y-2 rounded-lg border border-amber-700/60 bg-amber-950/20 p-3 text-sm text-amber-400">
+                <div className="space-y-2 rounded-lg border border-warning/60 bg-warning/10 p-3 text-sm text-warning">
                   <p>
                     This file looks like a <strong>{result.bank}</strong> export, but the selected
                     account is <strong>{selectedAccountBankName}</strong>. You can still continue
@@ -268,7 +271,7 @@ export default function Import() {
               )}
 
               {result.mixedFormatOverlapCount > 0 && (
-                <div className="space-y-2 rounded-lg border border-amber-700/60 bg-amber-950/20 p-3 text-sm text-amber-400">
+                <div className="space-y-2 rounded-lg border border-warning/60 bg-warning/10 p-3 text-sm text-warning">
                   <p>
                     <strong>{result.mixedFormatOverlapCount}</strong> transaction(s) in this period
                     on this account were imported from{" "}
@@ -280,132 +283,132 @@ export default function Import() {
               )}
 
               {allRowsAreDuplicates && (
-                <div className="space-y-2 rounded-lg border border-amber-700/60 bg-amber-950/20 p-3 text-sm text-amber-400">
+                <div className="space-y-2 rounded-lg border border-warning/60 bg-warning/10 p-3 text-sm text-warning">
                   <p>
                     Every transaction in this file is already in your account — looks like it may
                     have been imported before. You can still choose "Keep" below for any row you
                     want to add anyway.
                   </p>
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={handleSkipAllDuplicates}
                     disabled={committing}
-                    className="rounded-md border border-amber-700/60 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors hover:bg-amber-900/30 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+                    className="border-warning/60 text-warning hover:bg-warning/10 hover:text-warning"
                   >
                     {committing ? "Skipping…" : "Skip all — none of these were new"}
-                  </button>
+                  </Button>
                 </div>
               )}
 
-              <div className="space-y-1 rounded-lg border border-gray-800 p-3 text-sm text-gray-200">
+              <Card className="gap-1 p-3 text-sm text-foreground">
                 <p>
                   Parsed <strong>{result.rows.length}</strong> row(s) from{" "}
                   <strong>{result.bank}</strong>.
                 </p>
                 {result.skippedErrorCount > 0 && (
-                  <p className="text-gray-400">
+                  <p className="text-muted-foreground">
                     {result.skippedErrorCount} row(s) skipped due to parse errors.
                   </p>
                 )}
                 {duplicateIndexes.length > 0 && (
-                  <p className="text-gray-400">
+                  <p className="text-muted-foreground">
                     {duplicateIndexes.length} possible duplicate(s) need a decision
                     before you can continue.
                   </p>
                 )}
-              </div>
+              </Card>
 
               <ul className="space-y-2">
                 {result.rows.map((row, index) => (
-                  <li
-                    key={index}
-                    className={`rounded-lg border p-3 text-sm ${
-                      row.isDuplicate ? "border-amber-700/60 bg-amber-950/20" : "border-gray-800"
-                    }`}
-                  >
+                  <li key={index}>
+                    <Card
+                      className={`gap-0 p-3 text-sm ${
+                        row.isDuplicate ? "border-warning/60 bg-warning/10" : ""
+                      }`}
+                    >
                     {row.isDuplicate && row.existingTransaction ? (
                       <div className="space-y-2">
-                        <p className="text-xs font-medium uppercase tracking-wide text-amber-500">
+                        <p className="text-xs font-medium uppercase tracking-wide text-warning">
                           Possible duplicate
                         </p>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1">
-                            <p className="text-xs text-gray-500">Existing</p>
-                            <p className="text-gray-200">{row.existingTransaction.date}</p>
-                            <p className="text-gray-200">{row.existingTransaction.description}</p>
-                            <p className="text-gray-200">
+                            <p className="text-xs text-muted-foreground">Existing</p>
+                            <p className="text-foreground">{row.existingTransaction.date}</p>
+                            <p className="text-foreground">{row.existingTransaction.description}</p>
+                            <p className="text-foreground">
                               {formatAmount(row.existingTransaction.amount)}
                             </p>
                           </div>
                           <div className="space-y-1">
-                            <p className="text-xs text-gray-500">Incoming</p>
-                            <p className="text-gray-200">{row.date}</p>
-                            <p className="text-gray-200">{row.description}</p>
-                            <p className="text-gray-200">{formatAmount(row.amount)}</p>
+                            <p className="text-xs text-muted-foreground">Incoming</p>
+                            <p className="text-foreground">{row.date}</p>
+                            <p className="text-foreground">{row.description}</p>
+                            <p className="text-foreground">{formatAmount(row.amount)}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-4 pt-1">
-                          <label className="flex items-center gap-1.5 text-gray-200">
+                          <label className="flex items-center gap-1.5 text-foreground">
                             <input
                               type="radio"
                               name={`decision-${index}`}
                               checked={decisions.get(index) === "Keep"}
                               onChange={() => setRowDecision(index, "Keep")}
-                              className="accent-brand-500"
+                              className="accent-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
                             />
                             Keep (import anyway)
                           </label>
-                          <label className="flex items-center gap-1.5 text-gray-200">
+                          <label className="flex items-center gap-1.5 text-foreground">
                             <input
                               type="radio"
                               name={`decision-${index}`}
                               checked={decisions.get(index) === "Skip"}
                               onChange={() => setRowDecision(index, "Skip")}
-                              className="accent-brand-500"
+                              className="accent-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
                             />
                             Skip (don't import)
                           </label>
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between text-gray-200">
+                      <div className="flex items-center justify-between text-foreground">
                         <span>{row.date}</span>
                         <span className="flex-1 truncate px-3">{row.description}</span>
                         <span>{formatAmount(row.amount)}</span>
                       </div>
                     )}
+                    </Card>
                   </li>
                 ))}
               </ul>
 
-              {commitError && <p className="text-sm text-red-600">{commitError}</p>}
+              {commitError && <p className="text-sm text-destructive">{commitError}</p>}
 
-              <button
+              <Button
                 type="button"
                 onClick={handleContinue}
                 disabled={!allDuplicatesDecided || committing}
-                className="w-full rounded-lg bg-brand-500 p-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                className="w-full"
               >
                 {committing ? "Importing…" : "Continue"}
-              </button>
+              </Button>
             </div>
           ) : accountsLoading ? (
-            <p className="text-center text-sm text-gray-400 animate-[fade-slide-in_600ms_ease-out_both]">
+            <p className="text-center text-sm text-muted-foreground animate-[fade-slide-in_600ms_ease-out_both]">
               Loading…
             </p>
           ) : accounts.length === 0 ? (
-            <div
-              className="space-y-3 rounded-lg border border-gray-800 p-3 text-center text-sm text-gray-400 animate-[fade-slide-in_600ms_ease-out_both]"
+            <Card
+              className="gap-3 p-3 text-center text-sm text-muted-foreground animate-[fade-slide-in_600ms_ease-out_both]"
               style={{ animationDelay: "50ms" }}
             >
               <p>You need to add an account before you can import a statement.</p>
-              <a
-                href="/settings"
-                className="inline-block rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-              >
-                Go to Settings
-              </a>
-            </div>
+              <Button asChild className="mx-auto">
+                <a href="/settings">Go to Settings</a>
+              </Button>
+            </Card>
           ) : (
             <form
               onSubmit={handleSubmit}
@@ -413,7 +416,7 @@ export default function Import() {
               style={{ animationDelay: "50ms" }}
             >
               <div className="space-y-1">
-                <label htmlFor="accountId" className="text-sm text-gray-200">
+                <label htmlFor="accountId" className="text-sm text-foreground">
                   Account
                 </label>
                 <select
@@ -421,13 +424,13 @@ export default function Import() {
                   required
                   value={accountId}
                   onChange={(e) => setAccountId(e.target.value)}
-                  className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  className={selectClassName}
                 >
                   <option value="" disabled>
                     Select an account…
                   </option>
                   {accounts.map((account) => (
-                    <option key={account.id} value={account.id} className="bg-gray-900">
+                    <option key={account.id} value={account.id}>
                       {account.bankName} — {account.accountNumber}
                     </option>
                   ))}
@@ -435,22 +438,22 @@ export default function Import() {
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="file" className="text-sm text-gray-200">
+                <label htmlFor="file" className="text-sm text-foreground">
                   Bank statement (CSV or PDF)
                 </label>
-                <input
+                <Input
                   id="file"
                   type="file"
                   accept=".csv,.pdf"
                   required
                   onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                  className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 file:mr-2 file:rounded-md file:border-0 file:bg-brand-500 file:px-3 file:py-1.5 file:text-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  className="h-auto cursor-pointer p-1.5 file:mr-2 file:cursor-pointer file:rounded-sm file:border-0 file:bg-primary file:px-3 file:py-1 file:text-sm file:font-medium file:text-primary-foreground"
                 />
               </div>
 
               {showBankPicker && (
                 <div className="space-y-1">
-                  <label htmlFor="bank" className="text-sm text-gray-200">
+                  <label htmlFor="bank" className="text-sm text-foreground">
                     Bank
                   </label>
                   <select
@@ -458,13 +461,13 @@ export default function Import() {
                     required
                     value={bank}
                     onChange={(e) => setBank(e.target.value)}
-                    className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    className={selectClassName}
                   >
                     <option value="" disabled>
                       Select a bank…
                     </option>
                     {SUPPORTED_BANKS.map((b) => (
-                      <option key={b} value={b} className="bg-gray-900">
+                      <option key={b} value={b}>
                         {b}
                       </option>
                     ))}
@@ -472,15 +475,15 @@ export default function Import() {
                 </div>
               )}
 
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && <p className="text-sm text-destructive">{error}</p>}
 
-              <button
+              <Button
                 type="submit"
                 disabled={submitting || !file || !accountId}
-                className="w-full rounded-lg bg-brand-500 p-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                className="w-full"
               >
                 {submitting ? "Uploading…" : "Upload"}
-              </button>
+              </Button>
             </form>
           )}
         </div>

@@ -4,8 +4,13 @@ import type { Route } from "./+types/home";
 import { AppHeader } from "../components/AppHeader";
 import { CategorySpendDonut, type FlowKind } from "../components/CategorySpendDonut";
 import { CategoryTrendChart } from "../components/CategoryTrendChart";
+import { LandingPage } from "../components/landing/LandingPage";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
+import { Input, selectClassName } from "../components/ui/input";
 import { apiFetch, ApiError } from "../lib/api";
 import { categoriesForAmount, type CategoryDto } from "../lib/categories";
+import { cn } from "../lib/utils";
 import {
   PRESET_LABELS,
   defaultSelection,
@@ -18,21 +23,6 @@ import {
   type PeriodSelection,
 } from "../lib/period";
 
-const valueProps = [
-  {
-    title: "Import your statements",
-    description: "Upload bank statements: CSV exports from mBank, Revolut, and Erste, or PDF statements from mBank, Erste, and VeloBank.",
-  },
-  {
-    title: "Categorize in minutes",
-    description: "Tag transactions and let duplicates and transfers surface themselves.",
-  },
-  {
-    title: "See spend vs. your own history",
-    description: "Compare each category against your own past averages, not a stranger's budget.",
-  },
-];
-
 export function meta({}: Route.MetaArgs) {
   return [
     { title: "MyFinances" },
@@ -41,6 +31,13 @@ export function meta({}: Route.MetaArgs) {
       content:
         "Categorize your own spend and compare it to your own history — no budget required up front.",
     },
+    { property: "og:title", content: "MyFinances" },
+    {
+      property: "og:description",
+      content:
+        "Categorize your own spend and compare it to your own history — no budget required up front.",
+    },
+    { property: "og:type", content: "website" },
   ];
 }
 
@@ -255,67 +252,7 @@ export default function Home() {
     return (
       <>
         <AppHeader authenticated={false} />
-        <main className="relative flex min-h-screen items-center justify-center overflow-hidden pb-4">
-          <div
-            className="pointer-events-none absolute inset-0 -z-20 bg-[length:200%_200%] opacity-60 animate-[gradient-pan_18s_ease-in-out_infinite]"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 20% 20%, var(--color-brand-900) 0%, transparent 45%), radial-gradient(circle at 80% 30%, var(--color-brand-800) 0%, transparent 40%), radial-gradient(circle at 50% 80%, var(--color-brand-900) 0%, transparent 45%)",
-            }}
-            aria-hidden="true"
-          />
-          <div
-            className="pointer-events-none absolute -left-24 top-10 -z-10 h-72 w-72 rounded-full bg-brand-600 opacity-30 blur-3xl animate-[drift-slow_14s_ease-in-out_infinite]"
-            aria-hidden="true"
-          />
-          <div
-            className="pointer-events-none absolute -right-24 bottom-0 -z-10 h-80 w-80 rounded-full bg-brand-400 opacity-20 blur-3xl animate-[drift-slow-reverse_16s_ease-in-out_infinite]"
-            aria-hidden="true"
-          />
-          <div className="max-w-lg w-full space-y-8 px-4 text-center">
-            <h1 className="sr-only">MyFinances</h1>
-            <p
-              className="text-sm text-gray-400 animate-[fade-slide-in_600ms_ease-out_both]"
-              style={{ animationDelay: "0ms" }}
-            >
-              Categorize your own spend and compare it to your own history — no
-              budget required up front.
-            </p>
-            <div
-              className="flex justify-center gap-4 text-sm animate-[fade-slide-in_600ms_ease-out_both]"
-              style={{ animationDelay: "100ms" }}
-            >
-              <a
-                href="/login"
-                className="rounded-md bg-brand-500 px-4 py-2 font-medium text-white shadow-md shadow-brand-900/40 transition-all duration-200 hover:scale-105 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-600/40 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-              >
-                Log in
-              </a>
-              <a
-                href="/register"
-                className="rounded-md px-4 py-2 font-medium text-brand-400 ring-1 ring-inset ring-brand-400 transition-all duration-200 hover:scale-105 hover:bg-brand-900/30 hover:shadow-lg hover:shadow-brand-600/20 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-              >
-                Register
-              </a>
-            </div>
-            <div
-              className="grid grid-cols-1 gap-4 pt-4 text-left sm:grid-cols-3 animate-[fade-slide-in_600ms_ease-out_both]"
-              style={{ animationDelay: "200ms" }}
-            >
-              {valueProps.map((item) => (
-                <div
-                  key={item.title}
-                  className="space-y-1 rounded-lg border border-gray-800 p-3 transition-all duration-200 hover:-translate-y-1 hover:border-brand-500/60 hover:bg-brand-900/30 hover:shadow-lg hover:shadow-brand-900/30"
-                >
-                  <h2 className="text-sm font-semibold text-gray-200">
-                    {item.title}
-                  </h2>
-                  <p className="text-xs text-gray-400">{item.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </main>
+        <LandingPage />
       </>
     );
   }
@@ -344,8 +281,6 @@ export default function Home() {
   }
 
   const todayValue = toDateInputValue(new Date());
-  const periodInputClass =
-    "rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
   const periodInvalid = resolvePeriod(periodSelection) === null;
   const periodInvalidMessage =
     periodSelection.preset === "custom"
@@ -500,168 +435,158 @@ export default function Home() {
 
   const transactionForm = isFormOpen ? (
     accounts.length === 0 ? (
-      <div className="space-y-3 rounded-lg border border-gray-800 p-4 text-left">
-        <p className="text-sm text-gray-400">
+      <Card className="gap-3 p-4 text-left">
+        <p className="text-sm text-muted-foreground">
           You need at least one account before adding a transaction. Add one in{" "}
-          <Link to="/settings" className="text-brand-400 hover:text-brand-300">
+          <Link
+            to="/settings"
+            className="rounded-sm text-primary outline-none hover:text-primary/80 focus-visible:ring-2 focus-visible:ring-ring"
+          >
             Settings
           </Link>
           .
         </p>
-        <button
-          type="button"
-          onClick={closeForm}
-          className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium text-gray-200 transition-colors hover:bg-white/5"
-        >
-          Close
-        </button>
-      </div>
+        <div>
+          <Button type="button" variant="outline" onClick={closeForm}>
+            Close
+          </Button>
+        </div>
+      </Card>
     ) : (
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-gray-800 p-4 text-left">
-        <h2 className="text-sm font-medium text-gray-200">
-          {editingId ? "Edit transaction" : "Add transaction"}
-        </h2>
+      <Card className="gap-4 p-4 text-left">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <h2 className="text-sm font-medium text-foreground">
+            {editingId ? "Edit transaction" : "Add transaction"}
+          </h2>
 
-        <div className="space-y-1">
-          <label htmlFor="transactionDate" className="text-sm text-gray-200">
-            Date
-          </label>
-          <input
-            id="transactionDate"
-            type="date"
-            required
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="transactionDescription" className="text-sm text-gray-200">
-            Description
-          </label>
-          <input
-            id="transactionDescription"
-            type="text"
-            required
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="transactionAmount" className="text-sm text-gray-200">
-            Amount
-          </label>
-          <input
-            id="transactionAmount"
-            type="number"
-            step="0.01"
-            required
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="transactionAccount" className="text-sm text-gray-200">
-            Account
-          </label>
-          <select
-            id="transactionAccount"
-            required
-            value={accountId}
-            onChange={(e) => setAccountId(e.target.value)}
-            className="w-full rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-          >
-            <option value="">Select an account…</option>
-            {accounts.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.bankName} — {account.accountNumber}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="transactionCategory" className="text-sm text-gray-200">
-            Category
-          </label>
-          <select
-            id="transactionCategory"
-            required={!(editingId && isInternalTransfer)}
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-gray-200 [color-scheme:dark] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-          >
-            <option value="">Select a category…</option>
-            {categoriesForAmount(categories, amount.trim() === "" ? null : Number(amount.replace(",", ".")), categoryId).map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {editingId && (
-          <label className="flex items-center gap-2 text-sm text-gray-200">
-            <input
-              type="checkbox"
-              checked={isInternalTransfer}
-              onChange={(e) => setIsInternalTransfer(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-700 bg-transparent text-brand-500 focus:ring-brand-500"
+          <div className="space-y-1">
+            <label htmlFor="transactionDate" className="text-sm text-foreground">
+              Date
+            </label>
+            <Input
+              id="transactionDate"
+              type="date"
+              required
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
             />
-            This is an internal transfer between my own accounts
-          </label>
-        )}
-
-        {formError && <p className="text-sm text-red-600">{formError}</p>}
-
-        {pendingDuplicate && (
-          <div className="space-y-2 rounded-lg border border-amber-700/60 bg-amber-950/30 p-3 text-sm text-amber-300">
-            <p>
-              A similar transaction already exists: {pendingDuplicate.date} —{" "}
-              {pendingDuplicate.description} — {formatAmount(pendingDuplicate.amount)}
-            </p>
-            <button
-              type="button"
-              onClick={handleForceSubmit}
-              disabled={submitting}
-              className="rounded-md border border-amber-600 px-3 py-1 text-xs font-medium text-amber-200 transition-colors hover:bg-amber-900/40 disabled:opacity-50"
-            >
-              Save anyway
-            </button>
           </div>
-        )}
 
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-          >
-            {submitting ? "Saving…" : editingId ? "Save changes" : "Add transaction"}
-          </button>
-          <button
-            type="button"
-            onClick={closeForm}
-            className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium text-gray-200 transition-colors hover:bg-white/5"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
+          <div className="space-y-1">
+            <label htmlFor="transactionDescription" className="text-sm text-foreground">
+              Description
+            </label>
+            <Input
+              id="transactionDescription"
+              type="text"
+              required
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="transactionAmount" className="text-sm text-foreground">
+              Amount
+            </label>
+            <Input
+              id="transactionAmount"
+              type="number"
+              step="0.01"
+              required
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="transactionAccount" className="text-sm text-foreground">
+              Account
+            </label>
+            <select
+              id="transactionAccount"
+              required
+              value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}
+              className={selectClassName}
+            >
+              <option value="">Select an account…</option>
+              {accounts.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.bankName} — {account.accountNumber}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="transactionCategory" className="text-sm text-foreground">
+              Category
+            </label>
+            <select
+              id="transactionCategory"
+              required={!(editingId && isInternalTransfer)}
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className={selectClassName}
+            >
+              <option value="">Select a category…</option>
+              {categoriesForAmount(categories, amount.trim() === "" ? null : Number(amount.replace(",", ".")), categoryId).map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {editingId && (
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <Input
+                type="checkbox"
+                checked={isInternalTransfer}
+                onChange={(e) => setIsInternalTransfer(e.target.checked)}
+                className="h-4 w-4 shrink-0 p-0 accent-primary"
+              />
+              This is an internal transfer between my own accounts
+            </label>
+          )}
+
+          {formError && <p className="text-sm text-destructive">{formError}</p>}
+
+          {pendingDuplicate && (
+            <div className="space-y-2 rounded-lg border border-warning/60 bg-warning/10 p-3 text-sm text-warning">
+              <p>
+                A similar transaction already exists: {pendingDuplicate.date} —{" "}
+                {pendingDuplicate.description} — {formatAmount(pendingDuplicate.amount)}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleForceSubmit}
+                disabled={submitting}
+                className="border-warning text-warning hover:bg-warning/20 hover:text-warning"
+              >
+                Save anyway
+              </Button>
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Saving…" : editingId ? "Save changes" : "Add transaction"}
+            </Button>
+            <Button type="button" variant="ghost" onClick={closeForm}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Card>
     )
   ) : (
-    <button
-      type="button"
-      onClick={startAdd}
-      className="w-full rounded-md border border-gray-700 px-4 py-2 text-sm font-medium text-gray-200 transition-colors duration-200 hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-    >
+    <Button type="button" variant="outline" onClick={startAdd} className="w-full">
       Add transaction
-    </button>
+    </Button>
   );
 
   return (
@@ -669,28 +594,28 @@ export default function Home() {
       <AppHeader authenticated />
       <main className="relative flex items-center justify-center overflow-hidden pt-16 pb-4">
         <div
-          className="pointer-events-none absolute left-1/2 top-16 -z-10 h-56 w-56 -translate-x-1/2 rounded-full bg-brand-600 opacity-20 blur-3xl animate-[ambient-glow_6s_ease-in-out_infinite]"
+          className="pointer-events-none absolute left-1/2 top-16 -z-10 h-56 w-56 -translate-x-1/2 rounded-full bg-primary opacity-20 blur-3xl animate-[ambient-glow_6s_ease-in-out_infinite]"
           aria-hidden="true"
         />
         <div
           className="w-full max-w-4xl space-y-6 px-4 text-center"
         >
           <h1
-            className="text-lg font-semibold text-gray-200 animate-[fade-slide-in_600ms_ease-out_both]"
+            className="text-lg font-semibold text-foreground animate-[fade-slide-in_600ms_ease-out_both]"
             style={{ animationDelay: "0ms" }}
           >
             Welcome back, {user.email}
           </h1>
 
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <label htmlFor="periodPreset" className="text-sm text-gray-400">
+            <label htmlFor="periodPreset" className="text-sm text-muted-foreground">
               Period
             </label>
             <select
               id="periodPreset"
               value={periodSelection.preset}
               onChange={(e) => handlePresetChange(e.target.value as PeriodPreset)}
-              className={periodInputClass}
+              className={cn(selectClassName, "w-auto")}
             >
               {(Object.keys(PRESET_LABELS) as PeriodPreset[]).map((preset) => (
                 <option key={preset} value={preset}>
@@ -699,39 +624,39 @@ export default function Home() {
               ))}
             </select>
             {periodSelection.preset === "month" && (
-              <input
+              <Input
                 type="month"
                 aria-label="Month"
                 value={periodSelection.month}
                 max={toMonthInputValue(new Date())}
                 onChange={(e) => handlePeriodSelectionChange({ ...periodSelection, month: e.target.value })}
-                className={periodInputClass}
+                className="w-auto"
               />
             )}
             {periodSelection.preset === "custom" && (
               <>
-                <input
+                <Input
                   type="date"
                   aria-label="From"
                   value={periodSelection.customFrom}
                   max={periodSelection.customTo || todayValue}
                   onChange={(e) => handlePeriodSelectionChange({ ...periodSelection, customFrom: e.target.value })}
-                  className={periodInputClass}
+                  className="w-auto"
                 />
-                <span className="text-sm text-gray-400">–</span>
-                <input
+                <span className="text-sm text-muted-foreground">–</span>
+                <Input
                   type="date"
                   aria-label="To"
                   value={periodSelection.customTo}
                   min={periodSelection.customFrom || undefined}
                   max={todayValue}
                   onChange={(e) => handlePeriodSelectionChange({ ...periodSelection, customTo: e.target.value })}
-                  className={periodInputClass}
+                  className="w-auto"
                 />
               </>
             )}
           </div>
-          {periodInvalid && <p className="text-center text-sm text-red-400">{periodInvalidMessage}</p>}
+          {periodInvalid && <p className="text-center text-sm text-destructive">{periodInvalidMessage}</p>}
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <CategorySpendDonut
@@ -760,97 +685,102 @@ export default function Home() {
               {transactionForm}
 
               {selectedCategoryId && (
-                <div className="flex items-center gap-2 text-sm text-gray-400">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span>
-                    Filtering by: <span className="text-gray-200">{selectedCategoryName}</span> ({selectedKind}) · {period.label}
+                    Filtering by: <span className="text-foreground">{selectedCategoryName}</span> ({selectedKind}) · {period.label}
                   </span>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => handleSelectCategory(null, null)}
-                    className="rounded-md px-2 py-1 text-xs font-medium text-brand-400 transition-colors hover:bg-white/5 hover:text-brand-300"
                   >
                     Clear
-                  </button>
+                  </Button>
                 </div>
               )}
 
-              {filterLoading && <p className="text-sm text-gray-400">Loading…</p>}
+              {filterLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
 
               {!filterLoading && items.length === 0 && (
-                <p className="text-center text-sm text-gray-400">No transactions in this category for {period.label}.</p>
+                <p className="text-center text-sm text-muted-foreground">No transactions in this category for {period.label}.</p>
               )}
 
               <ul className="space-y-2">
                 {items.map((transaction) => (
-                  <li
-                    key={transaction.id}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-gray-800 p-3 text-sm text-gray-200"
-                  >
-                    <span className="shrink-0 text-gray-400">{transaction.date}</span>
-                    <span className="flex-1 truncate px-3">{transaction.description}</span>
-                    <span className="shrink-0 text-xs text-gray-500">
-                      {transaction.isInternalTransfer
-                        ? "Internal transfer"
-                        : (transaction.categoryName ?? "Uncategorized")}
-                    </span>
-                    <span
-                      className={`shrink-0 font-medium ${
-                        transaction.amount < 0 ? "text-red-500" : "text-emerald-500"
-                      }`}
-                    >
-                      {formatAmount(transaction.amount)}
-                    </span>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => startEdit(transaction)}
-                        className="rounded-md px-2 py-1 text-xs font-medium text-brand-400 transition-colors hover:bg-white/5 hover:text-brand-300"
+                  <li key={transaction.id}>
+                    <Card className="flex-row items-center justify-between gap-3 p-3 text-sm text-foreground">
+                      <span className="shrink-0 text-muted-foreground">{transaction.date}</span>
+                      <span className="flex-1 truncate px-3">{transaction.description}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {transaction.isInternalTransfer
+                          ? "Internal transfer"
+                          : (transaction.categoryName ?? "Uncategorized")}
+                      </span>
+                      <span
+                        className={`shrink-0 font-medium ${
+                          transaction.amount < 0 ? "text-destructive" : "text-success"
+                        }`}
                       >
-                        Edit
-                      </button>
-                      {confirmingDeleteId === transaction.id ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => void handleDelete(transaction.id)}
-                            className="rounded-md px-2 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-950/30"
-                          >
-                            Confirm delete
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmingDeleteId(null)}
-                            className="rounded-md px-2 py-1 text-xs font-medium text-gray-400 transition-colors hover:bg-white/5"
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <button
+                        {formatAmount(transaction.amount)}
+                      </span>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <Button
                           type="button"
-                          onClick={() => setConfirmingDeleteId(transaction.id)}
-                          className="rounded-md px-2 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-950/30"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => startEdit(transaction)}
                         >
-                          Delete
-                        </button>
-                      )}
-                    </div>
+                          Edit
+                        </Button>
+                        {confirmingDeleteId === transaction.id ? (
+                          <>
+                            <Button
+                              type="button"
+                              variant="destructive-ghost"
+                              size="sm"
+                              onClick={() => void handleDelete(transaction.id)}
+                            >
+                              Confirm delete
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setConfirmingDeleteId(null)}
+                              className="text-muted-foreground"
+                            >
+                              Cancel
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="destructive-ghost"
+                            size="sm"
+                            onClick={() => setConfirmingDeleteId(transaction.id)}
+                          >
+                            Delete
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
                   </li>
                 ))}
               </ul>
 
-              {loadMoreError && <p className="text-sm text-red-600">{loadMoreError}</p>}
+              {loadMoreError && <p className="text-sm text-destructive">{loadMoreError}</p>}
 
               {hasMore && (
                 <div className="text-center">
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
                     onClick={handleLoadMore}
                     disabled={loadingMore}
-                    className="rounded-md border border-gray-700 px-4 py-2 text-sm font-medium text-gray-200 transition-colors duration-200 hover:bg-gray-800 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
                   >
                     {loadingMore ? "Loading…" : "Load more"}
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -861,16 +791,13 @@ export default function Home() {
             >
               {transactionForm}
 
-              <p className="text-center text-sm text-gray-500">
+              <p className="text-center text-sm text-muted-foreground">
                 You haven't imported any transactions yet — let's start!
               </p>
               <div className="text-center">
-                <Link
-                  to="/import"
-                  className="inline-block rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-md shadow-brand-900/40 transition-all duration-200 hover:scale-105 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-600/40 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-                >
-                  Import a bank statement
-                </Link>
+                <Button asChild className="transition-all duration-200 hover:scale-105 active:scale-95">
+                  <Link to="/import">Import a bank statement</Link>
+                </Button>
               </div>
             </div>
           )}
