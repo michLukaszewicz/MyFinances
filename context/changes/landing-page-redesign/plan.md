@@ -250,10 +250,10 @@ No data or API changes. The `valueProps` constant and landing markup leave `home
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `npm run typecheck`
-- [x] 1.2 Production build passes: `npm run build`
-- [x] 1.3 No Revolut mention on the landing (grep returns no lines)
-- [x] 1.4 No literal colours in the new landing files and hook (grep returns no lines)
+- [x] 1.1 Type checking passes: `npm run typecheck` — 27f292b
+- [x] 1.2 Production build passes: `npm run build` — 27f292b
+- [x] 1.3 No Revolut mention on the landing (grep returns no lines) — 27f292b
+- [x] 1.4 No literal colours in the new landing files and hook (grep returns no lines) — 27f292b
 
 #### Manual
 
@@ -266,10 +266,10 @@ No data or API changes. The `valueProps` constant and landing markup leave `home
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npm run typecheck`
-- [ ] 2.2 Production build passes: `npm run build`
-- [ ] 2.3 No banned claims in landing copy (grep reviewed; only "no budget required" allowed)
-- [ ] 2.4 No literal colours in the landing files (grep returns no lines)
+- [x] 2.1 Type checking passes: `npm run typecheck`
+- [x] 2.2 Production build passes: `npm run build`
+- [x] 2.3 No banned claims in landing copy (grep reviewed; only "no budget required" allowed)
+- [x] 2.4 No literal colours in the landing files (grep returns no lines)
 
 #### Manual
 
