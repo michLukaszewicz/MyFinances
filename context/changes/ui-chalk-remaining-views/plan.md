@@ -114,11 +114,11 @@ All routes render in the Chalk palette with no `gray-*`/`red-*`/`green-*`/`emera
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npm run typecheck`
-- [x] 3.2 Production build passes: `npm run build`
-- [x] 3.3 No literal colours under app/routes and app/components (grep returns no lines)
-- [x] 3.4 No `brand-` usages or tokens remain in app/
-- [x] 3.5 Backend untouched: `git diff --stat main -- MyFinances/backend` shows no changes
+- [x] 3.1 Type checking passes: `npm run typecheck` — b9a2a39
+- [x] 3.2 Production build passes: `npm run build` — b9a2a39
+- [x] 3.3 No literal colours under app/routes and app/components (grep returns no lines) — b9a2a39
+- [x] 3.4 No `brand-` usages or tokens remain in app/ — b9a2a39
+- [x] 3.5 Backend untouched: `git diff --stat main -- MyFinances/backend` shows no changes — b9a2a39
 
 #### Manual
 
