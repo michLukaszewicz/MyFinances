@@ -1,10 +1,10 @@
 ---
 change_id: landing-page-redesign
 title: Rich animated landing page for logged-out visitors
-status: implemented
+status: archived
 created: 2026-10-02
 updated: 2026-10-07
-archived_at: null
+archived_at: 2026-10-07T08:54:36Z
 ---
 
 ## Notes
