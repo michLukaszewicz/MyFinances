@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { Button } from "../ui/button";
+import { ProductMock } from "./ProductMock";
 
 export function Hero() {
   return (
@@ -48,8 +49,9 @@ export function Hero() {
           </Button>
         </div>
       </div>
-      {/* Phase 2 slot: ProductMock renders here */}
-      <div className="mt-12 w-full max-w-3xl" data-slot="hero-mock" />
+      <div className="mt-12 w-full max-w-3xl" data-slot="hero-mock">
+        <ProductMock />
+      </div>
     </section>
   );
 }
