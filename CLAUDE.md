@@ -48,6 +48,9 @@ Backend has an xUnit test suite (`MyFinances/backend/Tests`, run via `dotnet tes
 - Use the shared components in `app/components/ui` (Button, Input, Card; native `<select>` uses `selectClassName`). Add new ones through the shadcn CLI, not by hand-copying.
 - Chart series colours come from `chartColor(slot)` in `app/lib/chartPalette.ts` (`--chart-1..12`); keep it in sync with the tokens.
 - `--color-brand-*` stays only on not-yet-migrated routes (import, categorize, settings, login, register).
+- Public-page (landing) animation is CSS plus the `useReveal` hook; no animation library. Animate `opacity`/`transform` only.
+- The reveal starting style (hidden state) applies only under the `reveal-ready` ancestor, so content stays visible without JS and under reduced motion.
+- Landing copy may only claim implemented features; check [context/foundation/roadmap.md](context/foundation/roadmap.md), not `prd.md`.
 
 ## 10xDevs AI Toolkit context
 
