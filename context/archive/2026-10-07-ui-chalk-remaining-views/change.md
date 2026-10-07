@@ -1,10 +1,10 @@
 ---
 change_id: ui-chalk-remaining-views
 title: Apply the Chalk standard to the remaining views and favicon
-status: implemented
+status: archived
 created: 2026-10-07
 updated: 2026-10-07
-archived_at: null
+archived_at: 2026-10-07T08:54:36Z
 ---
 
 ## Notes
