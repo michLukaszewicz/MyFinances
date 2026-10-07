@@ -102,9 +102,9 @@ All routes render in the Chalk palette with no `gray-*`/`red-*`/`green-*`/`emera
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npm run typecheck`
-- [x] 2.2 Production build passes: `npm run build`
-- [x] 2.3 No literal colours in settings.tsx and categorize.tsx (grep returns no lines)
+- [x] 2.1 Type checking passes: `npm run typecheck` — d478027
+- [x] 2.2 Production build passes: `npm run build` — d478027
+- [x] 2.3 No literal colours in settings.tsx and categorize.tsx (grep returns no lines) — d478027
 
 #### Manual
 
