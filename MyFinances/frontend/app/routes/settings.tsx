@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { redirect } from "react-router";
 import { apiFetch, ApiError } from "../lib/api";
 import { AppHeader } from "../components/AppHeader";
+import { Button } from "../components/ui/button";
+import { Card, CardContent } from "../components/ui/card";
+import { Input, selectClassName } from "../components/ui/input";
 
 export async function clientLoader() {
   const res = await fetch("/api/auth/me", { credentials: "include" });
@@ -140,31 +143,32 @@ export default function Settings() {
       <AppHeader authenticated />
       <main className="flex items-center justify-center pb-4">
         <div className="w-full max-w-2xl space-y-6 px-4">
-          <h1 className="text-center text-lg font-semibold text-gray-200">Settings</h1>
+          <h1 className="text-center text-lg font-semibold text-foreground">Settings</h1>
 
           {isFormOpen ? (
-            <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-gray-800 p-4">
-              <h2 className="text-sm font-medium text-gray-200">
+            <Card>
+              <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <h2 className="text-sm font-medium text-foreground">
                 {editingId ? "Edit account" : "Add account"}
               </h2>
 
               <div className="space-y-1">
-                <label htmlFor="bankName" className="text-sm text-gray-200">
+                <label htmlFor="bankName" className="text-sm text-foreground">
                   Account name
                 </label>
-                <input
+                <Input
                   id="bankName"
                   ref={bankNameInputRef}
                   type="text"
                   required
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
-                  className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                 />
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="bank" className="text-sm text-gray-200">
+                <label htmlFor="bank" className="text-sm text-foreground">
                   Bank
                 </label>
                 <select
@@ -172,118 +176,111 @@ export default function Settings() {
                   required
                   value={bank}
                   onChange={(e) => setBank(e.target.value)}
-                  className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  className={selectClassName}
                 >
                   <option value="" disabled>
                     Select a bank…
                   </option>
                   {bankOptions.map((b) => (
-                    <option key={b} value={b} className="bg-gray-900">
+                    <option key={b} value={b}>
                       {b}
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   Used to warn you when an imported file comes from a different bank. Choose Other
                   to skip that check.
                 </p>
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="accountNumber" className="text-sm text-gray-200">
+                <label htmlFor="accountNumber" className="text-sm text-foreground">
                   Account number
                 </label>
-                <input
+                <Input
                   id="accountNumber"
                   type="text"
                   required
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
-                  className="w-full rounded-lg border border-gray-700 bg-transparent p-2 text-sm text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                 />
               </div>
 
-              {formError && <p className="text-sm text-red-600">{formError}</p>}
+              {formError && <p className="text-sm text-destructive">{formError}</p>}
 
               <div className="flex gap-2">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-                >
+                <Button type="submit" disabled={submitting}>
                   {submitting ? "Saving…" : editingId ? "Save changes" : "Add account"}
-                </button>
-                <button
-                  type="button"
-                  onClick={closeForm}
-                  className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium text-gray-200 transition-colors hover:bg-white/5"
-                >
+                </Button>
+                <Button type="button" variant="outline" onClick={closeForm}>
                   Cancel
-                </button>
+                </Button>
               </div>
             </form>
+              </CardContent>
+            </Card>
           ) : (
-            <button
-              type="button"
-              onClick={startAdd}
-              className="w-full rounded-lg bg-brand-500 p-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-            >
+            <Button type="button" onClick={startAdd} className="w-full">
               Add account
-            </button>
+            </Button>
           )}
 
           <div className="space-y-2">
-            <h2 className="text-sm font-medium text-gray-200">Your accounts</h2>
+            <h2 className="text-sm font-medium text-foreground">Your accounts</h2>
             {loading ? (
-              <p className="text-sm text-gray-400">Loading…</p>
+              <p className="text-sm text-muted-foreground">Loading…</p>
             ) : accounts.length === 0 ? (
-              <p className="text-sm text-gray-400">You haven't added any accounts yet.</p>
+              <p className="text-sm text-muted-foreground">You haven't added any accounts yet.</p>
             ) : (
               <ul className="space-y-2">
                 {accounts.map((account) => (
-                  <li
-                    key={account.id}
-                    className="flex items-center justify-between rounded-lg border border-gray-800 p-3 text-sm text-gray-200"
-                  >
+                  <li key={account.id}>
+                    <Card className="flex-row items-center justify-between gap-2 p-3 text-sm text-foreground">
                     <span>
                       {account.bankName} — {account.accountNumber}
-                      <span className="ml-2 text-xs text-gray-400">({account.bank})</span>
+                      <span className="ml-2 text-xs text-muted-foreground">({account.bank})</span>
                     </span>
                     <div className="flex items-center gap-2">
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => startEdit(account)}
-                        className="rounded-md px-2 py-1 text-xs font-medium text-brand-400 transition-colors hover:bg-white/5 hover:text-brand-300"
                       >
                         Edit
-                      </button>
+                      </Button>
                       {confirmingDeleteId === account.id ? (
                         <>
-                          <button
+                          <Button
                             type="button"
+                            variant="destructive-ghost"
+                            size="sm"
                             onClick={() => void handleDelete(account.id)}
-                            className="rounded-md px-2 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-950/30"
                           >
                             Confirm delete
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground"
                             onClick={() => setConfirmingDeleteId(null)}
-                            className="rounded-md px-2 py-1 text-xs font-medium text-gray-400 transition-colors hover:bg-white/5"
                           >
                             Cancel
-                          </button>
+                          </Button>
                         </>
                       ) : (
-                        <button
+                        <Button
                           type="button"
+                          variant="destructive-ghost"
+                          size="sm"
                           onClick={() => setConfirmingDeleteId(account.id)}
-                          className="rounded-md px-2 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-950/30"
                         >
                           Delete
-                        </button>
+                        </Button>
                       )}
                     </div>
+                    </Card>
                   </li>
                 ))}
               </ul>
