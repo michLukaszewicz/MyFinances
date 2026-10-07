@@ -212,6 +212,63 @@ body {
   }
 }
 
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.starfield {
+  background-repeat: repeat;
+}
+
+.starfield-near {
+  background-image:
+    radial-gradient(1.5px 1.5px at 40px 60px, var(--foreground), transparent),
+    radial-gradient(1px 1px at 130px 20px, var(--foreground), transparent),
+    radial-gradient(1.5px 1.5px at 210px 140px, var(--primary), transparent),
+    radial-gradient(1px 1px at 90px 180px, var(--foreground), transparent);
+  background-size: 260px 220px;
+  animation: twinkle 5s ease-in-out infinite;
+}
+
+.starfield-far {
+  background-image:
+    radial-gradient(1px 1px at 20px 110px, var(--foreground), transparent),
+    radial-gradient(1px 1px at 170px 70px, var(--secondary), transparent),
+    radial-gradient(1.5px 1.5px at 280px 190px, var(--foreground), transparent);
+  background-size: 340px 260px;
+  animation: twinkle 7s ease-in-out 1.5s infinite;
+}
+
+.reveal-ready .reveal {
+  opacity: 0;
+  translate: 0 16px;
+  transition:
+    opacity 600ms ease-out,
+    translate 600ms ease-out;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal-ready .reveal[data-revealed] {
+  opacity: 1;
+  translate: 0 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
