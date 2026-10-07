@@ -31,6 +31,13 @@ export function meta({}: Route.MetaArgs) {
       content:
         "Categorize your own spend and compare it to your own history — no budget required up front.",
     },
+    { property: "og:title", content: "MyFinances" },
+    {
+      property: "og:description",
+      content:
+        "Categorize your own spend and compare it to your own history — no budget required up front.",
+    },
+    { property: "og:type", content: "website" },
   ];
 }
 
