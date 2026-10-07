@@ -4,6 +4,7 @@ import type { Route } from "./+types/home";
 import { AppHeader } from "../components/AppHeader";
 import { CategorySpendDonut, type FlowKind } from "../components/CategorySpendDonut";
 import { CategoryTrendChart } from "../components/CategoryTrendChart";
+import { LandingPage } from "../components/landing/LandingPage";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Input, selectClassName } from "../components/ui/input";
@@ -21,21 +22,6 @@ import {
   type PeriodPreset,
   type PeriodSelection,
 } from "../lib/period";
-
-const valueProps = [
-  {
-    title: "Import your statements",
-    description: "Upload bank statements: CSV exports from mBank, Revolut, and Erste, or PDF statements from mBank, Erste, and VeloBank.",
-  },
-  {
-    title: "Categorize in minutes",
-    description: "Tag transactions and let duplicates and transfers surface themselves.",
-  },
-  {
-    title: "See spend vs. your own history",
-    description: "Compare each category against your own past averages, not a stranger's budget.",
-  },
-];
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -259,68 +245,7 @@ export default function Home() {
     return (
       <>
         <AppHeader authenticated={false} />
-        <main className="relative flex min-h-screen items-center justify-center overflow-hidden pb-4">
-          <div
-            className="pointer-events-none absolute inset-0 -z-20 bg-[length:200%_200%] opacity-20 animate-[gradient-pan_18s_ease-in-out_infinite]"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 20% 20%, var(--color-primary) 0%, transparent 45%), radial-gradient(circle at 80% 30%, var(--color-secondary) 0%, transparent 40%), radial-gradient(circle at 50% 80%, var(--color-primary) 0%, transparent 45%)",
-            }}
-            aria-hidden="true"
-          />
-          <div
-            className="pointer-events-none absolute -left-24 top-10 -z-10 h-72 w-72 rounded-full bg-primary opacity-20 blur-3xl animate-[drift-slow_14s_ease-in-out_infinite]"
-            aria-hidden="true"
-          />
-          <div
-            className="pointer-events-none absolute -right-24 bottom-0 -z-10 h-80 w-80 rounded-full bg-secondary opacity-20 blur-3xl animate-[drift-slow-reverse_16s_ease-in-out_infinite]"
-            aria-hidden="true"
-          />
-          <div className="max-w-lg w-full space-y-8 px-4 text-center">
-            <h1 className="sr-only">MyFinances</h1>
-            <p
-              className="text-sm text-muted-foreground animate-[fade-slide-in_600ms_ease-out_both]"
-              style={{ animationDelay: "0ms" }}
-            >
-              Categorize your own spend and compare it to your own history — no
-              budget required up front.
-            </p>
-            <div
-              className="flex justify-center gap-4 text-sm animate-[fade-slide-in_600ms_ease-out_both]"
-              style={{ animationDelay: "100ms" }}
-            >
-              <Button
-                asChild
-                className="shadow-md transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95"
-              >
-                <a href="/login">Log in</a>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95"
-              >
-                <a href="/register">Register</a>
-              </Button>
-            </div>
-            <div
-              className="grid grid-cols-1 gap-4 pt-4 text-left sm:grid-cols-3 animate-[fade-slide-in_600ms_ease-out_both]"
-              style={{ animationDelay: "200ms" }}
-            >
-              {valueProps.map((item) => (
-                <Card
-                  key={item.title}
-                  className="gap-1 p-3 transition-all duration-200 hover:-translate-y-1 hover:border-primary/60 hover:bg-accent hover:shadow-lg"
-                >
-                  <h2 className="text-sm font-semibold text-foreground">
-                    {item.title}
-                  </h2>
-                  <p className="text-xs text-muted-foreground">{item.description}</p>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </main>
+        <LandingPage />
       </>
     );
   }
