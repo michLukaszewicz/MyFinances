@@ -282,10 +282,10 @@ No data or API changes. The `valueProps` constant and landing markup leave `home
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npm run typecheck`
-- [x] 3.2 Production build passes: `npm run build`
-- [x] 3.3 Backend untouched: `git diff --stat main -- MyFinances/backend` shows no changes
-- [x] 3.4 Landing has exactly one h1
+- [x] 3.1 Type checking passes: `npm run typecheck` — 4d10a25
+- [x] 3.2 Production build passes: `npm run build` — 4d10a25
+- [x] 3.3 Backend untouched: `git diff --stat main -- MyFinances/backend` shows no changes — 4d10a25
+- [x] 3.4 Landing has exactly one h1 — 4d10a25
 
 #### Manual
 
