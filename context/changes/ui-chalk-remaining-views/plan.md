@@ -95,8 +95,8 @@ All routes render in the Chalk palette with no `gray-*`/`red-*`/`green-*`/`emera
 
 #### Manual
 
-- [ ] 1.4 Favicon shows orange in the browser tab
-- [ ] 1.5 Login and register look coherent with the dashboard and their flows still work
+- [x] 1.4 Favicon shows orange in the browser tab
+- [x] 1.5 Login and register look coherent with the dashboard and their flows still work
 
 ### Phase 2: Settings and categorize
 
@@ -108,7 +108,7 @@ All routes render in the Chalk palette with no `gray-*`/`red-*`/`green-*`/`emera
 
 #### Manual
 
-- [ ] 2.4 Settings and categorize look coherent and all actions work
+- [x] 2.4 Settings and categorize look coherent and all actions work
 
 ### Phase 3: Import and brand retirement
 
@@ -122,5 +122,5 @@ All routes render in the Chalk palette with no `gray-*`/`red-*`/`green-*`/`emera
 
 #### Manual
 
-- [ ] 3.6 Import flow works and looks coherent
-- [ ] 3.7 Every route at 375px has no horizontal overflow; Tab shows visible focus rings
+- [x] 3.6 Import flow works and looks coherent
+- [x] 3.7 Every route at 375px has no horizontal overflow; Tab shows visible focus rings
