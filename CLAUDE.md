@@ -44,10 +44,10 @@ Backend has an xUnit test suite (`MyFinances/backend/Tests`, run via `dotnet tes
 ## UI conventions
 
 - The app is dark-only (Chalk theme, `<html class="dark">`); no light-mode wiring or theme toggle.
-- Colour comes only from semantic tokens in [app/app.css](MyFinances/frontend/app/app.css) (`bg-background`, `text-muted-foreground`, `border-border`, `bg-primary`, `text-destructive`, `text-success`, `text-warning`, ...). No `gray-*`/`red-*`/`emerald-*`/`amber-*` utilities or hex literals in migrated views (currently the dashboard: `home.tsx`, `AppHeader`, `CategorySpendDonut`, `CategoryTrendChart`).
+- Colour comes only from semantic tokens in [app/app.css](MyFinances/frontend/app/app.css) (`bg-background`, `text-muted-foreground`, `border-border`, `bg-primary`, `text-destructive`, `text-success`, `text-warning`, ...). No `gray-*`/`red-*`/`emerald-*`/`amber-*` utilities, `white/N`, or hex literals in any route or component.
 - Use the shared components in `app/components/ui` (Button, Input, Card; native `<select>` uses `selectClassName`). Add new ones through the shadcn CLI, not by hand-copying.
 - Chart series colours come from `chartColor(slot)` in `app/lib/chartPalette.ts` (`--chart-1..12`); keep it in sync with the tokens.
-- `--color-brand-*` stays only on not-yet-migrated routes (import, categorize, settings, login, register).
+- All views are migrated to the Chalk theme; the `--color-brand-*` ramp no longer exists, so do not use `brand-*` utilities.
 - Public-page (landing) animation is CSS plus the `useReveal` hook; no animation library. Animate `opacity`/`transform` only.
 - The reveal starting style (hidden state) applies only under the `reveal-ready` ancestor, so content stays visible without JS and under reduced motion.
 - Landing copy may only claim implemented features; check [context/foundation/roadmap.md](context/foundation/roadmap.md), not `prd.md`.

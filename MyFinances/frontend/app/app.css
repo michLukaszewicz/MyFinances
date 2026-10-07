@@ -7,17 +7,6 @@
   --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-  --color-brand-50: #eef0fd;
-  --color-brand-100: #dde1fc;
-  --color-brand-200: #b8c0f9;
-  --color-brand-300: #8d98f4;
-  --color-brand-400: #5c66ec;
-  --color-brand-500: #3629e3;
-  --color-brand-600: #2413de;
-  --color-brand-700: #1d0fb2;
-  --color-brand-800: #170c87;
-  --color-brand-900: #110861;
-
   /* Chalk shadows (very soft) */
   --shadow-2xs: 0 1px 4px 0 hsl(0 0% 0% / 0.03);
   --shadow-xs: 0 1px 4px 0 hsl(0 0% 0% / 0.03);
