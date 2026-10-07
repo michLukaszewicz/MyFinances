@@ -1,9 +1,9 @@
 ---
 change_id: ui-chalk-theme-dashboard
 title: Apply Chalk theme tokens to the dashboard view
-status: implementing
+status: implemented
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-07
 archived_at: null
 ---
 

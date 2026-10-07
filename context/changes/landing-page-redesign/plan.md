@@ -257,10 +257,10 @@ No data or API changes. The `valueProps` constant and landing markup leave `home
 
 #### Manual
 
-- [ ] 1.5 Signed out, `/` shows the hero with animated background and a visible headline; Log in and Register work
-- [ ] 1.6 With OS reduce-motion on, content is fully visible and nothing loops
-- [ ] 1.7 With JavaScript disabled, the hero text and buttons are visible
-- [ ] 1.8 Signed in, `/` still shows the unchanged dashboard
+- [x] 1.5 Signed out, `/` shows the hero with animated background and a visible headline; Log in and Register work
+- [x] 1.6 With OS reduce-motion on, content is fully visible and nothing loops
+- [x] 1.7 With JavaScript disabled, the hero text and buttons are visible
+- [x] 1.8 Signed in, `/` still shows the unchanged dashboard
 
 ### Phase 2: Product mock and content sections
 
@@ -273,10 +273,10 @@ No data or API changes. The `valueProps` constant and landing markup leave `home
 
 #### Manual
 
-- [ ] 2.5 Scrolling reveals each section once, in order, without jank or layout shift
-- [ ] 2.6 The mock reads clearly as an example and its badge colours match the real dashboard
-- [ ] 2.7 Every sentence on the page is true of the current app
-- [ ] 2.8 Page is usable at 375px width: no horizontal scroll, mock and cards stack
+- [x] 2.5 Scrolling reveals each section once, in order, without jank or layout shift
+- [x] 2.6 The mock reads clearly as an example and its badge colours match the real dashboard
+- [x] 2.7 Every sentence on the page is true of the current app
+- [x] 2.8 Page is usable at 375px width: no horizontal scroll, mock and cards stack
 
 ### Phase 3: Closing CTA, polish and verification
 
@@ -289,8 +289,8 @@ No data or API changes. The `valueProps` constant and landing markup leave `home
 
 #### Manual
 
-- [ ] 3.5 Full-page screenshots at 1440px and 375px reviewed and acceptable
-- [ ] 3.6 Tab order reaches every link and button with a visible focus ring; the entrance animation never delays focus
-- [ ] 3.7 Reduced-motion setting shows a static, complete page
-- [ ] 3.8 Signed-in dashboard and the other routes render as before
-- [ ] 3.9 Lighthouse accessibility score for `/` signed out is at least 90, or findings documented
+- [x] 3.5 Full-page screenshots at 1440px and 375px reviewed and acceptable
+- [x] 3.6 Tab order reaches every link and button with a visible focus ring; the entrance animation never delays focus
+- [x] 3.7 Reduced-motion setting shows a static, complete page
+- [x] 3.8 Signed-in dashboard and the other routes render as before
+- [x] 3.9 Lighthouse accessibility score for `/` signed out is at least 90, or findings documented

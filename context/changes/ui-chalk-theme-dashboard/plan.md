@@ -286,9 +286,9 @@ No data migration. Global effects of this change on out-of-scope routes: new fon
 
 #### Manual
 
-- [ ] 1.5 Dev server shows the app in Outfit on the Chalk background without console errors
-- [ ] 1.6 Other routes (login, import, settings) still render legibly with `brand-*` accents intact
-- [ ] 1.7 Reviewed diff shows the CLI did not drop keyframes, `brand-*` ramp or reduced-motion rules
+- [x] 1.5 Dev server shows the app in Outfit on the Chalk background without console errors
+- [x] 1.6 Other routes (login, import, settings) still render legibly with `brand-*` accents intact
+- [x] 1.7 Reviewed diff shows the CLI did not drop keyframes, `brand-*` ramp or reduced-motion rules
 
 ### Phase 2: Charts onto tokens
 
@@ -300,9 +300,9 @@ No data migration. Global effects of this change on out-of-scope routes: new fon
 
 #### Manual
 
-- [ ] 2.4 Slice and line colours render via `var(--chart-N)` and a category keeps the same colour in donut, legend dots and trend lines
-- [ ] 2.5 All 12 slots are visibly distinct and readable against the new background
-- [ ] 2.6 Tooltip, axes and grid are legible; deviation badges read as above/below/in line
+- [x] 2.4 Slice and line colours render via `var(--chart-N)` and a category keeps the same colour in donut, legend dots and trend lines
+- [x] 2.5 All 12 slots are visibly distinct and readable against the new background
+- [x] 2.6 Tooltip, axes and grid are legible; deviation badges read as above/below/in line
 
 ### Phase 3: Header and dashboard migration
 
@@ -314,10 +314,10 @@ No data migration. Global effects of this change on out-of-scope routes: new fon
 
 #### Manual
 
-- [ ] 3.4 Logged-out landing and the dashboard look coherent in the Chalk palette
-- [ ] 3.5 Add, edit, delete, duplicate-warning and load-more flows still work as before
-- [ ] 3.6 Keyboard Tab visits every button, input and link with a visible focus ring
-- [ ] 3.7 Income and expenses are visually distinct from neutral accents (destructive differs from secondary teal)
+- [x] 3.4 Logged-out landing and the dashboard look coherent in the Chalk palette
+- [x] 3.5 Add, edit, delete, duplicate-warning and load-more flows still work as before
+- [x] 3.6 Keyboard Tab visits every button, input and link with a visible focus ring
+- [x] 3.7 Income and expenses are visually distinct from neutral accents (destructive differs from secondary teal)
 
 ### Phase 4: Verification gate and UI rule
 
@@ -329,7 +329,7 @@ No data migration. Global effects of this change on out-of-scope routes: new fon
 
 #### Manual
 
-- [ ] 4.4 7-state matrix captured in screenshots: default, hover, focus, disabled, loading, empty, error
-- [ ] 4.5 Chart text, axes and muted-foreground text meet readable contrast on the Chalk background
-- [ ] 4.6 Login, register, import, categorize and settings render without breakage and the shared header works on each
-- [ ] 4.7 Mobile-width viewport (375px) renders the dashboard without horizontal overflow
+- [x] 4.4 7-state matrix captured in screenshots: default, hover, focus, disabled, loading, empty, error
+- [x] 4.5 Chart text, axes and muted-foreground text meet readable contrast on the Chalk background
+- [x] 4.6 Login, register, import, categorize and settings render without breakage and the shared header works on each
+- [x] 4.7 Mobile-width viewport (375px) renders the dashboard without horizontal overflow
