@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: MyFinances/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet build
+      - run: dotnet test --no-build
+
+  # Report-only (thresholds.break = 0 in Tests/stryker-config.json): never fails on score.
+  # --since limits mutants to code changed in the PR, so base history must be fetched.
+  mutation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore tools
+        working-directory: MyFinances/backend
+        run: dotnet tool restore
+      - name: Run Stryker (changed code only)
+        working-directory: MyFinances/backend/Tests
+        run: dotnet stryker --since:origin/${{ github.base_ref }} | tee "$RUNNER_TEMP/stryker.log"
+      - name: Summarize mutation score
+        if: always()
+        run: |
+          score=$(grep -a "final mutation score" "$RUNNER_TEMP/stryker.log" || echo "no mutants tested")
+          echo "### Mutation testing (changed code only)" >> "$GITHUB_STEP_SUMMARY"
+          echo "$score" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: MyFinances/backend/Tests/StrykerOutput/**/reports/
+          if-no-files-found: ignore
