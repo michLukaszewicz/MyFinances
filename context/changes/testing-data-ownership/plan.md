@@ -156,32 +156,32 @@ None. Tests only.
 
 #### Automated
 
-- [x] 1.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`)
-- [x] 1.2 Smoke test shows two different emails for client A and client B in one host
+- [x] 1.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`) — 16afe57
+- [x] 1.2 Smoke test shows two different emails for client A and client B in one host — 16afe57
 
 #### Manual
 
-- [x] 1.3 Harness has no production code changes
+- [x] 1.3 Harness has no production code changes — 16afe57
 
 ### Phase 2: Cross-user denial and isolation tests
 
 #### Automated
 
-- [x] 2.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`)
-- [x] 2.2 Mutation spot-checks (transaction PUT lookup, account DELETE lookup, dashboard query) make a new test fail, then revert
+- [x] 2.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`) — b7af5ae
+- [x] 2.2 Mutation spot-checks (transaction PUT lookup, account DELETE lookup, dashboard query) make a new test fail, then revert — b7af5ae
 
 #### Manual
 
-- [x] 2.3 Denial tests assert state, not only status code
+- [x] 2.3 Denial tests assert state, not only status code — b7af5ae
 
 ### Phase 3: Endpoint inventory guard and cookbook
 
 #### Automated
 
-- [x] 3.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`)
-- [x] 3.2 Guard fails when a dummy unclassified endpoint is mapped (mutation, then revert)
-- [x] 3.3 Build has no new warnings: `dotnet build` (from `MyFinances/backend`)
+- [x] 3.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`) — b1b81a2
+- [x] 3.2 Guard fails when a dummy unclassified endpoint is mapped (mutation, then revert) — b1b81a2
+- [x] 3.3 Build has no new warnings: `dotnet build` (from `MyFinances/backend`) — b1b81a2
 
 #### Manual
 
-- [x] 3.4 `test-plan.md` §6.3, §6.4 and the §3 row match what shipped
+- [x] 3.4 `test-plan.md` §6.3, §6.4 and the §3 row match what shipped — b1b81a2
