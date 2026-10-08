@@ -1,10 +1,10 @@
 ---
 change_id: testing-data-ownership
 title: Data ownership test rollout (Phase 3)
-status: implemented
+status: archived
 created: 2026-10-08
 updated: 2026-10-08
-archived_at: null
+archived_at: 2026-10-08T08:54:06Z
 ---
 
 ## Notes
