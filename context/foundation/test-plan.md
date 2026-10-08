@@ -68,7 +68,7 @@ orchestrator updates Status as artifacts appear on disk.
 |---|------------|-----------------|----------------|------------|--------|---------------|
 | 1 | Import integrity and dedup | Re-imports and CSV-vs-PDF overlaps never double-count and always surface duplicates | #1, #4 | integration | complete | context/archive/2026-10-02-testing-import-integrity-dedup/ |
 | 2 | Parser correctness | Parsed amounts and dates equal an independent source, independent of culture | #2 | unit with fixtures | shipped (limitations: CSV parsers stop silently at the first unparseable date row, pinned as current behavior; PDF fixtures are still synthetic, no real statements; ICU is only guarded by a pl-PL separator test, not provided; NBSP is read as a plain space by PdfPig, so only U+2212 is mutation-sensitive for PDF rejection; VeloBank pairwise balance-check blind spots pinned; mBank offsetting errors accepted) | context/changes/testing-parser-correctness/ |
-| 3 | Data ownership | A user can never read or change another user's data | #3 | integration (two users) | not started | — |
+| 3 | Data ownership | A user can never read or change another user's data | #3 | integration (two users) | planned | context/changes/testing-data-ownership/ |
 | 4 | Quality-gates wiring | Lock the floor: run the suite automatically in the agent loop and in CI | cross-cutting | gates (hook, CI) | complete (CI jobs enforced by the `main protection` ruleset; see §6.4) | no change folder: Stop hook `d3a61fa`, pre-PR hook `4a89c97`, CI `19c0544` / `b835524` / PR #44 |
 
 **Status vocabulary** (fixed — parser literals): `not started`,
