@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// PreToolUse hook (Bash): runs the CI gates locally before `gh pr create` goes through, because
-// GitHub Actions is unavailable. Gates: backend build + tests, frontend typecheck, full Playwright
+// PreToolUse hook (Bash): runs the CI gates locally before `gh pr create` goes through, so a PR never opens red;
+// the same gates run in GitHub Actions. Gates: backend build + tests, frontend typecheck, full Playwright
 // E2E suite. Exit 2 + stderr blocks the command and shows Claude why. Mutation testing stays out
 // (report-only in CI, too slow here).
 import { spawnSync } from 'node:child_process';

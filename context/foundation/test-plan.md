@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-10-02
+> Last updated: 2026-10-08
 
 ## 1. Strategy
 
@@ -69,7 +69,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 1 | Import integrity and dedup | Re-imports and CSV-vs-PDF overlaps never double-count and always surface duplicates | #1, #4 | integration | complete | context/changes/testing-import-integrity-dedup/ |
 | 2 | Parser correctness | Parsed amounts and dates equal an independent source, independent of culture | #2 | unit with fixtures | shipped (limitations: CSV parsers stop silently at the first unparseable date row, pinned as current behavior; PDF fixtures are still synthetic, no real statements; ICU is only guarded by a pl-PL separator test, not provided; NBSP is read as a plain space by PdfPig, so only U+2212 is mutation-sensitive for PDF rejection; VeloBank pairwise balance-check blind spots pinned; mBank offsetting errors accepted) | context/changes/testing-parser-correctness/ |
 | 3 | Data ownership | A user can never read or change another user's data | #3 | integration (two users) | not started | — |
-| 4 | Quality-gates wiring | Lock the floor: run the suite automatically in the agent loop and in CI (none exists today) | cross-cutting | gates (hook, CI) | not started | — |
+| 4 | Quality-gates wiring | Lock the floor: run the suite automatically in the agent loop and in CI | cross-cutting | gates (hook, CI) | complete (limitation: GitHub does not enforce the CI jobs; `main` has no branch protection or required status checks) | no change folder: Stop hook `d3a61fa`, pre-PR hook `4a89c97`, CI `19c0544` / `b835524` / PR #44 |
 
 **Status vocabulary** (fixed — parser literals): `not started`,
 `change opened`, `researched`, `planned`, `implementing`, `complete`.
@@ -83,10 +83,12 @@ The classic test base for this project.
 | unit + integration (backend) | xUnit | 2.9.2 | 22 test files in `MyFinances/backend/Tests`; run with `dotnet test` from `MyFinances/backend` |
 | integration host | Microsoft.AspNetCore.Mvc.Testing (`WebApplicationFactory`) | 10.0.3 | endpoint-level tests |
 | persistence in tests | EF Core InMemory | 10.0.3 | does not reproduce Postgres constraints or transactions; research decides per risk whether a real database is required |
-| frontend unit / e2e | none | n/a | no framework; frontend deliberately left out of this rollout (see §7) |
-| CI | none | n/a | no workflows exist; addressed by Phase 4 |
+| frontend unit | none | n/a | no framework; frontend logic deliberately left out of this rollout (see §7) |
+| e2e (browser) | Playwright Test | 1.63.0 | one browser-level slice (`seed.spec.ts`, `import-to-dashboard.spec.ts`); runs against the production-like build and a throwaway Postgres container (Docker); see `context/foundation/test-stack.md` |
+| mutation testing | Stryker.NET | 5.0.0 | incremental (`--since`), report-only (`thresholds.break = 0`); see `context/changes/mutation-testing-stryker/` |
+| CI | GitHub Actions (`.github/workflows/ci.yml`) | n/a | on pull requests to `main`: `test`, `typecheck`, `e2e`, `mutation` (report-only) |
 
-Test-base profile: `meaningful` for backend, absent for frontend.
+Test-base profile: `meaningful` for backend, minimal (E2E only) for frontend.
 
 **Stack grounding tools (current session):**
 - Docs: Context7 — available; not queried at planning time, to be used per phase for xUnit / ASP.NET Core testing APIs; checked: 2026-10-02
@@ -98,10 +100,13 @@ Test-base profile: `meaningful` for backend, absent for frontend.
 
 | Gate | Where | Required? | Catches |
 |------|-------|-----------|---------|
-| backend build | local + CI | required after §3 Phase 4 | compile errors |
-| frontend typecheck | local + CI | required after §3 Phase 4 | type drift |
-| backend unit + integration (`dotnet test`) | local + CI | required after §3 Phase 1 (CI after Phase 4) | logic regressions in import, parsing, ownership |
-| post-edit / end-of-turn hook | local (agent loop) | recommended after §3 Phase 4 | regressions at edit time |
+| backend build | local (Stop hook) + CI job `test` | required | compile errors |
+| frontend typecheck | local (Stop hook) + CI job `typecheck` | required | type drift |
+| backend unit + integration (`dotnet test`) | local (Stop hook) + CI job `test` | required | logic regressions in import, parsing, ownership |
+| Playwright E2E (`npx playwright test`) | local (pre-PR hook, before `gh pr create`) + CI job `e2e` | required | browser-level regressions (auth redirect, import to dashboard) |
+| mutation testing (Stryker, changed code only) | CI job `mutation` | informational (report-only) | weak assertions in tests of changed code; never fails the build |
+| end-of-turn hook | local (agent loop): `.claude/hooks/end-of-turn.mjs`, Stop event | required | build/test/typecheck failures at the end of an agent turn (one retry, CI catches the rest) |
+| pre-PR hook | local: `.claude/hooks/pre-pr.mjs`, PreToolUse on `gh pr create` | required | the same gates as CI, including E2E, before a PR is opened |
 
 ## 6. Cookbook Patterns
 
@@ -132,6 +137,8 @@ How to add new tests in this project. Sub-sections fill in as phases ship.
 
 (Appended by `/10x-implement` after each phase.)
 
+- **Phase 4 (quality-gates wiring)** — delivered outside the `/10x-new` flow, as separate changes. Local: the Stop hook runs `dotnet test` and `npm run typecheck` when the turn touched backend or frontend files; the pre-PR hook runs `dotnet test`, typecheck and the full Playwright suite before `gh pr create`. CI (`.github/workflows/ci.yml`, pull requests to `main`): jobs `test`, `typecheck`, `e2e` (needs `dotnet-ef` installed globally and the E2E user from job env), `mutation` (report-only). History: the workflow was removed on 2026-10-02 because of a GitHub Actions billing lock (the pre-PR hook replaced it) and restored on 2026-10-08; the `typecheck` and `e2e` jobs were added in PR #44 (all four jobs green). Known gap: CI runs only on pull requests, and without required status checks a red job does not block a merge.
+
 - **Phase 1 (import integrity and dedup)** — shipped two test classes, `ImportDedupIntegrityTests` (re-import, partial overlap, skip/keep contract, manual-entry match) and `ImportCrossFormatOverlapTests` (CSV-vs-PDF overlap warning in both orders, same-format control, partial period, warn-only commit), plus the helpers `ImportTestHelpers`, `MBankCsvBuilder` and `MBankPairedStatement`. Known limitations pinned as current behavior: the cross-format overlap is warn-only (keeping both imports doubles the stored sum); repeated identical rows are flagged together (the dedup key has no occurrence counter); edit-then-reimport is out of scope. Fixture note: the paired PDF spans two pages on purpose, because the mBank PDF parser reads no rows from a statement that fits on one page.
 
 ## 7. What We Deliberately Don't Test
@@ -144,8 +151,8 @@ How to add new tests in this project. Sub-sections fill in as phases ship.
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-10-02
-- Stack versions last verified: 2026-10-02
+- Strategy (§1–§5) last reviewed: 2026-10-08 (§4 test stack and §5 quality gates synced with the repo and GitHub Actions)
+- Stack versions last verified: 2026-10-08
 - AI-native tool references last verified: 2026-10-02 (none recommended)
 
 Refresh (`/10x-test-plan --refresh`) when:
