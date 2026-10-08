@@ -66,7 +66,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|----------------|------------|--------|---------------|
-| 1 | Import integrity and dedup | Re-imports and CSV-vs-PDF overlaps never double-count and always surface duplicates | #1, #4 | integration | complete | context/changes/testing-import-integrity-dedup/ |
+| 1 | Import integrity and dedup | Re-imports and CSV-vs-PDF overlaps never double-count and always surface duplicates | #1, #4 | integration | complete | context/archive/2026-10-02-testing-import-integrity-dedup/ |
 | 2 | Parser correctness | Parsed amounts and dates equal an independent source, independent of culture | #2 | unit with fixtures | shipped (limitations: CSV parsers stop silently at the first unparseable date row, pinned as current behavior; PDF fixtures are still synthetic, no real statements; ICU is only guarded by a pl-PL separator test, not provided; NBSP is read as a plain space by PdfPig, so only U+2212 is mutation-sensitive for PDF rejection; VeloBank pairwise balance-check blind spots pinned; mBank offsetting errors accepted) | context/changes/testing-parser-correctness/ |
 | 3 | Data ownership | A user can never read or change another user's data | #3 | integration (two users) | not started | — |
 | 4 | Quality-gates wiring | Lock the floor: run the suite automatically in the agent loop and in CI | cross-cutting | gates (hook, CI) | complete (limitation: GitHub does not enforce the CI jobs; `main` has no branch protection or required status checks) | no change folder: Stop hook `d3a61fa`, pre-PR hook `4a89c97`, CI `19c0544` / `b835524` / PR #44 |
