@@ -167,12 +167,12 @@ None. Tests only.
 
 #### Automated
 
-- [ ] 2.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`)
-- [ ] 2.2 Mutation spot-checks (transaction PUT lookup, account DELETE lookup, dashboard query) make a new test fail, then revert
+- [x] 2.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`)
+- [x] 2.2 Mutation spot-checks (transaction PUT lookup, account DELETE lookup, dashboard query) make a new test fail, then revert
 
 #### Manual
 
-- [ ] 2.3 Denial tests assert state, not only status code
+- [x] 2.3 Denial tests assert state, not only status code
 
 ### Phase 3: Endpoint inventory guard and cookbook
 
