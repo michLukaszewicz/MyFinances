@@ -178,10 +178,10 @@ None. Tests only.
 
 #### Automated
 
-- [ ] 3.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`)
-- [ ] 3.2 Guard fails when a dummy unclassified endpoint is mapped (mutation, then revert)
-- [ ] 3.3 Build has no new warnings: `dotnet build` (from `MyFinances/backend`)
+- [x] 3.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`)
+- [x] 3.2 Guard fails when a dummy unclassified endpoint is mapped (mutation, then revert)
+- [x] 3.3 Build has no new warnings: `dotnet build` (from `MyFinances/backend`)
 
 #### Manual
 
-- [ ] 3.4 `test-plan.md` §6.3, §6.4 and the §3 row match what shipped
+- [x] 3.4 `test-plan.md` §6.3, §6.4 and the §3 row match what shipped
