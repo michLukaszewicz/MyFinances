@@ -1,10 +1,10 @@
 ---
 change_id: testing-import-integrity-dedup
 title: Import integrity and dedup test rollout (Phase 1)
-status: implemented
+status: archived
 created: 2026-10-02
-updated: 2026-10-02
-archived_at: null
+updated: 2026-10-08
+archived_at: 2026-10-08T08:19:59Z
 ---
 
 ## Notes
