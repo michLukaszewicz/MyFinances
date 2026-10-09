@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyFinances.Api;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyFinances.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261009061219_AddCategoryOwner")]
+    partial class AddCategoryOwner
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -160,9 +163,6 @@ namespace MyFinances.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("ColorSlot")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Kind")
                         .HasColumnType("integer");
 
@@ -173,7 +173,7 @@ namespace MyFinances.Api.Migrations
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -181,6 +181,106 @@ namespace MyFinances.Api.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000001"),
+                            Kind = 0,
+                            Name = "Groceries",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000002"),
+                            Kind = 0,
+                            Name = "Dining & Takeout",
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000003"),
+                            Kind = 0,
+                            Name = "Transport",
+                            SortOrder = 3
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000004"),
+                            Kind = 0,
+                            Name = "Housing & Utilities",
+                            SortOrder = 4
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000005"),
+                            Kind = 0,
+                            Name = "Health",
+                            SortOrder = 5
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000006"),
+                            Kind = 0,
+                            Name = "Shopping",
+                            SortOrder = 6
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000007"),
+                            Kind = 0,
+                            Name = "Entertainment",
+                            SortOrder = 7
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000008"),
+                            Kind = 0,
+                            Name = "Travel",
+                            SortOrder = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000009"),
+                            Kind = 0,
+                            Name = "Subscriptions",
+                            SortOrder = 9
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000010"),
+                            Kind = 1,
+                            Name = "Income",
+                            SortOrder = 10
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000011"),
+                            Kind = 0,
+                            Name = "Fees & Charges",
+                            SortOrder = 11
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000012"),
+                            Kind = 0,
+                            Name = "Other",
+                            SortOrder = 12
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000013"),
+                            Kind = 1,
+                            Name = "Refunds & Reimbursements",
+                            SortOrder = 13
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000014"),
+                            Kind = 1,
+                            Name = "Other income",
+                            SortOrder = 14
+                        });
                 });
 
             modelBuilder.Entity("MyFinances.Api.Transactions.Account", b =>

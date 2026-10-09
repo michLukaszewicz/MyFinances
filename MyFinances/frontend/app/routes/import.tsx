@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { redirect } from "react-router";
 import { apiFetch, ApiError } from "../lib/api";
+import { notifyUncategorizedChanged } from "../lib/uncategorized";
 import { AppHeader } from "../components/AppHeader";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
@@ -195,6 +196,7 @@ export default function Import() {
         }),
       });
       setSummary(response);
+      notifyUncategorizedChanged();
     } catch (err) {
       setCommitError(await extractErrorMessage(err));
     } finally {

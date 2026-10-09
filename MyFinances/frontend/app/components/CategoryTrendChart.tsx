@@ -159,8 +159,8 @@ export function CategoryTrendChart() {
   }, [granularity, kind, range.from, range.to, rangeError]);
 
   function colorFor(categoryId: string, fallbackIndex: number): string {
-    const index = categories.findIndex((c) => c.id === categoryId);
-    return chartColor(index >= 0 ? index : fallbackIndex);
+    const slot = categories.find((c) => c.id === categoryId)?.colorSlot;
+    return chartColor(slot ?? fallbackIndex);
   }
 
   const chartData = useMemo(() => {

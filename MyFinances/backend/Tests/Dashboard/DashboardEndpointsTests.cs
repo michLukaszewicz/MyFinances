@@ -53,6 +53,7 @@ public class DashboardEndpointsTests
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await FixedCategories.EnsureAsync(db, userId, categoryId);
         db.Transactions.Add(new Transaction
         {
             Id = Guid.NewGuid(),
