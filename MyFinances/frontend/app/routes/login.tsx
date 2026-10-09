@@ -57,7 +57,7 @@ export default function Login() {
   return (
     <>
       <AppHeader authenticated={false} />
-      <main className="flex items-center justify-center pb-4">
+      <main className="flex items-center justify-center pt-16 pb-4">
         <div className="max-w-sm w-full space-y-6 px-4">
           <h1
             className="text-center text-lg font-semibold text-foreground animate-[fade-slide-in_600ms_ease-out_both]"

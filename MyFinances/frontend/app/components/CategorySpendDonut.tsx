@@ -173,39 +173,37 @@ export function CategorySpendDonut({ kind, period, selectedCategoryId, refreshKe
           </PieChart>
         </ResponsiveContainer>
       </div>
-      {kind === "spend" && (
-        <ul className="space-y-1">
-          {chartData.map((entry) => {
-            const badge = entry.deviation ? DEVIATION_BADGE[entry.deviation] : null;
-            return (
-              <li key={entry.categoryId}>
-                <button
-                  type="button"
-                  onClick={() => toggleEntry(entry)}
-                  aria-pressed={selectedCategoryId === entry.categoryId}
-                  className="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-sm hover:bg-accent"
-                >
-                  {/* Only the dot dims with the slices; dimming the text would drop it below readable contrast. */}
-                  <span
-                    className="h-3 w-3 shrink-0 rounded-full"
-                    style={{ backgroundColor: entry.fill, opacity: entry.fillOpacity }}
-                  />
-                  <span className="min-w-0 flex-1 truncate text-foreground">{entry.categoryName}</span>
-                  <span className="text-foreground">{formatAmount(entry.amount)}</span>
-                  {badge && (
-                    <span className="flex flex-col items-end">
-                      <span className={`rounded px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
-                      {entry.averageToDate != null && (
-                        <span className="text-xs text-muted-foreground">{period.isCurrentMonth ? "avg by this day" : "avg for comparable period"}: {formatAmount(entry.averageToDate)}</span>
-                      )}
-                    </span>
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <ul className="space-y-1">
+        {chartData.map((entry) => {
+          const badge = entry.deviation ? DEVIATION_BADGE[entry.deviation] : null;
+          return (
+            <li key={entry.categoryId}>
+              <button
+                type="button"
+                onClick={() => toggleEntry(entry)}
+                aria-pressed={selectedCategoryId === entry.categoryId}
+                className="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-sm hover:bg-accent"
+              >
+                {/* Only the dot dims with the slices; dimming the text would drop it below readable contrast. */}
+                <span
+                  className="h-3 w-3 shrink-0 rounded-full"
+                  style={{ backgroundColor: entry.fill, opacity: entry.fillOpacity }}
+                />
+                <span className="min-w-0 flex-1 truncate text-foreground">{entry.categoryName}</span>
+                <span className="text-foreground">{formatAmount(entry.amount)}</span>
+                {badge && (
+                  <span className="flex flex-col items-end">
+                    <span className={`rounded px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
+                    {entry.averageToDate != null && (
+                      <span className="text-xs text-muted-foreground">{period.isCurrentMonth ? "avg by this day" : "avg for comparable period"}: {formatAmount(entry.averageToDate)}</span>
+                    )}
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
