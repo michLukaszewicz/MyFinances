@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { redirect } from "react-router";
 import { apiFetch, ApiError } from "../lib/api";
+import { notifyUncategorizedChanged } from "../lib/uncategorized";
 import { AppHeader } from "../components/AppHeader";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -160,6 +161,7 @@ export default function Settings() {
     try {
       const query = deleteTransactions ? "?deleteTransactions=true" : "";
       await apiFetch(`/accounts/${id}${query}`, { method: "DELETE" });
+      notifyUncategorizedChanged();
       await loadAccounts();
       setConfirmingDeleteId(null);
       setTransactionDeleteWarning(null);

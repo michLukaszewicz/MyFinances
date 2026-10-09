@@ -50,7 +50,7 @@ export function CategorySpendDonut({ kind, period, selectedCategoryId, refreshKe
   const [data, setData] = useState<CategorySpendDto[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  // Fixed palette slot per category (its position in the shared category list), so colours match the trend chart.
+  // Each category's stored colour slot, so colours stay stable and match the trend chart.
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const periodKey = `${period.from}/${period.to}`;
   const lastPeriodKey = useRef(periodKey);
@@ -103,7 +103,7 @@ export function CategorySpendDonut({ kind, period, selectedCategoryId, refreshKe
   }, []);
 
   function categorySlot(categoryId: string): number {
-    return categories.findIndex((c) => c.id === categoryId);
+    return categories.find((c) => c.id === categoryId)?.colorSlot ?? -1;
   }
 
   if (loading) {
