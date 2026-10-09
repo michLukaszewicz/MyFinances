@@ -222,7 +222,7 @@ export default function Import() {
   return (
     <>
       <AppHeader authenticated />
-      <main className="flex items-center justify-center pb-4">
+      <main className="flex items-center justify-center pt-16 pb-4">
         <div className={`w-full space-y-6 px-4 ${result ? "max-w-2xl" : "max-w-[300px]"}`}>
           <h1
             className="text-center text-lg font-semibold text-foreground animate-[fade-slide-in_600ms_ease-out_both]"
