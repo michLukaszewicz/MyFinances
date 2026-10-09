@@ -19,9 +19,11 @@ public class DataOwnershipWriteTests : IAsyncLifetime
     private Account accountB = null!;
     private Transaction categorizedA = null!;
     private Guid expenseCategoryId;
+    private Guid expenseCategoryIdB;
     private TwoUserHarness harness = null!;
     private Transaction importedA = null!;
     private Guid secondExpenseCategoryId;
+    private Guid secondExpenseCategoryIdB;
     private List<string> snapshotA = null!;
     private List<string> snapshotB = null!;
     private Transaction transactionB = null!;
@@ -52,15 +54,44 @@ public class DataOwnershipWriteTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task CategoriesDelete_OnAnotherUsersCustomCategory_IsNotFoundAndLeavesDataUnchanged()
+    {
+        // Arrange
+        var customA = await harness.SeedCustomCategoryAsync(harness.UserIdA, "Pets A");
+        snapshotA = await harness.SnapshotAsync(harness.UserIdA);
+        // Act
+        var response = await TwoUserHarness.SendAsync(
+            harness.ClientB, HttpMethod.Delete, $"/api/categorization/categories/{customA.Id}?uncategorizeTransactions=true");
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await AssertNobodysDataChangedAsync();
+    }
+
+    [Fact]
     public async Task CategorizePut_OnAnotherUsersTransaction_IsNotFoundAndLeavesDataUnchanged()
     {
         // Arrange
-        var categorize = new { CategoryId = secondExpenseCategoryId, IsInternalTransfer = true };
+        var categorize = new { CategoryId = secondExpenseCategoryIdB, IsInternalTransfer = true };
         // Act
         var response = await TwoUserHarness.SendAsync(
             harness.ClientB, HttpMethod.Put, $"/api/categorization/transactions/{uncategorizedA.Id}", categorize);
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await AssertNobodysDataChangedAsync();
+    }
+
+    [Fact]
+    public async Task CategorizePut_WithAnotherUsersCustomCategory_IsBadRequestAndLeavesDataUnchanged()
+    {
+        // Arrange
+        var customA = await harness.SeedCustomCategoryAsync(harness.UserIdA, "Pets A");
+        snapshotA = await harness.SnapshotAsync(harness.UserIdA);
+        var categorize = new { CategoryId = customA.Id };
+        // Act
+        var response = await TwoUserHarness.SendAsync(
+            harness.ClientB, HttpMethod.Put, $"/api/categorization/transactions/{transactionB.Id}", categorize);
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         await AssertNobodysDataChangedAsync();
     }
 
@@ -107,14 +138,15 @@ public class DataOwnershipWriteTests : IAsyncLifetime
     public async Task InitializeAsync()
     {
         harness = await TwoUserHarness.CreateAsync();
-        (expenseCategoryId, secondExpenseCategoryId, _) = await harness.GetCategoryIdsAsync();
+        (expenseCategoryId, secondExpenseCategoryId, _) = await harness.GetCategoryIdsAsync(harness.UserIdA);
+        (expenseCategoryIdB, secondExpenseCategoryIdB, _) = await harness.GetCategoryIdsAsync(harness.UserIdB);
         accountA = await harness.SeedAccountAsync(harness.UserIdA, "111");
         accountB = await harness.SeedAccountAsync(harness.UserIdB, "222");
         var batchA = await harness.SeedImportBatchAsync(harness.UserIdA, accountA.Id, 1);
         categorizedA = await harness.SeedTransactionAsync(harness.UserIdA, accountA.Id, Day, -100.00m, "Test description A1", expenseCategoryId);
         uncategorizedA = await harness.SeedTransactionAsync(harness.UserIdA, accountA.Id, Day, -50.00m, "Test description A2");
         importedA = await harness.SeedTransactionAsync(harness.UserIdA, accountA.Id, Day, -25.00m, "Test description A3", null, batchA.Id);
-        transactionB = await harness.SeedTransactionAsync(harness.UserIdB, accountB.Id, Day, -30.00m, "Test description B1", expenseCategoryId);
+        transactionB = await harness.SeedTransactionAsync(harness.UserIdB, accountB.Id, Day, -30.00m, "Test description B1", expenseCategoryIdB);
         snapshotA = await harness.SnapshotAsync(harness.UserIdA);
         snapshotB = await harness.SnapshotAsync(harness.UserIdB);
     }
@@ -146,7 +178,21 @@ public class DataOwnershipWriteTests : IAsyncLifetime
     public async Task TransactionsPost_IntoAnotherUsersAccount_IsBadRequestAndLeavesDataUnchanged()
     {
         // Arrange
-        var create = new TransactionWriteRequest(Day, "Planted", -5.00m, accountA.Id, expenseCategoryId, false);
+        var create = new TransactionWriteRequest(Day, "Planted", -5.00m, accountA.Id, expenseCategoryIdB, false);
+        // Act
+        var response = await TwoUserHarness.SendAsync(harness.ClientB, HttpMethod.Post, "/api/transactions/", create);
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await AssertNobodysDataChangedAsync();
+    }
+
+    [Fact]
+    public async Task TransactionsPost_WithAnotherUsersCustomCategory_IsBadRequestAndLeavesDataUnchanged()
+    {
+        // Arrange
+        var customA = await harness.SeedCustomCategoryAsync(harness.UserIdA, "Pets A");
+        snapshotA = await harness.SnapshotAsync(harness.UserIdA);
+        var create = new TransactionWriteRequest(Day, "Planted", -5.00m, accountB.Id, customA.Id, false);
         // Act
         var response = await TwoUserHarness.SendAsync(harness.ClientB, HttpMethod.Post, "/api/transactions/", create);
         // Assert
@@ -158,7 +204,7 @@ public class DataOwnershipWriteTests : IAsyncLifetime
     public async Task TransactionsPut_MovingOwnTransactionIntoAnotherUsersAccount_IsBadRequestAndLeavesDataUnchanged()
     {
         // Arrange
-        var move = new TransactionWriteRequest(Day, "Test description B1", -30.00m, accountA.Id, expenseCategoryId, false);
+        var move = new TransactionWriteRequest(Day, "Test description B1", -30.00m, accountA.Id, expenseCategoryIdB, false);
         // Act
         var response = await TwoUserHarness.SendAsync(harness.ClientB, HttpMethod.Put, $"/api/transactions/{transactionB.Id}", move);
         // Assert
@@ -170,7 +216,7 @@ public class DataOwnershipWriteTests : IAsyncLifetime
     public async Task TransactionsPut_OnAnotherUsersTransaction_IsNotFoundAndLeavesDataUnchanged()
     {
         // Arrange
-        var edit = new TransactionWriteRequest(Day, "Overwritten", -1.00m, accountB.Id, secondExpenseCategoryId, true);
+        var edit = new TransactionWriteRequest(Day, "Overwritten", -1.00m, accountB.Id, secondExpenseCategoryIdB, true);
         // Act
         var response = await TwoUserHarness.SendAsync(harness.ClientB, HttpMethod.Put, $"/api/transactions/{categorizedA.Id}", edit);
         // Assert
