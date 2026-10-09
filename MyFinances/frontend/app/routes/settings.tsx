@@ -34,6 +34,22 @@ async function extractErrorMessage(error: unknown): Promise<string> {
   return "Something went wrong. Please try again.";
 }
 
+// The backend answers a delete of an account that still has transactions with a 409 carrying the
+// number of transactions that would be lost; null for any other failure.
+async function extractTransactionCount(error: unknown): Promise<number | null> {
+  if (error instanceof ApiError && error.response.status === 409) {
+    try {
+      const body = await error.response.clone().json();
+      if (typeof body?.transactionCount === "number") {
+        return body.transactionCount;
+      }
+    } catch {
+      // fall through to null
+    }
+  }
+  return null;
+}
+
 export default function Settings() {
   const [accounts, setAccounts] = useState<AccountDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +64,12 @@ export default function Settings() {
   const [submitting, setSubmitting] = useState(false);
 
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [transactionDeleteWarning, setTransactionDeleteWarning] = useState<{
+    accountId: string;
+    transactionCount: number;
+  } | null>(null);
 
   const bankNameInputRef = useRef<HTMLInputElement>(null);
 
@@ -132,10 +154,28 @@ export default function Settings() {
     }
   }
 
-  async function handleDelete(id: string) {
-    await apiFetch(`/accounts/${id}`, { method: "DELETE" });
-    setConfirmingDeleteId(null);
-    await loadAccounts();
+  async function handleDelete(id: string, deleteTransactions = false) {
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      const query = deleteTransactions ? "?deleteTransactions=true" : "";
+      await apiFetch(`/accounts/${id}${query}`, { method: "DELETE" });
+      await loadAccounts();
+      setConfirmingDeleteId(null);
+      setTransactionDeleteWarning(null);
+    } catch (err) {
+      const transactionCount = await extractTransactionCount(err);
+      if (transactionCount !== null) {
+        setConfirmingDeleteId(null);
+        setTransactionDeleteWarning({ accountId: id, transactionCount });
+      } else {
+        setConfirmingDeleteId(null);
+        setTransactionDeleteWarning(null);
+        setDeleteError(await extractErrorMessage(err));
+      }
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
@@ -227,6 +267,11 @@ export default function Settings() {
 
           <div className="space-y-2">
             <h2 className="text-sm font-medium text-foreground">Your accounts</h2>
+            {deleteError && (
+              <p role="alert" className="text-sm text-destructive">
+                {deleteError}
+              </p>
+            )}
             {loading ? (
               <p className="text-sm text-muted-foreground">Loading…</p>
             ) : accounts.length === 0 ? (
@@ -255,6 +300,7 @@ export default function Settings() {
                             type="button"
                             variant="destructive-ghost"
                             size="sm"
+                            disabled={deleting}
                             onClick={() => void handleDelete(account.id)}
                           >
                             Confirm delete
@@ -274,13 +320,53 @@ export default function Settings() {
                           type="button"
                           variant="destructive-ghost"
                           size="sm"
-                          onClick={() => setConfirmingDeleteId(account.id)}
+                          onClick={() => {
+                          setDeleteError(null);
+                          setTransactionDeleteWarning(null);
+                          setConfirmingDeleteId(account.id);
+                        }}
                         >
                           Delete
                         </Button>
                       )}
                     </div>
                     </Card>
+                    {transactionDeleteWarning?.accountId === account.id && (
+                      <div
+                        role="alert"
+                        className="mt-2 space-y-3 rounded-lg border border-warning p-3 text-sm text-foreground"
+                      >
+                        <p>
+                          This account has {transactionDeleteWarning.transactionCount}{" "}
+                          {transactionDeleteWarning.transactionCount === 1
+                            ? "transaction"
+                            : "transactions"}
+                          . Deleting it will permanently delete the account together with all its
+                          transactions and import history. This cannot be undone.
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="destructive-ghost"
+                            size="sm"
+                            disabled={deleting}
+                            onClick={() => void handleDelete(account.id, true)}
+                          >
+                            {deleting ? "Deleting…" : "Delete account and transactions"}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground"
+                            disabled={deleting}
+                            onClick={() => setTransactionDeleteWarning(null)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
