@@ -107,7 +107,7 @@ public static class TransactionEndpoints
                 return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: "Unknown account.");
             }
 
-            var categoryExists = await db.Categories.AnyAsync(c => c.Id == request.CategoryId);
+            var categoryExists = await db.Categories.OwnedBy(userId).AnyAsync(c => c.Id == request.CategoryId);
             if (!categoryExists)
             {
                 return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: "Unknown category.");
@@ -184,7 +184,7 @@ public static class TransactionEndpoints
                 return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: "Unknown account.");
             }
 
-            var categoryExists = await db.Categories.AnyAsync(c => c.Id == request.CategoryId);
+            var categoryExists = await db.Categories.OwnedBy(userId).AnyAsync(c => c.Id == request.CategoryId);
             if (!categoryExists)
             {
                 return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: "Unknown category.");

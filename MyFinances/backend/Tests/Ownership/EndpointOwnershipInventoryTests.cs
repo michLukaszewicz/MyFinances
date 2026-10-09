@@ -25,7 +25,6 @@ public class EndpointOwnershipInventoryTests
         "GET /api/auth/me",
         "POST /api/auth/logout",
         "GET /api/accounts/banks",
-        "GET /api/categorization/categories",
     ];
 
     private static readonly string[] OwnershipTested =
@@ -38,7 +37,11 @@ public class EndpointOwnershipInventoryTests
         "POST /api/transactions/",
         "PUT /api/transactions/{id:guid}",
         "DELETE /api/transactions/{id:guid}",
+        "GET /api/categorization/categories",
+        "POST /api/categorization/categories",
+        "DELETE /api/categorization/categories/{id:guid}",
         "GET /api/categorization/queue",
+        "GET /api/categorization/queue/count",
         "GET /api/categorization/handled",
         "PUT /api/categorization/transactions/{id:guid}",
         "POST /api/import/parse",

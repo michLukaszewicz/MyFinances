@@ -3,7 +3,13 @@ namespace MyFinances.Api.Categorization;
 // Request/response contracts for the categorization queue flow (CategorizationEndpoints).
 
 // Kind is "expense" or "income" (lowercase) so the frontend can filter pickers by amount sign.
-public record CategoryDto(Guid Id, string Name, string Kind);
+// ColorSlot is the category's stable chart palette slot.
+public record CategoryDto(Guid Id, string Name, string Kind, int ColorSlot);
+
+// Kind is "expense" or "income" (case-insensitive).
+public record CategoryWriteRequest(string Name, string Kind);
+
+public record UncategorizedCountDto(int Count);
 
 public record TransactionQueueItemDto(
     Guid Id,
