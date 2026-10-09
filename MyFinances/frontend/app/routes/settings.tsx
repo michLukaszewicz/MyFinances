@@ -183,7 +183,7 @@ export default function Settings() {
   return (
     <>
       <AppHeader authenticated />
-      <main className="flex items-center justify-center pb-4">
+      <main className="flex items-center justify-center pt-16 pb-4">
         <div className="w-full max-w-2xl space-y-6 px-4">
           <h1 className="text-center text-lg font-semibold text-foreground">Settings</h1>
 
