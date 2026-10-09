@@ -3,6 +3,7 @@ export interface CategoryDto {
   id: string;
   name: string;
   kind: "expense" | "income";
+  colorSlot: number;
 }
 
 // Categories a transaction of this amount can be assigned to: income categories for positive

@@ -9,6 +9,7 @@ import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Input, selectClassName } from "../components/ui/input";
 import { apiFetch, ApiError } from "../lib/api";
+import { notifyUncategorizedChanged } from "../lib/uncategorized";
 import { categoriesForAmount, type CategoryDto } from "../lib/categories";
 import { cn } from "../lib/utils";
 import {
@@ -426,6 +427,7 @@ export default function Home() {
   async function handleDelete(id: string) {
     try {
       await apiFetch(`/transactions/${id}`, { method: "DELETE" });
+      notifyUncategorizedChanged();
       setConfirmingDeleteId(null);
       await refreshTransactions();
     } catch {

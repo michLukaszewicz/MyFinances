@@ -47,6 +47,9 @@ internal sealed class TwoUserHarness : IDisposable
             var created = await userManager.CreateAsync(userB, Password);
             Assert.True(created.Succeeded);
             userIdB = userB.Id;
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.Categories.AddRange(DefaultCategories.CreateFor(userIdB));
+            await db.SaveChangesAsync();
         }
         var clientB = factory.CreateClient();
         var login = await clientB.PostAsJsonAsync("/api/auth/login", new LoginRequest(OtherEmail, Password));
@@ -80,18 +83,18 @@ internal sealed class TwoUserHarness : IDisposable
         Factory.Dispose();
     }
 
-    public async Task<(Guid ExpenseId, Guid SecondExpenseId, Guid IncomeId)> GetCategoryIdsAsync()
+    public async Task<(Guid ExpenseId, Guid SecondExpenseId, Guid IncomeId)> GetCategoryIdsAsync(Guid userId)
     {
         using var scope = Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var expenses = await db.Categories
-            .Where(c => c.Kind == CategoryKind.Expense)
+            .Where(c => c.UserId == userId && c.Kind == CategoryKind.Expense)
             .OrderBy(c => c.SortOrder)
             .Select(c => c.Id)
             .Take(2)
             .ToListAsync();
         var incomeId = await db.Categories
-            .Where(c => c.Kind == CategoryKind.Income)
+            .Where(c => c.UserId == userId && c.Kind == CategoryKind.Income)
             .OrderBy(c => c.SortOrder)
             .Select(c => c.Id)
             .FirstAsync();
@@ -106,6 +109,16 @@ internal sealed class TwoUserHarness : IDisposable
         db.Accounts.Add(account);
         await db.SaveChangesAsync();
         return account;
+    }
+
+    public async Task<Category> SeedCustomCategoryAsync(Guid userId, string name)
+    {
+        using var scope = Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var category = new Category { Id = Guid.NewGuid(), Name = name, SortOrder = 1000, UserId = userId };
+        db.Categories.Add(category);
+        await db.SaveChangesAsync();
+        return category;
     }
 
     public async Task<ImportBatch> SeedImportBatchAsync(Guid userId, Guid accountId, int importedCount)
@@ -165,6 +178,13 @@ internal sealed class TwoUserHarness : IDisposable
         var batches = (await db.ImportBatches.Where(b => b.UserId == userId).ToListAsync())
             .Select(b => $"batch|{b.Id}|{b.UserId}|{b.AccountId}|{b.ImportedAtUtc:O}|{b.ImportedCount}|{b.SkippedDuplicateCount}|"
                 + $"{b.SkippedErrorCount}|{b.SourceFormat}");
-        return accounts.Concat(transactions).Concat(batches).OrderBy(line => line, StringComparer.Ordinal).ToList();
+        var categories = (await db.Categories.Where(c => c.UserId == userId).ToListAsync())
+            .Select(c => $"category|{c.Id}|{c.UserId}|{c.Name}|{c.Kind}|{c.SortOrder}");
+        return accounts
+            .Concat(transactions)
+            .Concat(batches)
+            .Concat(categories)
+            .OrderBy(line => line, StringComparer.Ordinal)
+            .ToList();
     }
 }

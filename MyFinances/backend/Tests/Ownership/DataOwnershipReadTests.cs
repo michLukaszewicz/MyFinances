@@ -23,6 +23,7 @@ public class DataOwnershipReadTests : IAsyncLifetime
     private Transaction expenseA = null!;
     private Transaction expenseB = null!;
     private Guid expenseCategoryId;
+    private Guid expenseCategoryIdB;
     private TwoUserHarness harness = null!;
     private Transaction incomeA = null!;
     private Guid incomeCategoryId;
@@ -36,6 +37,35 @@ public class DataOwnershipReadTests : IAsyncLifetime
         // Assert
         Assert.Equal([accountB.Id], forB.Select(a => a.Id));
         Assert.Equal(["222"], forB.Select(a => a.AccountNumber));
+    }
+
+    [Fact]
+    public async Task CategoriesList_AfterOneUserDeletesACategory_StillHasAllOfTheOtherUsers()
+    {
+        // Arrange
+        var before = await TwoUserHarness.GetJsonAsync<List<CategoryDto>>(harness.ClientB, "/api/categorization/categories");
+        var deleted = await TwoUserHarness.SendAsync(
+            harness.ClientA, HttpMethod.Delete, $"/api/categorization/categories/{incomeCategoryId}?uncategorizeTransactions=true");
+        // Act
+        var forA = await TwoUserHarness.GetJsonAsync<List<CategoryDto>>(harness.ClientA, "/api/categorization/categories");
+        var forB = await TwoUserHarness.GetJsonAsync<List<CategoryDto>>(harness.ClientB, "/api/categorization/categories");
+        // Assert
+        Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
+        Assert.DoesNotContain(forA, c => c.Id == incomeCategoryId);
+        Assert.Equal(before.Select(c => c.Id), forB.Select(c => c.Id));
+    }
+
+    [Fact]
+    public async Task CategoriesList_NeverContainsAnotherUsersCustomCategory()
+    {
+        // Arrange
+        var customA = await harness.SeedCustomCategoryAsync(harness.UserIdA, "Pets A");
+        // Act
+        var forB = await TwoUserHarness.GetJsonAsync<List<CategoryDto>>(harness.ClientB, "/api/categorization/categories");
+        var forA = await TwoUserHarness.GetJsonAsync<List<CategoryDto>>(harness.ClientA, "/api/categorization/categories");
+        // Assert
+        Assert.DoesNotContain(forB, c => c.Id == customA.Id);
+        Assert.Contains(forA, c => c.Id == customA.Id);
     }
 
     [Fact]
@@ -68,7 +98,7 @@ public class DataOwnershipReadTests : IAsyncLifetime
         var forA = await TwoUserHarness.GetJsonAsync<List<CategorySpendSignalDto>>(harness.ClientA, $"/api/dashboard/category-spend?{Period}");
         // Assert
         var spendB = Assert.Single(forB);
-        Assert.Equal(expenseCategoryId, spendB.CategoryId);
+        Assert.Equal(expenseCategoryIdB, spendB.CategoryId);
         Assert.Equal(30.00m, spendB.Amount);
         Assert.Equal(100.00m, Assert.Single(forA).Amount);
     }
@@ -136,13 +166,14 @@ public class DataOwnershipReadTests : IAsyncLifetime
     public async Task InitializeAsync()
     {
         harness = await TwoUserHarness.CreateAsync();
-        (expenseCategoryId, _, incomeCategoryId) = await harness.GetCategoryIdsAsync();
+        (expenseCategoryId, _, incomeCategoryId) = await harness.GetCategoryIdsAsync(harness.UserIdA);
+        (expenseCategoryIdB, _, _) = await harness.GetCategoryIdsAsync(harness.UserIdB);
         accountA = await harness.SeedAccountAsync(harness.UserIdA, "111");
         accountB = await harness.SeedAccountAsync(harness.UserIdB, "222");
         expenseA = await harness.SeedTransactionAsync(harness.UserIdA, accountA.Id, Day, -100.00m, "Test description A1", expenseCategoryId);
         incomeA = await harness.SeedTransactionAsync(harness.UserIdA, accountA.Id, Day, 3000.00m, "Test description A2", incomeCategoryId);
         uncategorizedA = await harness.SeedTransactionAsync(harness.UserIdA, accountA.Id, Day, -50.00m, "Test description A3");
-        expenseB = await harness.SeedTransactionAsync(harness.UserIdB, accountB.Id, Day, -30.00m, "Test description B1", expenseCategoryId);
+        expenseB = await harness.SeedTransactionAsync(harness.UserIdB, accountB.Id, Day, -30.00m, "Test description B1", expenseCategoryIdB);
     }
 
     [Fact]
@@ -152,7 +183,7 @@ public class DataOwnershipReadTests : IAsyncLifetime
         var forB = await TwoUserHarness.GetJsonAsync<TransactionListResponseDto>(
             harness.ClientB, $"/api/transactions?categoryId={incomeCategoryId}&{Period}&kind=income");
         var forBExpense = await TwoUserHarness.GetJsonAsync<TransactionListResponseDto>(
-            harness.ClientB, $"/api/transactions?categoryId={expenseCategoryId}&{Period}");
+            harness.ClientB, $"/api/transactions?categoryId={expenseCategoryIdB}&{Period}");
         // Assert
         Assert.Empty(forB.Items);
         Assert.Equal([expenseB.Id], forBExpense.Items.Select(t => t.Id));
@@ -183,5 +214,16 @@ public class DataOwnershipReadTests : IAsyncLifetime
         // Assert
         Assert.False(queueForA.Single(t => t.Id == outgoingA.Id).IsInternalTransfer);
         Assert.False(queueForB.Single(t => t.Id == incomingB.Id).IsInternalTransfer);
+    }
+
+    [Fact]
+    public async Task UncategorizedCount_CountsOnlyTheCallersOwnRows()
+    {
+        // Act
+        var forA = await TwoUserHarness.GetJsonAsync<UncategorizedCountDto>(harness.ClientA, "/api/categorization/queue/count");
+        var forB = await TwoUserHarness.GetJsonAsync<UncategorizedCountDto>(harness.ClientB, "/api/categorization/queue/count");
+        // Assert
+        Assert.Equal(1, forA.Count);
+        Assert.Equal(0, forB.Count);
     }
 }

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { redirect } from "react-router";
 import { apiFetch, ApiError } from "../lib/api";
+import { notifyUncategorizedChanged } from "../lib/uncategorized";
 import { categoriesForAmount, type CategoryDto } from "../lib/categories";
 import { AppHeader } from "../components/AppHeader";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
-import { selectClassName } from "../components/ui/input";
+import { Input, selectClassName } from "../components/ui/input";
 
 export async function clientLoader() {
   const res = await fetch("/api/auth/me", { credentials: "include" });
@@ -40,6 +41,22 @@ async function extractErrorMessage(error: unknown): Promise<string> {
   return "Something went wrong. Please try again.";
 }
 
+// The backend answers a delete of a category that is still used by transactions with a 409 carrying
+// the number of transactions that would go back to the queue; null for any other failure.
+async function extractTransactionCount(error: unknown): Promise<number | null> {
+  if (error instanceof ApiError && error.response.status === 409) {
+    try {
+      const body = await error.response.clone().json();
+      if (typeof body?.transactionCount === "number") {
+        return body.transactionCount;
+      }
+    } catch {
+      // fall through to null
+    }
+  }
+  return null;
+}
+
 export default function Categorize() {
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [queue, setQueue] = useState<TransactionQueueItemDto[]>([]);
@@ -50,6 +67,19 @@ export default function Categorize() {
   const [upNextTransfer, setUpNextTransfer] = useState(false);
   const [upNextError, setUpNextError] = useState<string | null>(null);
   const [savingUpNext, setSavingUpNext] = useState(false);
+
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryKind, setNewCategoryKind] = useState<"expense" | "income">("expense");
+  const [categoryFormError, setCategoryFormError] = useState<string | null>(null);
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [confirmingCategoryDeleteId, setConfirmingCategoryDeleteId] = useState<string | null>(null);
+  const [categoryDeleteError, setCategoryDeleteError] = useState<string | null>(null);
+  const [deletingCategory, setDeletingCategory] = useState(false);
+  const [categoryUsageWarning, setCategoryUsageWarning] = useState<{
+    categoryId: string;
+    transactionCount: number;
+  } | null>(null);
 
   async function loadAll() {
     const [categoryList, queueList] = await Promise.all([
@@ -100,11 +130,149 @@ export default function Categorize() {
         }),
       });
       await loadAll();
+      notifyUncategorizedChanged();
     } catch (err) {
       setUpNextError(await extractErrorMessage(err));
     } finally {
       setSavingUpNext(false);
     }
+  }
+
+  async function handleAddCategory(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = newCategoryName.trim();
+    if (!name) return;
+
+    setCategoryFormError(null);
+    setAddingCategory(true);
+    try {
+      await apiFetch<CategoryDto>("/categorization/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ Name: name, Kind: newCategoryKind }),
+      });
+      await loadAll();
+      setNewCategoryName("");
+    } catch (err) {
+      setCategoryFormError(await extractErrorMessage(err));
+    } finally {
+      setAddingCategory(false);
+    }
+  }
+
+  async function handleDeleteCategory(id: string, uncategorizeTransactions = false) {
+    setCategoryDeleteError(null);
+    setDeletingCategory(true);
+    try {
+      const query = uncategorizeTransactions ? "?uncategorizeTransactions=true" : "";
+      await apiFetch(`/categorization/categories/${id}${query}`, { method: "DELETE" });
+      await loadAll();
+      notifyUncategorizedChanged();
+      setConfirmingCategoryDeleteId(null);
+      setCategoryUsageWarning(null);
+    } catch (err) {
+      const transactionCount = await extractTransactionCount(err);
+      setConfirmingCategoryDeleteId(null);
+      if (transactionCount !== null) {
+        setCategoryUsageWarning({ categoryId: id, transactionCount });
+      } else {
+        setCategoryUsageWarning(null);
+        setCategoryDeleteError(await extractErrorMessage(err));
+      }
+    } finally {
+      setDeletingCategory(false);
+    }
+  }
+
+  function renderCategoryList(kind: "expense" | "income", title: string) {
+    const items = categories.filter((c) => c.kind === kind);
+    return (
+      <div className="space-y-2">
+        <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</h3>
+        {items.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No {kind} categories.</p>
+        ) : (
+          <ul className="space-y-2">
+            {items.map((category) => (
+              <li key={category.id}>
+                <Card className="flex-row items-center justify-between gap-2 p-3 text-sm text-foreground">
+                  <span>{category.name}</span>
+                  {confirmingCategoryDeleteId === category.id ? (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="destructive-ghost"
+                        size="sm"
+                        disabled={deletingCategory}
+                        onClick={() => void handleDeleteCategory(category.id)}
+                      >
+                        Confirm delete
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground"
+                        onClick={() => setConfirmingCategoryDeleteId(null)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="destructive-ghost"
+                      size="sm"
+                      onClick={() => {
+                        setCategoryDeleteError(null);
+                        setCategoryUsageWarning(null);
+                        setConfirmingCategoryDeleteId(category.id);
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </Card>
+                {categoryUsageWarning?.categoryId === category.id && (
+                  <div
+                    role="alert"
+                    className="mt-2 space-y-3 rounded-lg border border-warning p-3 text-sm text-foreground"
+                  >
+                    <p>
+                      This category is used by {categoryUsageWarning.transactionCount}{" "}
+                      {categoryUsageWarning.transactionCount === 1 ? "transaction" : "transactions"}. If you delete
+                      it, {categoryUsageWarning.transactionCount === 1 ? "that transaction" : "those transactions"}{" "}
+                      will become uncategorized and appear in the list above again.
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="destructive-ghost"
+                        size="sm"
+                        disabled={deletingCategory}
+                        onClick={() => void handleDeleteCategory(category.id, true)}
+                      >
+                        {deletingCategory ? "Deleting…" : "Delete category and uncategorize"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground"
+                        disabled={deletingCategory}
+                        onClick={() => setCategoryUsageWarning(null)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -120,6 +288,73 @@ export default function Categorize() {
             <p className="text-center text-sm text-destructive">{loadError}</p>
           ) : (
             <>
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  aria-expanded={showCategoryManager}
+                  onClick={() => setShowCategoryManager((open) => !open)}
+                >
+                  {showCategoryManager ? "Hide categories" : "Manage categories"}
+                </Button>
+              </div>
+
+              {showCategoryManager && (
+                <section className="space-y-4">
+                  <h2 className="text-sm font-medium text-foreground">Manage categories</h2>
+                  <Card>
+                    <CardContent>
+                      <form onSubmit={handleAddCategory} className="space-y-3">
+                        <div className="flex flex-wrap items-end gap-2">
+                          <div className="min-w-40 flex-1 space-y-1">
+                            <label htmlFor="newCategoryName" className="text-sm text-foreground">
+                              New category name
+                            </label>
+                            <Input
+                              id="newCategoryName"
+                              type="text"
+                              maxLength={50}
+                              value={newCategoryName}
+                              onChange={(e) => setNewCategoryName(e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label htmlFor="newCategoryKind" className="text-sm text-foreground">
+                              Type
+                            </label>
+                            <select
+                              id="newCategoryKind"
+                              value={newCategoryKind}
+                              onChange={(e) => setNewCategoryKind(e.target.value as "expense" | "income")}
+                              className={selectClassName}
+                            >
+                              <option value="expense">Expense</option>
+                              <option value="income">Income</option>
+                            </select>
+                          </div>
+                          <Button type="submit" disabled={addingCategory || !newCategoryName.trim()}>
+                            {addingCategory ? "Adding…" : "Add category"}
+                          </Button>
+                        </div>
+                        {categoryFormError && (
+                          <p role="alert" className="text-sm text-destructive">
+                            {categoryFormError}
+                          </p>
+                        )}
+                      </form>
+                    </CardContent>
+                  </Card>
+                  {categoryDeleteError && (
+                    <p role="alert" className="text-sm text-destructive">
+                      {categoryDeleteError}
+                    </p>
+                  )}
+                  {renderCategoryList("expense", "Expense categories")}
+                  {renderCategoryList("income", "Income categories")}
+                </section>
+              )}
+
               <section className="space-y-2">
                 {upNext && <h2 className="text-sm font-medium text-foreground">Up next</h2>}
                 {upNext ? (
