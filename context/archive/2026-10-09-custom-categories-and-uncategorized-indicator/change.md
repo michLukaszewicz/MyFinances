@@ -1,10 +1,10 @@
 ---
 change_id: custom-categories-and-uncategorized-indicator
 title: Custom categories (create/delete) and an uncategorized-transactions indicator
-status: implementing
+status: archived
 created: 2026-10-09
-updated: 2026-10-09
-archived_at: null
+updated: 2026-10-16
+archived_at: 2026-10-16T07:50:07Z
 ---
 
 ## Notes

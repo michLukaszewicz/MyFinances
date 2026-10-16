@@ -1,10 +1,10 @@
 ---
 change_id: mutation-testing-stryker
 title: Add Stryker.NET mutation testing with incremental runs
-status: implementing
+status: archived
 created: 2026-10-02
-updated: 2026-10-02
-archived_at: null
+updated: 2026-10-16
+archived_at: 2026-10-16T07:50:07Z
 ---
 
 ## Notes
