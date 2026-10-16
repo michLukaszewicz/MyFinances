@@ -33,3 +33,6 @@ source: "01-domain-distillation.md"
 | Sygnał odchylenia | Powyżej / poniżej / w normie wobec własnej średniej kategorii | `CategoryDeviation`, `above` / `below` / `inLine` | „budget”, „alert”, „limit” |
 | Trend kategorii | Sumy kategorii w kubełkach tydzień / miesiąc / rok | `CategoryTrend*` | „history”, „chart” |
 | Budżet | Porzucony; nie istnieje w produkcie | — | nie używać |
+| Kategoria domyślna | Jedna z 14 kategorii kopiowanych nowemu użytkownikowi; po rejestracji zwykła, usuwalna kategoria | `DefaultCategories.CreateFor` | „systemowa”, „globalna kategoria” |
+| Kolor kategorii | Stały slot koloru kategorii na wykresach, niezależny od kolejności listy | `Category.ColorSlot`, `chartColor` | „indeks na liście” |
+| Wskaźnik nieskategoryzowanych | Kropka na zakładce Categorize i toast, gdy kolejka jest niepusta | `/categorization/queue/count`, `uncategorized:changed` | „notification”, „alert” |
