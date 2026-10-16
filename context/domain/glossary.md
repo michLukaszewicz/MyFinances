@@ -36,3 +36,6 @@ source: "01-domain-distillation.md"
 | Kategoria domyślna | Jedna z 14 kategorii kopiowanych nowemu użytkownikowi; po rejestracji zwykła, usuwalna kategoria | `DefaultCategories.CreateFor` | „systemowa”, „globalna kategoria” |
 | Kolor kategorii | Stały slot koloru kategorii na wykresach, niezależny od kolejności listy | `Category.ColorSlot`, `chartColor` | „indeks na liście” |
 | Wskaźnik nieskategoryzowanych | Kropka na zakładce Categorize i toast, gdy kolejka jest niepusta | `/categorization/queue/count`, `uncategorized:changed` | „notification”, „alert” |
+| Transakcja z importu | Transakcja utworzona przy zatwierdzeniu wyciągu; jej hash jest tożsamością nadaną raz i nie zmienia się przy edycji | `ImportBatchId != null`, `Transaction.FromImport` (planowane) | „imported row” bez rozróżnienia od ręcznej, „zsynchronizowana” |
+| Ręczny wpis | Transakcja wpisana przez użytkownika; hash odpowiada aktualnie wpisanym wartościom i nie jest dopasowywany do importu | `ImportBatchId == null`, `Transaction.EnteredManually` (planowane) | „manual import”, „własna transakcja” |
+| Tożsamość transakcji | Hash służący do wykrywania duplikatów | `Transaction.Hash`, `Transaction.IdentityFor` (planowane) | „checksum”, „klucz” |
