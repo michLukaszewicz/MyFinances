@@ -1,10 +1,10 @@
 ---
 project: "MyFinances"
-version: 1
+version: 2
 status: draft
 created: 2026-09-22
-updated: 2026-10-02
-prd_version: 3
+updated: 2026-10-16
+prd_version: 4
 main_goal: market-feedback
 top_blocker: time
 milestone_id: mvp-spend-insight-loop
@@ -14,7 +14,7 @@ milestone_status: done
 
 # Roadmap: MyFinances
 
-> Derived from `context/foundation/prd.md` (v3) + `context/foundation/shape-notes.md`'s `## Forward: technical-roadmap` notes + auto-researched codebase baseline.
+> Derived from `context/foundation/prd.md` (v4; v3 until 2026-10-16) + `context/foundation/shape-notes.md`'s `## Forward: technical-roadmap` notes + auto-researched codebase baseline.
 > Edit-in-place; archive when superseded.
 > Slices below are listed in dependency order. The "At a glance" table is the index.
 
@@ -22,13 +22,13 @@ milestone_status: done
 
 **M-1: Full MVP spend-insight loop (mBank, Erste, VeloBank)** — Status: done
 
-- **Intent:** Deliver the entire MVP scope in `prd.md` v3 — the full import → dedup → categorize → chart → budget/average-deviation loop, across all four banks (VeloBank via PDF statements, the others via CSV) — as one outcome-scoped milestone. The PRD carries no staged "Etap" split (that framing lived only in the earlier shape-notes draft), so all must-have FRs belong to this single milestone. S-12 (mBank and Erste PDF import) is an optional follow-up to S-11 and sits outside this milestone's done criterion.
-- **Source materials:** `context/foundation/prd.md` (v3), supplemented by `context/foundation/shape-notes.md`'s `## Forward: technical-roadmap` notes (parser architecture, dedup-hash shape, CSV formats to verify).
+- **Intent:** Deliver the entire MVP scope in `prd.md` (v3 at the time, v4 now) — the full import → dedup → categorize → chart → average-deviation loop, across three banks (mBank, Erste and VeloBank; VeloBank via PDF statements, the others via CSV and PDF). Budget-vs-actual and Revolut were dropped on 2026-10-02 (see Parked). The PRD carries no staged "Etap" split (that framing lived only in the earlier shape-notes draft), so all must-have FRs belong to this single milestone. S-12 (mBank and Erste PDF import) is an optional follow-up to S-11 and sits outside this milestone's done criterion.
+- **Source materials:** `context/foundation/prd.md` (v3 when the milestone was opened), supplemented by `context/foundation/shape-notes.md`'s `## Forward: technical-roadmap` notes (parser architecture, dedup-hash shape, CSV formats to verify).
 - **Done when:** every F-NN and S-NN below is `done`, except the optional S-12.
 
 ## Vision recap
 
-An individual manages personal finances across several bank accounts (mBank, Revolut, Erste Bank Polska, VeloBank) and has no visibility into what they actually spend, per category, without manual spreadsheet work or trusting a bank's own shallow categorization. The product's core bet — its **wedge**, the one trait that, if removed, makes it just another expense tracker — is that categorization quality comes from the user's own deliberate, correctable decisions rather than a black-box auto-categorizer, and spend gets compared against the user's own historical average so "is this normal for me" works without ever requiring a budget to be set up front.
+An individual manages personal finances across several bank accounts (mBank, Erste Bank Polska, VeloBank) and has no visibility into what they actually spend, per category, without manual spreadsheet work or trusting a bank's own shallow categorization. The product's core bet — its **wedge**, the one trait that, if removed, makes it just another expense tracker — is that categorization quality comes from the user's own deliberate, correctable decisions rather than a black-box auto-categorizer, and spend gets compared against the user's own historical average so "is this normal for me" works without ever requiring a budget to be set up front.
 
 ## North star
 
@@ -53,6 +53,7 @@ An individual manages personal finances across several bank accounts (mBank, Rev
 | S-12  | pdf-import                        | (optional) import an mBank or Erste Bank Polska PDF statement as a second format next to the CSV | S-11 | FR-018                        | done |
 | S-14  | chart-period-selector             | pick the period (last 30/90 days, a month, a custom range) shown by both donut charts, the slice drilldown list and the deviation badge | S-04, S-06 | FR-011, FR-012, FR-013, FR-016 | done |
 | S-15  | category-trend-line-chart         | see a line chart of per-category spend/income over time, bucketed by week, month or year | S-04          | FR-011 (data exploration)     | done |
+| S-16  | custom-categories-and-uncategorized-indicator | create and delete their own categories, and see an indicator while uncategorized transactions exist | S-03 | FR-007, FR-019 | done |
 
 ## Streams
 
@@ -64,6 +65,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | B      | Manual transaction entry        | `S-02`                                          | Joins Stream A at `S-01` — independent of categorization/chart work, can run in parallel. |
 | C      | Bank coverage expansion         | `S-07` → `S-08` → `S-11` (→ `S-12` optional) | Joins Stream A at `S-01` — Revolut/Erste import, then VeloBank PDF import (`S-11`, which replaces Revolut as the next bank to add — no Revolut sample available). `S-08` no longer waits for `S-07` — the PRD FR-003 sequencing gate was waived by the user on 2026-10-01. `S-12` adds the PDF format for mBank and Erste and is optional. |
 | D      | Transaction visibility           | `S-09`                                          | Joins Stream A at `S-01` — closes the "no history view" gap flagged during S-01 manual testing (2026-09-25); independent of categorization/chart work, can run in parallel. |
+| G      | Category management             | `S-16`                                          | Joins Stream A at `S-03` — added 2026-10-09 after the MVP milestone closed; per-user categories with create/delete and an uncategorized indicator. |
 | F      | Data exploration                | `S-14`, `S-15`                                  | Joins Stream A at `S-04`/`S-06` — added 2026-10-02 in place of the dropped S-05 (budget-vs-actual); the two slices are independent (the line chart has its own range control) and can run in parallel. |
 | E      | Account management              | `S-10`                                          | Joins Stream A at `S-03` — S-03's internal-transfer heuristic (FR-009) consumes S-10's account list; only needs F-01, so it can be built in parallel with S-01/S-02/S-07/S-09. |
 
@@ -245,6 +247,19 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** New aggregation endpoint (ISO weeks, clipped edge buckets, 120-bucket cap); the dashboard layout may get crowded next to two donuts and a selector.
 - **Status:** done
 
+### S-16: Custom categories and uncategorized indicator
+
+- **Outcome:** user can create and delete their own categories (a new user starts with a copy of 14 defaults); deleting a category in use asks for consent and returns its transactions to the queue; a dot on the Categorize tab and a toast show while uncategorized transactions exist.
+- **Change ID:** custom-categories-and-uncategorized-indicator
+- **PRD refs:** FR-007, FR-019 (added in PRD v4)
+- **Prerequisites:** S-03
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - Whether the in-app toast conflicts with the Non-Goal "no notification system" — Owner: user. Block: no.
+- **Risk:** Categories moved from one global list to per-user rows (migration `PerUserCategories`), so every category query must stay owner-scoped; the category name is unique per user in code only, with no database index.
+- **Status:** done
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID                        | Suggested issue title                                          | Ready for `/10x-plan` | Notes |
@@ -262,18 +277,19 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-12       | pdf-import                         | Import mBank and Erste Bank Polska PDF statements (optional)        | no                     | Depends on S-11; optional, outside M-1's done criterion |
 | S-14       | chart-period-selector              | Period selector for the spend/income donut charts                   | yes                    | Depends on S-04, S-06 (done); planned |
 | S-15       | category-trend-line-chart          | Per-category spend/income line chart by week/month/year             | yes                    | Depends on S-04 (done); planned |
+| S-16       | custom-categories-and-uncategorized-indicator | Per-user categories with create/delete and an uncategorized indicator | no               | Merged (PR #49) and archived 2026-10-16 |
 
 ## Open Roadmap Questions
 
-No cross-cutting open questions at this time — PRD's own `## Open Questions` section is empty ("None outstanding"). The remaining unknowns (exact CSV export formats per bank) are scoped to their individual slices above (S-01, S-08) and don't block sequencing.
+The PRD v4 `## Open Questions` section lists five product-owner decisions raised by the domain distillation of 2026-10-16 (internal-transfer pair handling, recognising manual entries in imports, category kind versus amount sign, account uniqueness, the toast versus the notifications Non-Goal). None blocks sequencing; the first two are candidates for the next refactoring change (see `context/domain/01-domain-distillation.md`).
 
 ## Parked
 
-- **S-07 / Revolut CSV import (FR-003, Revolut portion)** — Why parked: dropped from the MVP on 2026-10-02 for lack of time (and no Revolut sample available). Not a PRD Non-Goal — PRD v3 FR-003 still lists Revolut and should be updated if this is permanent; can be revived later.
+- **S-07 / Revolut CSV import (FR-003, Revolut portion)** — Why parked: dropped from the MVP on 2026-10-02 for lack of time (and no Revolut sample available). Not a PRD Non-Goal — PRD v4 (2026-10-16) removed Revolut from FR-003 and from the bank lists and notes it as parked; can be revived later.
 
-- **S-05 / FR-017 (optional per-category budget vs. actual)** — Why parked: dropped from the MVP on 2026-10-02 for lack of time; effort goes to richer data exploration (period selector on the charts, category trend line chart) instead. Not a PRD Non-Goal — can be revived later.
-- **FR-016 (arbitrary date-range transaction filter)** — Why parked: priority nice-to-have in PRD; the current-month filter (FR-011, folded into S-04) already covers the "audit the chart's numbers" need the PRD calls out.
-- **Open Banking/PSD2 bank API integration** — Why parked: PRD Non-Goal; CSV import only, avoids compliance burden.
+- **S-05 / FR-017 (optional per-category budget vs. actual)** — Why parked: dropped from the MVP on 2026-10-02 for lack of time; effort goes to richer data exploration (period selector on the charts, category trend line chart) instead. Not a PRD Non-Goal — can be revived later. PRD v4 marks FR-017 as dropped and replaces the budget Secondary criterion.
+- **FR-016 (arbitrary date-range transaction filter)** — No longer parked: delivered by S-14 (period selector, 2026-10-02) for the charts and the slice drilldown list; see PRD v4 FR-016.
+- **Open Banking/PSD2 bank API integration** — Why parked: PRD Non-Goal; statements are imported from CSV or PDF files only, avoids compliance burden.
 - **Multi-currency support** — Why parked: PRD Non-Goal; PLN-only, non-PLN transactions filtered at import with a skipped-count.
 - **Fully automatic categorization without user approval** — Why parked: PRD Non-Goal; every category assignment requires user confirmation.
 - **Rule-learning / auto-suggested categorization** — Why parked: PRD Non-Goal, dropped entirely (not deferred) — categorization is fully manual.
@@ -281,7 +297,7 @@ No cross-cutting open questions at this time — PRD's own `## Open Questions` s
 - **Data sharing between users** — Why parked: PRD Non-Goal; strictly single-user data.
 - **Email/push notifications** — Why parked: PRD Non-Goal; no notification system.
 - **Mobile app** — Why parked: PRD Non-Goal; web only.
-- **Banks other than mBank, Revolut, Erste, VeloBank** — Why parked: PRD Non-Goal; no other bank statement formats supported (VeloBank: PDF only).
+- **Banks other than mBank, Erste, VeloBank** — Why parked: PRD Non-Goal; no other bank statement formats supported (VeloBank: PDF only).
 - **Login via Google/OAuth** — Why parked: PRD Non-Goal; email+password only.
 
 ## Milestone History
@@ -310,3 +326,4 @@ No cross-cutting open questions at this time — PRD's own `## Open Questions` s
 - **account-bank-selection (S-10 follow-up): accounts get a Bank dropdown (Polish banks + Other) that drives the import bank-mismatch check.** — Archived 2026-10-02 → `context/archive/2026-10-02-account-bank-selection/`. Lesson: —.
 - **homepage-redesign: placeholder home page replaced with a real MyFinances landing page.** — Archived 2026-10-02 → `context/archive/2026-10-02-homepage-redesign/`. Lesson: —.
 - **homepage-visual-refresh: homepage gets the logo and animation.** — Archived 2026-10-02 → `context/archive/2026-10-02-homepage-visual-refresh/`. Lesson: —.
+- **S-16: user can create and delete their own categories (a new user starts with a copy of 14 defaults); deleting a category in use asks for consent and returns its transactions to the queue; a dot on the Categorize tab and a toast show while uncategorized transactions exist.** — Archived 2026-10-16 → `context/archive/2026-10-09-custom-categories-and-uncategorized-indicator/`. Lesson: —.
