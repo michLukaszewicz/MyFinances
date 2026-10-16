@@ -85,7 +85,7 @@ The classic test base for this project.
 | persistence in tests | EF Core InMemory | 10.0.3 | does not reproduce Postgres constraints or transactions; research decides per risk whether a real database is required |
 | frontend unit | none | n/a | no framework; frontend logic deliberately left out of this rollout (see §7) |
 | e2e (browser) | Playwright Test | 1.63.0 | one browser-level slice (`seed.spec.ts`, `import-to-dashboard.spec.ts`); runs against the production-like build and a throwaway Postgres container (Docker); see `context/foundation/test-stack.md` |
-| mutation testing | Stryker.NET | 5.0.0 | incremental (`--since`), report-only (`thresholds.break = 0`); see `context/changes/mutation-testing-stryker/` |
+| mutation testing | Stryker.NET | 5.0.0 | incremental (`--since`), report-only (`thresholds.break = 0`); see `context/archive/2026-10-02-mutation-testing-stryker/` |
 | CI | GitHub Actions (`.github/workflows/ci.yml`) | n/a | on pull requests to `main`: `test`, `typecheck`, `e2e`, `mutation` (report-only) |
 
 Test-base profile: `meaningful` for backend, minimal (E2E only) for frontend.

@@ -236,28 +236,28 @@ None. First CI in the repo: a PR check, not a required status check until the us
 
 #### Manual
 
-- [ ] 2.3 Opening a PR runs both jobs; `test` is green
-- [ ] 2.4 `mutation` job finishes, uploads the report artifact and shows a score in the job summary
-- [ ] 2.5 The mutation job only reports on files changed in the PR
+- [x] 2.3 Opening a PR runs both jobs; `test` is green — manually validated by user (2026-10-16)
+- [x] 2.4 `mutation` job finishes, uploads the report artifact and shows a score in the job summary — manually validated by user (2026-10-16)
+- [x] 2.5 The mutation job only reports on files changed in the PR — manually validated by user (2026-10-16)
 
 ### Phase 3: Verify and record
 
 #### Automated
 
-- [ ] 3.1 Incremental run on an unchanged tree reports no mutants: `dotnet stryker --since:main` (from `MyFinances/backend/Tests`, on a branch equal to `main`)
+- [x] 3.1 Incremental run on an unchanged tree reports no mutants: `dotnet stryker --since:main` (from `MyFinances/backend/Tests`, on a branch equal to `main`) — manually validated by user (2026-10-16)
 
 #### Manual
 
-- [ ] 3.2 Editing one line in a parser on a branch makes the run mutate only that file
-- [ ] 3.3 Run duration for a one-file change is noticeably shorter than a full run
+- [x] 3.2 Editing one line in a parser on a branch makes the run mutate only that file — manually validated by user (2026-10-16)
+- [x] 3.3 Run duration for a one-file change is noticeably shorter than a full run — manually validated by user (2026-10-16)
 
 ### Phase 4: Strengthen existing tests
 
 #### Automated
 
-- [ ] 4.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`)
-- [ ] 4.2 Mutants in `Import/DedupHash.cs` are killed: `dotnet stryker -m "Import/DedupHash.cs"` (from `MyFinances/backend/Tests`) reports 0 survivors
+- [x] 4.1 Backend tests pass: `dotnet test` (from `MyFinances/backend`) — manually validated by user (2026-10-16)
+- [x] 4.2 Mutants in `Import/DedupHash.cs` are killed: `dotnet stryker -m "Import/DedupHash.cs"` (from `MyFinances/backend/Tests`) reports 0 survivors — manually validated by user (2026-10-16)
 
 #### Manual
 
-- [ ] 4.3 Skim the new assertions: each fails for a reason a reader can name
+- [x] 4.3 Skim the new assertions: each fails for a reason a reader can name — manually validated by user (2026-10-16)
