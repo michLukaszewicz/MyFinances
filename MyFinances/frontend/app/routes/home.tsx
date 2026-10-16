@@ -793,14 +793,22 @@ export default function Home() {
             >
               {transactionForm}
 
-              <p className="text-center text-sm text-muted-foreground">
-                You haven't imported any transactions yet — let's start!
-              </p>
-              <div className="text-center">
-                <Button asChild className="transition-all duration-200 hover:scale-105 active:scale-95">
-                  <Link to="/import">Import a bank statement</Link>
-                </Button>
-              </div>
+              {initialTransactions === null ? (
+                <p className="text-center text-sm text-destructive">
+                  We couldn't load your transactions. Please refresh the page to try again.
+                </p>
+              ) : (
+                <>
+                  <p className="text-center text-sm text-muted-foreground">
+                    You haven't imported any transactions yet — let's start!
+                  </p>
+                  <div className="text-center">
+                    <Button asChild className="transition-all duration-200 hover:scale-105 active:scale-95">
+                      <Link to="/import">Import a bank statement</Link>
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
