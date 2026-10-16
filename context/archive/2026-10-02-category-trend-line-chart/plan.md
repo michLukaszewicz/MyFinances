@@ -170,8 +170,8 @@ None. No schema change; only a new endpoint and component.
 
 #### Manual
 
-- [ ] 1.4 `/swagger` shows `category-trend` with its parameters
-- [ ] 1.5 Calling it against real data returns plausible per-bucket sums for a known category and month
+- [x] 1.4 `/swagger` shows `category-trend` with its parameters — manually validated by user (2026-10-16)
+- [x] 1.5 Calling it against real data returns plausible per-bucket sums for a known category and month — manually validated by user (2026-10-16)
 
 ### Phase 2: Line chart on the dashboard
 
@@ -183,10 +183,10 @@ None. No schema change; only a new endpoint and component.
 
 #### Manual
 
-- [ ] 2.4 First open shows the last 12 months of spend with the 5 highest-spend categories ticked
-- [ ] 2.5 Switching to week and year changes the X axis buckets and default ranges correctly
-- [ ] 2.6 Unticking/ticking categories adds/removes lines; colours stay stable
-- [ ] 2.7 Spend/income toggle switches the available categories and amounts
-- [ ] 2.8 A range exceeding the bucket cap and a future end date are blocked with a clear message
-- [ ] 2.9 Empty range and API error states render sensibly; no console errors; usable on a narrow viewport
-- [ ] 2.10 Dashboard donuts and list behave as before
+- [x] 2.4 First open shows the last 12 months of spend with the 5 highest-spend categories ticked — manually validated by user (2026-10-16)
+- [x] 2.5 Switching to week and year changes the X axis buckets and default ranges correctly — manually validated by user (2026-10-16)
+- [x] 2.6 Unticking/ticking categories adds/removes lines; colours stay stable — manually validated by user (2026-10-16)
+- [x] 2.7 Spend/income toggle switches the available categories and amounts — manually validated by user (2026-10-16)
+- [x] 2.8 A range exceeding the bucket cap and a future end date are blocked with a clear message — manually validated by user (2026-10-16)
+- [x] 2.9 Empty range and API error states render sensibly; no console errors; usable on a narrow viewport — manually validated by user (2026-10-16)
+- [x] 2.10 Dashboard donuts and list behave as before — manually validated by user (2026-10-16)

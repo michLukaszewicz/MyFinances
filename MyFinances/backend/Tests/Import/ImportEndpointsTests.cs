@@ -425,6 +425,91 @@ public class ImportEndpointsTests
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Commit_KeepRowWithEmptyDescription_ReturnsBadRequestAndPersistsNothing()
+    {
+        // Arrange
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+        using var commitRequest = new HttpRequestMessage(HttpMethod.Post, "/api/import/commit");
+        commitRequest.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
+        commitRequest.Content = JsonContent.Create(new
+        {
+            AccountId = account.Id,
+            SkippedErrorCount = 0,
+            Rows = new[]
+            {
+                new { Date = "2024-01-15", Description = "Valid", Amount = 10.00m, Decision = "Keep" },
+                new { Date = "2024-01-16", Description = "  ", Amount = 20.00m, Decision = "Keep" },
+            }
+        });
+
+        // Act
+        var response = await client.SendAsync(commitRequest);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Assert.Empty(await db.Transactions.ToListAsync());
+        Assert.Empty(await db.ImportBatches.ToListAsync());
+    }
+
+    [Fact]
+    public async Task Commit_KeepRowWithOverlongDescription_ReturnsBadRequest()
+    {
+        // Arrange
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+        using var commitRequest = new HttpRequestMessage(HttpMethod.Post, "/api/import/commit");
+        commitRequest.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
+        commitRequest.Content = JsonContent.Create(new
+        {
+            AccountId = account.Id,
+            SkippedErrorCount = 0,
+            Rows = new[]
+            {
+                new { Date = "2024-01-15", Description = new string('x', 1001), Amount = 10.00m, Decision = "Keep" },
+            }
+        });
+
+        // Act
+        var response = await client.SendAsync(commitRequest);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Commit_MoreRowsThanTheCap_ReturnsBadRequest()
+    {
+        // Arrange
+        using var factory = new AuthApiFactory();
+        using var client = await TestClientHelpers.CreateAuthenticatedClientAsync(factory);
+        var account = await CreateAccountAsync(client, "mBank", "111");
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+        using var commitRequest = new HttpRequestMessage(HttpMethod.Post, "/api/import/commit");
+        commitRequest.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
+        commitRequest.Content = JsonContent.Create(new
+        {
+            AccountId = account.Id,
+            SkippedErrorCount = 0,
+            Rows = Enumerable.Range(0, 10001)
+                .Select(i => new { Date = "2024-01-15", Description = "Row " + i, Amount = 1.00m, Decision = "Skip" })
+                .ToArray(),
+        });
+
+        // Act
+        var response = await client.SendAsync(commitRequest);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     private static string ErsteFixturePath(string fileName = "erste-sample-redacted.csv") =>
         Path.Combine(AppContext.BaseDirectory, "Fixtures", fileName);
 
