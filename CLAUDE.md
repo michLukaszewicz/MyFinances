@@ -8,6 +8,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Foundation (F-01) and slices S-01/S-02/S-03/S-04/S-06/S-08/S-09/S-10 are implemented and merged to `main` — auth (register/login/persistent session), mBank and Erste Bank Polska CSV import with dedup (Erste in all four export delimiters: `;`, `,`, tab, `|`), manual transaction entry, the categorization queue (with internal-transfer auto-flagging), the dashboard transaction history view, the spend/income donut charts (current month, click-to-filter), the category average-deviation signal, and user-managed bank accounts. See [context/foundation/roadmap.md](context/foundation/roadmap.md) for current per-slice status; not-yet-built slices remain `proposed`; S-05 (budget-vs-actual) and S-07 (Revolut import) were dropped from the MVP on 2026-10-02 (parked in the roadmap).
 
+## Domain language
+
+Name things in code, tests and plans with the terms from the glossary below, and avoid the "how NOT to call it" variants. Background and evidence: [context/domain/01-domain-distillation.md](context/domain/01-domain-distillation.md).
+
+@context/domain/glossary.md
+
 ## Architecture
 
 Split stack under `MyFinances/`, single-origin in production:
