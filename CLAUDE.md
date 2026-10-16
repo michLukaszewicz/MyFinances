@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**MyFinances** — a personal-finance MVP (single user) for importing bank CSV statements (mBank, then Revolut, then Erste Bank Polska), manually categorizing transactions, detecting duplicates and internal transfers, and visualizing spend-per-category against both historical averages and optional per-category budgets. Full requirements live in [context/foundation/prd.md](context/foundation/prd.md). Solo build, after-hours, 3-week MVP timeline, no multi-tenant/sharing.
+**MyFinances** — a personal-finance MVP (single user) for importing bank statements (CSV: mBank, Erste Bank Polska; PDF: VeloBank, mBank, Erste), manually categorizing transactions, detecting duplicates and internal transfers, and visualizing spend and income per category (donut charts, trend line chart, period selector, deviation from the category's own historical average). Revolut import and per-category budgets were dropped from the MVP on 2026-10-02 (parked in the roadmap). Full requirements live in [context/foundation/prd.md](context/foundation/prd.md). Solo build, after-hours, no multi-tenant/sharing.
 
-Foundation (F-01) and slices S-01/S-02/S-03/S-04/S-06/S-08/S-09/S-10 are implemented and merged to `main` — auth (register/login/persistent session), mBank and Erste Bank Polska CSV import with dedup (Erste in all four export delimiters: `;`, `,`, tab, `|`), manual transaction entry, the categorization queue (with internal-transfer auto-flagging), the dashboard transaction history view, the spend/income donut charts (current month, click-to-filter), the category average-deviation signal, and user-managed bank accounts. See [context/foundation/roadmap.md](context/foundation/roadmap.md) for current per-slice status; not-yet-built slices remain `proposed`; S-05 (budget-vs-actual) and S-07 (Revolut import) were dropped from the MVP on 2026-10-02 (parked in the roadmap).
+All MVP slices (F-01, S-01..S-04, S-06, S-08..S-12, S-14..S-16) are implemented and merged to `main`: auth, CSV/PDF import with dedup, manual entry, categorization queue with internal-transfer auto-flagging, custom categories, bank accounts, transaction history, charts. See [context/foundation/roadmap.md](context/foundation/roadmap.md) for per-slice status.
 
 ## Domain language
 
