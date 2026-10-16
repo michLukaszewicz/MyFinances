@@ -38,7 +38,7 @@ Explicitly single-user for MVP — no multi-tenant, no data sharing (see Non-Goa
   > Updated in v4 (2026-10-16): replaces the optional-budget criterion; budget-vs-actual (FR-017) was dropped from the MVP on 2026-10-02 (`roadmap.md` Parked), and the period selector and trend chart (S-14, S-15) were built in its place.
 
 ### Guardrails
-- Duplicate transactions (re-imported overlapping statements) are never silently double-counted in totals or charts — duplicate detection must hold regardless of how a transaction originally entered the system. Exception decided 2026-10-02 (`archive/2026-10-02-pdf-import/change.md`): the same period imported once from CSV and once from PDF on the same account is not matched by hash (descriptions differ between formats); it shows a non-blocking overlap warning instead.
+- Duplicate transactions (re-imported overlapping statements) are never silently double-counted in totals or charts — duplicate detection must hold for every imported statement, including edited imported rows. Exception for manually entered transactions (decided 2026-10-16, see FR-010): they are not matched against later imports. Exception decided 2026-10-02 (`archive/2026-10-02-pdf-import/change.md`): the same period imported once from CSV and once from PDF on the same account is not matched by hash (descriptions differ between formats); it shows a non-blocking overlap warning instead.
 
 ## User Stories
 
@@ -79,14 +79,20 @@ Explicitly single-user for MVP — no multi-tenant, no data sharing (see Non-Goa
   > Socratic: Counter-argument considered: "one-at-a-time approval could be tedious for large imports; batch-approve by suggested category might be needed." Resolution: kept as written — matches the intended "one transaction at a time" review flow.
 - FR-009: System automatically marks a transaction as an internal transfer using a detection heuristic (e.g. matching transactions between the user's own known accounts); the user can change this flag by hand at any time. Flagged transactions are excluded from spend calculations and charts so income/outflow totals aren't distorted. Priority: must-have
   > Socratic: Counter-argument considered: "a manual-only flag depends on the user remembering to mark every transfer; forgetting silently skews totals." Resolution: revised — detection is automatic by default, with manual override always available.
-- FR-019: User can create and delete their own categories. A new user starts with a copy of 14 default categories, which are ordinary, deletable categories afterwards. Deleting a category that is used on transactions warns the user and asks for consent; on confirmation those transactions become uncategorized and return to the categorization queue. Each category keeps a stable chart colour. While uncategorized transactions exist, the Categorize tab shows an indicator and a toast is shown outside the Categorize page. Priority: must-have
+  > Decided 2026-10-16: when one side of a detected pair is deleted, the other transaction stays flagged as an internal transfer. Editing a transaction's amount, date or account after pairing is not yet specified.
+- FR-019: User can create and delete their own categories. A new user starts with a copy of 14 default categories, which are ordinary, deletable categories afterwards. Deleting a category that is used on transactions warns the user and asks for consent; on confirmation those transactions become uncategorized and return to the categorization queue. A category's kind (expense or income) must match the sign of the transaction amount, and the server rejects a mismatch. Each category keeps a stable chart colour. While uncategorized transactions exist, the Categorize tab shows an indicator and a toast is shown outside the Categorize page. Priority: must-have
   > Added in v4 (2026-10-16) from `changes/custom-categories-and-uncategorized-indicator/change.md` (decisions of 2026-10-09). Not covered by any v3 requirement; the toast sits in tension with the Non-Goal on notifications (see Open Questions).
 - FR-015: User can re-categorize any transaction at any time, even after it has already been categorized. Priority: must-have
   > Updated in v4 (2026-10-16): re-categorizing happens on the dashboard edit form, not on /categorize, since the Handled list was removed on 2026-09-30 (`archive/2026-09-30-categorize-queue-only/change.md`).
   > Socratic: Counter-argument considered: "with categorization fully manual (no rule-learning), is re-categorization support still worth the effort?" Resolution: kept as written — mistakes and changed judgment calls still happen with manual categorization, so being able to fix them without deleting/re-adding the transaction stands on its own merit.
 
+### Accounts
+- FR-020: User can add, edit and remove their own bank accounts, each with a bank (chosen from a list of Polish banks, or "Other"), a free-text account name and an account number. A user cannot have two accounts with the same bank and account number. Removing an account that has transactions asks for consent and deletes its transactions and import batches. Priority: must-have
+  > Added in v4 (2026-10-16) from S-10 (`roadmap.md`) and its follow-ups `account-bank-selection` and the account-delete fix. Uniqueness by bank and number decided 2026-10-16; the code currently enforces it on the free-text name instead (`BE/AppDbContext.cs:46-48`).
+
 ### Transaction management
-- FR-010: User can manually add, edit, and delete transactions. A manually-entered transaction is still recognized as the same one if it later appears in an imported statement, so it isn't duplicated. Priority: must-have
+- FR-010: User can manually add, edit, and delete transactions. A manually-entered transaction is hashed from exactly what the user typed and is not matched against a later bank import; keeping such entries free of duplicates is the user's responsibility. An imported transaction keeps its original hash when the user edits it, so a later import of the same statement still flags it as a duplicate. Priority: must-have
+  > Updated in v4 (2026-10-16), decided by the product owner: replaces the v3 promise that a manual entry is recognised when it later appears in an imported statement. Today's code recomputes the hash on every edit (`BE/Transactions/TransactionEndpoints.cs:212-222`), which contradicts the second sentence; fixing it is a separate change.
   > Socratic: Counter-argument considered: "manual transactions bypass the import/duplicate-detection model; could collide with a later import of the same real transaction." Resolution: kept as written, with a clarification added — the existing duplicate-detection mechanism already covers this case regardless of whether the transaction was entered manually or imported.
 - FR-011: User can filter the transaction list by category, scoped to the selected period (default: the current month). Priority: must-have
   > Updated in v4 (2026-10-16): the fixed current-month scope was replaced by the period selector (S-14, 2026-10-02).
@@ -135,10 +141,15 @@ Login via email + password, with an authenticated session that persists across v
 
 ## Open Questions
 
-Raised by the domain distillation of 2026-10-16 (`context/domain/01-domain-distillation.md`); each needs the product owner's decision:
+Raised by the domain distillation of 2026-10-16 (`context/domain/01-domain-distillation.md`). Answered by the product owner on 2026-10-16 and folded into the requirements above:
 
-- FR-009: when one side of an internal-transfer pair is deleted or edited, should the other side return to the categorization queue or stay an internal transfer (e.g. a transfer to an account outside the app)? (P-01)
-- FR-010: should a manually entered transaction be recognised in a later import when its description differs from the bank's text? Today the match needs the same date, amount, account and description. (P-02)
-- Categories: must a category's kind (expense/income) match the sign of the amount, enforced by the server, or is it only a hint in the picker? Are refunds income or a reduction of the expense category? (P-04)
-- Accounts: should uniqueness be bank + account number, or the free-text account name + number as implemented today? (P-05)
+- FR-009: after one side of an internal-transfer pair is deleted, the other stays flagged as an internal transfer.
+- FR-010: manual entries are hashed from what the user typed and are not matched against imports; an imported row keeps its original hash when edited.
+- FR-019: a category kind must match the amount sign, enforced on the server.
+- FR-020: account uniqueness is bank + account number.
+
+Still open:
+
+- Statement integrity for CSV (FR-018 covers PDF only): both the mBank and the Erste CSV exports carry a running balance column ("Saldo po operacji"; mBank also has opening/closing balance and credit/debit totals), which the parsers ignore. Whether to reject CSV files whose balances do not add up is not decided; checked against the redacted fixtures in `MyFinances/backend/Tests/Fixtures/`, to be confirmed with a fresh real export.
+- FR-009: what happens to the flag when a paired transaction is edited (amount, date or account) rather than deleted.
 - Non-Goals: does the in-app uncategorized toast (FR-019) count as a "notification system"?
