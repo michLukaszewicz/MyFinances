@@ -46,13 +46,13 @@ lesson: "10xDevs M4L5 — Modernizacja legacy z DDD, krok 2"
 | N-01 | Hash zaimportowanej transakcji jest nadawany przy imporcie i nie zmienia się przy edycji; hash ręcznego wpisu odpowiada aktualnie wpisanym wartościom | `ctx/foundation/prd.md:41,94-95` | `BE/Transactions/TransactionEndpoints.cs:222` (przeczy) |
 | N-02 | Kategoria przypisana do transakcji ma rodzaj zgodny ze znakiem kwoty | `prd.md:83` | `FE/lib/categories.ts:12-20` (tylko klient) |
 | N-03 | Para przelewu wewnętrznego jest wykluczona z wykresów; ręczna decyzja nie jest nadpisywana; flaga zostaje po usunięciu partnera | `prd.md:80-82` | `BE/Categorization/TransferDetectionService.cs:19-22,45-49`, `BE/Categorization/CategorizationEndpoints.cs:201-206`, `BE/Dashboard/DashboardEndpoints.cs:66-71` |
-| N-04 | Każdy wykryty duplikat przechodzi przez decyzję użytkownika; commit odtwarza tylko to, co zostało sparsowane | `prd.md:73` (FR-004) | `BE/Import/ImportEndpoints.cs:142-144` (komentarz) vs `:151-199` |
+| N-04 | Każdy wykryty duplikat przechodzi przez decyzję użytkownika; commit odtwarza tylko to, co zostało sparsowane | `prd.md:73` (FR-004) | `BE/Import/ImportEndpoints.cs:145-147` (komentarz) vs `:151-199` |
 | N-05 | Rachunek jest unikalny po banku i numerze | `prd.md:90` | `BE/AppDbContext.cs:46-48` (po etykiecie, nie po banku) |
 | N-06 | Każde zapytanie i zapis są ograniczone do właściciela danych | `prd.md` NFR, `ctx/foundation/test-plan.md` ryzyko 3 | filtr `UserId ==` powielony w endpointach; pilnowany testami `BE/Tests/Ownership/*` |
-| N-07 | Wyciąg PDF z niesumującymi się saldami jest odrzucony | `prd.md:69` (FR-018) | `BE/Import/ImportEndpoints.cs:73-82`, parsery PDF |
+| N-07 | Wyciąg PDF z niesumującymi się saldami jest odrzucony | `prd.md:69` (FR-018) | `BE/Import/ImportEndpoints.cs:76-85`, parsery PDF |
 | N-08 | Usunięcie używanej kategorii lub rachunku wymaga zgody | archiwum `ctx/archive/2026-10-09-custom-categories-and-uncategorized-indicator/change.md`, `prd.md:90` | `BE/Categorization/CategorizationEndpoints.cs:98-127`, `BE/Transactions/AccountEndpoints.cs:110-145` |
 | N-09 | Nowy użytkownik zawsze ma domyślne kategorie | archiwum `2026-10-09-custom-categories…/change.md` | `BE/Auth/AuthEndpoints.cs:33,39-40` (dwa osobne zapisy) |
-| N-10 | Ręczny wpis zawsze ma kategorię, import zaczyna bez kategorii | `ctx/archive/2026-09-25-manual-transaction-entry/plan-brief.md:37` | `BE/Transactions/TransactionContracts.cs:16`, `BE/Import/ImportEndpoints.cs:189-199` |
+| N-10 | Ręczny wpis zawsze ma kategorię, import zaczyna bez kategorii | `ctx/archive/2026-09-25-manual-transaction-entry/plan-brief.md:37` | `BE/Transactions/TransactionContracts.cs:16`, `BE/Import/ImportEndpoints.cs:201-211` |
 
 ## Krok 2 — Klasyfikacja i wybór #1
 
@@ -86,9 +86,9 @@ Gdzie reguła żyje dziś (wszystkie cytaty sprawdzone w kodzie):
 **Warstwa API (każde miejsce liczy hash samo)**
 - Tworzenie ręczne: `BE/Transactions/TransactionEndpoints.cs:116` (liczy), `:137-148` (inicjalizator obiektu z `Hash = hash`).
 - **Edycja: `BE/Transactions/TransactionEndpoints.cs:193` (liczy z nowych wartości), `:214-216` (komentarz uzasadnia przeliczenie), `:222` (`transaction.Hash = hash`). To jest miejsce, w którym reguła jest łamana.** Edycja obejmuje też transakcje zaimportowane, bo endpoint ładuje po `Id` i `UserId` bez rozróżnienia (`:175`).
-- Import, parse: `BE/Import/ImportEndpoints.cs:85` i `:100` (dwa razy to samo obliczenie).
-- Import, commit: `BE/Import/ImportEndpoints.cs:153,158` (liczy dla `Keep` i `Skip`), `:189-199` (inicjalizator z `Hash = hash`).
-- Razem 6 wywołań `DedupHash.ComputeHash` (4 w imporcie, 2 w transakcjach) i 3 przypisania `Hash` (`ImportEndpoints.cs:197`, `TransactionEndpoints.cs:145`, `:222`) w 2 plikach endpointów.
+- Import, parse: `BE/Import/ImportEndpoints.cs:88` i `:100` (dwa razy to samo obliczenie).
+- Import, commit: `BE/Import/ImportEndpoints.cs:165,170` (liczy dla `Keep` i `Skip`), `:189-199` (inicjalizator z `Hash = hash`).
+- Razem 6 wywołań `DedupHash.ComputeHash` (4 w imporcie, 2 w transakcjach) i 3 przypisania `Hash` (`ImportEndpoints.cs:209`, `TransactionEndpoints.cs:145`, `:222`) w 2 plikach endpointów.
 
 **Warstwa persystencji**
 - `BE/AppDbContext.cs:23-25`: indeks `(UserId, Hash)` nieunikalny, zamierzony; nic nie chroni niezmienności.
@@ -155,7 +155,7 @@ public interface ITransactionRepository
 
 Implementacja owija `AppDbContext`. Zapytania z `UserId == userId` żyją tylko tu, więc N-06 zyskuje jedno miejsce zamiast kopii (efekt uboczny, poza zakresem).
 
-**Atomiczność.** Sprawdzenie duplikatu i zapis muszą iść w jednej transakcji `Serializable` (dziś `BE/Transactions/TransactionEndpoints.cs:121,198`, `BeginTransactionIfSupportedAsync` z `catch` połykającym `InvalidOperationException`, `:266-276`). Plan: jeden przypadek użycia `SaveTransactionAsync(...)` otwiera transakcję, woła `FindDuplicateAsync`, wywołuje metodę agregatu, robi `SaveChangesAsync` i `CommitAsync`. Commit importu zostaje w jednym `SaveChangesAsync` (partia i jej transakcje razem, `BE/Import/ImportEndpoints.cs:202`), tylko tworzy transakcje przez `FromImport`.
+**Atomiczność.** Sprawdzenie duplikatu i zapis muszą iść w jednej transakcji `Serializable` (dziś `BE/Transactions/TransactionEndpoints.cs:121,198`, `BeginTransactionIfSupportedAsync` z `catch` połykającym `InvalidOperationException`, `:266-276`). Plan: jeden przypadek użycia `SaveTransactionAsync(...)` otwiera transakcję, woła `FindDuplicateAsync`, wywołuje metodę agregatu, robi `SaveChangesAsync` i `CommitAsync`. Commit importu zostaje w jednym `SaveChangesAsync` (partia i jej transakcje razem, `BE/Import/ImportEndpoints.cs:214`), tylko tworzy transakcje przez `FromImport`.
 
 **Cienkie API.** Endpoint: sparsuj `TransactionWriteRequest` → sprawdź własność rachunku i kategorii → `repository.GetOwnedAsync` → polityka duplikatu → metoda agregatu → zapis → mapowanie na DTO. Błędy domenowe mapuje jeden `IEndpointFilter` (`TransactionIdentityException` → 400 `Problem`, `CategoryKindMismatchException` → 400 `Problem` z komunikatem „Category kind does not match the amount sign.”). Egzekucja żadnej reguły nie przenosi się z klienta, bo w N-01 klient nie uczestniczy; w Fazie 3 (N-02) przenosi się z `FE/lib/categories.ts:12-20` na serwer, a klient zostaje tylko jako ułatwienie wyboru.
 
@@ -169,8 +169,8 @@ Implementacja owija `AppDbContext`. Zapytania z `UserId == userId` żyją tylko 
 | `TransactionEndpoints.cs:116,137-148` (POST) | endpoint liczy hash i ręcznie wypełnia obiekt | `Transaction.EnteredManually(...)` |
 | `TransactionEndpoints.cs:193` (PUT, kontrola duplikatu) | liczy hash z nowych pól | `Transaction.IdentityFor(...)` jako kandydat; kontrola duplikatu bez zmian |
 | `TransactionEndpoints.cs:214-222` (PUT, zapis) | przypisuje nowy `Hash` | `transaction.CorrectDetails(...)`, hash nietknięty (po Fazie 2) |
-| `ImportEndpoints.cs:85,100` (parse) | dwa obliczenia | `Transaction.IdentityFor(...)` |
-| `ImportEndpoints.cs:153,158,189-199` (commit) | trzy obliczenia i inicjalizator | `Transaction.IdentityFor` dla `Skip`, `Transaction.FromImport` dla `Keep` |
+| `ImportEndpoints.cs:88,103` (parse) | dwa obliczenia | `Transaction.IdentityFor(...)` |
+| `ImportEndpoints.cs:165,170,201-211` (commit) | trzy obliczenia i inicjalizator | `Transaction.IdentityFor` dla `Skip`, `Transaction.FromImport` dla `Keep` |
 | `TransactionEndpoints.cs:261-277` | `catch` połyka brak transakcji | bez zmian w tej zmianie; do osobnej oceny |
 | `Tests/.../TransactionEndpointsTests.cs:789-829` | asercja: hash przeliczony | odwrócona w Fazie 2: hash niezmieniony |
 | Klient `FE/routes/home.tsx:385-392` | wysyła pełny `PUT` | bez zmian |
@@ -220,7 +220,7 @@ Implementacja owija `AppDbContext`. Zapytania z `UserId == userId` żyją tylko 
 
 ### Poza zakresem tego planu (świadomie)
 
-N-03 (przelew wewnętrzny, edycja po sparowaniu, zapis przy GET), N-04 (zaufanie klientowi przy commicie importu), N-05 (indeks po banku i numerze), N-06 (helper własności dla wszystkich zapytań), N-07 CSV (kontrola sald), N-09 (atomowa rejestracja), brak walidacji pustego opisu i zerowej kwoty w endpointach ręcznych. Każde z nich dostanie własny change-id.
+N-03 (przelew wewnętrzny, edycja po sparowaniu, zapis przy GET), N-04 (zaufanie klientowi przy commicie importu; częściowo zaadresowane w PR 55: commit odrzuca ponad 10000 wierszy oraz wiersze Keep z pustym lub dłuższym niż 1000 znaków opisem, `ImportEndpoints.cs:148-156`, hash i flagi duplikatu nadal pochodzą od klienta), N-05 (indeks po banku i numerze), N-06 (helper własności dla wszystkich zapytań), N-07 CSV (kontrola sald), N-09 (atomowa rejestracja), brak walidacji pustego opisu i zerowej kwoty w endpointach ręcznych. Każde z nich dostanie własny change-id.
 
 ### Nowe nazwy do zarejestrowania
 
