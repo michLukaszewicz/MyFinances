@@ -249,8 +249,8 @@ None. No schema change; `currentMonth` on `/api/transactions` is removed and its
 
 #### Manual
 
-- [ ] 1.4 Swagger (`/swagger`) shows `from`/`to` on both dashboard endpoints and the transaction list
-- [ ] 1.5 Calling the endpoints without parameters returns the same data as before for the current month
+- [x] 1.4 Swagger (`/swagger`) shows `from`/`to` on both dashboard endpoints and the transaction list — manually validated by user (2026-10-16)
+- [x] 1.5 Calling the endpoints without parameters returns the same data as before for the current month — manually validated by user (2026-10-16)
 
 ### Phase 2: Deviation signal for any period
 
@@ -262,8 +262,8 @@ None. No schema change; `currentMonth` on `/api/transactions` is removed and its
 
 #### Manual
 
-- [ ] 2.4 Against real data, a past month with known spend shows a plausible badge versus the average of earlier months
-- [ ] 2.5 A 30-day window with a clearly higher spend than earlier 30-day windows reads "above"
+- [x] 2.4 Against real data, a past month with known spend shows a plausible badge versus the average of earlier months — manually validated by user (2026-10-16)
+- [x] 2.5 A 30-day window with a clearly higher spend than earlier 30-day windows reads "above" — manually validated by user (2026-10-16)
 
 ### Phase 3: Period selector in the dashboard UI
 
@@ -275,10 +275,10 @@ None. No schema change; `currentMonth` on `/api/transactions` is removed and its
 
 #### Manual
 
-- [ ] 3.4 Default load shows the current month, matching the previous behaviour
-- [ ] 3.5 "Last 30 days", "Last 90 days", a past month and a custom range each update both donuts and their titles
-- [ ] 3.6 Clicking a slice lists exactly the rows of that category in the chosen period and their sum matches the slice; clicking again clears
-- [ ] 3.7 Changing the period clears an active slice selection
-- [ ] 3.8 Future months and future custom end dates cannot be chosen; start after end is blocked
-- [ ] 3.9 Deviation badge appears for periods with enough history and is hidden otherwise
-- [ ] 3.10 No console errors; layout fine on a narrow viewport
+- [x] 3.4 Default load shows the current month, matching the previous behaviour — manually validated by user (2026-10-16)
+- [x] 3.5 "Last 30 days", "Last 90 days", a past month and a custom range each update both donuts and their titles — manually validated by user (2026-10-16)
+- [x] 3.6 Clicking a slice lists exactly the rows of that category in the chosen period and their sum matches the slice; clicking again clears — manually validated by user (2026-10-16)
+- [x] 3.7 Changing the period clears an active slice selection — manually validated by user (2026-10-16)
+- [x] 3.8 Future months and future custom end dates cannot be chosen; start after end is blocked — manually validated by user (2026-10-16)
+- [x] 3.9 Deviation badge appears for periods with enough history and is hidden otherwise — manually validated by user (2026-10-16)
+- [x] 3.10 No console errors; layout fine on a narrow viewport — manually validated by user (2026-10-16)

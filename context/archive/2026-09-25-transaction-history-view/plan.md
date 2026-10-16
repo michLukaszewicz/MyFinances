@@ -213,8 +213,8 @@ None — no schema changes; this phase is purely additive (new endpoint, new fro
 
 #### Manual
 
-- [ ] 2.3 Zero-transaction user still sees the original empty-state message and CTA
+- [x] 2.3 Zero-transaction user still sees the original empty-state message and CTA — manually validated by user (2026-10-16)
 - [x] 2.4 Transactions render newest-first, amounts colored by sign, uncategorized rows labeled "Uncategorized" — 60e7e58
 - [x] 2.5 "Load more" appends the next page and disappears once all transactions are loaded — 60e7e58
-- [ ] 2.6 New transactions appear after import + navigation back to `/`, with no manual refresh
+- [x] 2.6 New transactions appear after import + navigation back to `/`, with no manual refresh — manually validated by user (2026-10-16)
 - [x] 2.7 Dark mode and responsive layout look correct — 60e7e58
