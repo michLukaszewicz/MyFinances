@@ -209,6 +209,10 @@ None. Tests only.
 - Similar pinned-limitation pattern: `MyFinances/backend/Tests/Import/Parsers/ErstePdfParserTests.cs:450,463`
 - Prior phase: `context/changes/testing-import-integrity-dedup/plan.md`
 
+## Amendments (added 2026-10-16 after the retrospective impl review)
+
+- Phase 2: U+2212 and a dot decimal in a PDF amount cell are rejected as planned, but a no-break space (NBSP) thousands separator is accepted and parsed to the same value as a regular space (tests `Parse_ReadsANoBreakSpaceThousandsSeparator_AsTheSameValueAsARegularSpace`, commit 057dda1). The plan's "NBSP is rejected" wording in Phase 2 change 1 is superseded by this pinned behaviour; the mutation spot-check in 2.2 therefore concerns U+2212.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.

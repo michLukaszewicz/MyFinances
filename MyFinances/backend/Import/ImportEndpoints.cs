@@ -9,6 +9,9 @@ namespace MyFinances.Api.Import;
 
 public static class ImportEndpoints
 {
+    private const int MaxCommitRows = 10000;
+    private const int MaxDescriptionLength = 1000;
+
     // Nested under the /api group so /api/import/* inherits RequireAuthorization() — import
     // always requires a session, unlike /api/auth/register|login which opt out.
     public static void MapImportEndpoints(this IEndpointRouteBuilder api)
@@ -142,6 +145,15 @@ public static class ImportEndpoints
             // The server is not a trust boundary on data it re-receives from its own prior
             // response: every row is re-validated here rather than trusting client-supplied
             // hashes or IsDuplicate flags.
+            if (request.Rows.Count > MaxCommitRows)
+            {
+                return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: $"Too many rows. A single import accepts at most {MaxCommitRows} rows.");
+            }
+            if (request.Rows.Any(r => r.Decision == RowDecision.Keep
+                && (string.IsNullOrWhiteSpace(r.Description) || r.Description.Length > MaxDescriptionLength)))
+            {
+                return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: $"Each kept row needs a description of 1 to {MaxDescriptionLength} characters.");
+            }
             var account = await db.Accounts.FirstOrDefaultAsync(a => a.Id == request.AccountId && a.UserId == userId);
             if (account is null)
             {

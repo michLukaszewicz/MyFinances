@@ -442,8 +442,8 @@ semantics to preserve.
 
 #### Manual
 
-- [ ] 2.5 Matching transfer pair auto-flagged and excluded from queue (verified via Swagger) — skipped: starting a second local backend instance on this shared dev machine collided with the sibling S-09 preview on port 5007 (both worktrees' launchSettings default to 5007); killed the stray process immediately to avoid disrupting that live manual-testing session. Needs a human pass with a dedicated port/profile.
-- [ ] 2.6 Manual override of an auto-flagged transfer persists and moves it back to the queue — same reason as 2.5, not verified live.
+- [x] 2.5 Matching transfer pair auto-flagged and excluded from queue (verified via Swagger) — skipped: starting a second local backend instance on this shared dev machine collided with the sibling S-09 preview on port 5007 (both worktrees' launchSettings default to 5007); killed the stray process immediately to avoid disrupting that live manual-testing session. Needs a human pass with a dedicated port/profile. — manually validated by user (2026-10-16)
+- [x] 2.6 Manual override of an auto-flagged transfer persists and moves it back to the queue — same reason as 2.5, not verified live. — manually validated by user (2026-10-16)
 
 ### Phase 3: Frontend categorization page
 
@@ -454,6 +454,6 @@ semantics to preserve.
 
 #### Manual
 
-- [ ] 3.3 Categorize a transaction from "up next"; it moves to handled and the queue advances — not verified live: the frontend dev server defaults to the same port (5173) as the sibling S-09 preview running on this dev machine; skipped to avoid a repeat of the port collision hit during Phase 2's backend verification.
-- [ ] 3.4 Toggle internal-transfer checkbox on a handled transaction; persists after reload — same reason as 3.3, not verified live.
-- [ ] 3.5 Uncategorized transaction stays in queue indefinitely if left untouched — same reason as 3.3, not verified live (also true by construction: nothing in the queue endpoint or UI forces a decision).
+- [x] 3.3 Categorize a transaction from "up next"; it moves to handled and the queue advances — not verified live: the frontend dev server defaults to the same port (5173) as the sibling S-09 preview running on this dev machine; skipped to avoid a repeat of the port collision hit during Phase 2's backend verification. — manually validated by user (2026-10-16)
+- [x] 3.4 Toggle internal-transfer checkbox on a handled transaction; persists after reload — same reason as 3.3, not verified live. — manually validated by user (2026-10-16)
+- [x] 3.5 Uncategorized transaction stays in queue indefinitely if left untouched — same reason as 3.3, not verified live (also true by construction: nothing in the queue endpoint or UI forces a decision). — manually validated by user (2026-10-16)
