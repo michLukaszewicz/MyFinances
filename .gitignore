@@ -3,3 +3,6 @@
 StrykerOutput/
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
+
+# Demo data (bank statements)
+MyFinances/demo-data/
