@@ -87,6 +87,36 @@ jobs:
             neutral "no plan" comment and exit cleanly - do not fail
             the workflow.
 
+      - name: Post review summary comment
+        if: always() && steps.guard.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          REVIEW_FILE=$(find . -type f -path '*/context/changes/*/reviews/impl-review*.md' 2>/dev/null \
+                          | xargs ls -t 2>/dev/null | head -1)
+          if [ -z "$REVIEW_FILE" ] || [ ! -f "$REVIEW_FILE" ]; then
+            echo "No review file - nothing to post."
+            exit 0
+          fi
+          NOW_ISO=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          {
+            echo "## 🔍 Implementation Review (CI)"
+            echo
+            echo "_Run: ${RUN_URL}_"
+            echo
+            grep -v '^<!-- ' "$REVIEW_FILE"
+            echo
+            echo "<!-- impl-review-ci:marker -->"
+          } > "$RUNNER_TEMP/review-comment.md"
+          gh pr comment "$PR_NUMBER" --body-file "$RUNNER_TEMP/review-comment.md"
+          gh api --paginate "repos/{owner}/{repo}/issues/${PR_NUMBER}/comments" \
+            --jq ".[] | select(.body | contains(\"<!-- impl-review-ci:marker -->\")) | select(.created_at < \"${NOW_ISO}\") | .id" \
+            | while read -r COMMENT_ID; do
+                gh api --method DELETE "repos/{owner}/{repo}/issues/comments/${COMMENT_ID}" 2>/dev/null || true
+              done
+
       - name: Validate Claude's commit (skip-ci + output contract)
         if: always()
         env:
