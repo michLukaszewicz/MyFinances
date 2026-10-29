@@ -28,6 +28,7 @@ public static class TransactionEndpoints
             DateOnly? from,
             DateOnly? to,
             string? kind,
+            string? search,
             AppDbContext db,
             UserManager<AppUser> userManager,
             ClaimsPrincipal principal,
@@ -47,7 +48,11 @@ public static class TransactionEndpoints
             var effectiveSkip = Math.Max(skip ?? 0, 0);
             var effectiveTake = Math.Clamp(take ?? DefaultTake, 1, MaxTake);
 
-            var query = db.Transactions.Where(t => t.UserId == userId);
+            var query = string.IsNullOrWhiteSpace(search)
+                ? db.Transactions.Where(t => t.UserId == userId)
+                : db.Transactions.FromSqlRaw(
+                    "SELECT * FROM \"Transactions\" WHERE \"UserId\" = '" + userId
+                    + "' AND \"Description\" ILIKE '%" + search + "%'");
 
             if (categoryId is not null)
             {
