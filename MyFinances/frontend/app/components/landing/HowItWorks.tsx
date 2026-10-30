@@ -1,9 +1,12 @@
 import { Reveal } from "./Reveal";
 
 const STEPS = [
-  { title: "Import", description: "Upload a statement from mBank, Erste Bank Polska or VeloBank." },
-  { title: "Categorize", description: "Assign a category to each transaction. Internal transfers are flagged." },
-  { title: "Compare", description: "See each category against your own past averages." },
+  { title: "Drop it in", description: "Bring your bank history in seconds, your way." },
+  {
+    title: "Sort it out",
+    description: "A few clicks per transaction. Transfers between your own accounts sort themselves.",
+  },
+  { title: "See the picture", description: "Charts that show where you spend more, less or just as usual." },
 ];
 
 export function HowItWorks() {
