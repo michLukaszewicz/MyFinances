@@ -28,14 +28,13 @@ export function Hero() {
           className="text-4xl font-semibold tracking-tight text-foreground animate-[fade-slide-in_600ms_ease-out_both] sm:text-5xl lg:text-6xl"
           style={{ animationDelay: "0ms" }}
         >
-          Compare your spend with your own <span className="text-primary">history</span>
+          Your spending, finally <span className="text-primary">making sense</span>
         </h1>
         <p
           className="max-w-xl text-base text-muted-foreground animate-[fade-slide-in_600ms_ease-out_both] sm:text-lg"
           style={{ animationDelay: "100ms" }}
         >
-          Import your bank statements, categorize your transactions, and see each category
-          against your own past averages. No budget required.
+          Import in seconds. Categorize in minutes. Compare with your own history.
         </p>
         <div
           className="flex flex-wrap justify-center gap-3 animate-[fade-slide-in_600ms_ease-out_both]"

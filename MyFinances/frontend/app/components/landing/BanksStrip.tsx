@@ -11,7 +11,7 @@ export function BanksStrip() {
     <section className="px-4 py-16">
       <Reveal className="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center">
         <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-          Import statements from your bank
+          Works with the banks you already use
         </h2>
         <ul className="flex flex-wrap justify-center gap-3">
           {BANKS.map((bank) => (
@@ -24,7 +24,7 @@ export function BanksStrip() {
             </li>
           ))}
         </ul>
-        <p className="text-sm text-muted-foreground">Works with PLN accounts.</p>
+        <p className="text-sm text-muted-foreground">Built for PLN accounts.</p>
       </Reveal>
     </section>
   );

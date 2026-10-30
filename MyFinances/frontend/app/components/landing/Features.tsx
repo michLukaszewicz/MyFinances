@@ -3,19 +3,19 @@ import { Reveal } from "./Reveal";
 
 const FEATURES = [
   {
-    title: "Import and review duplicates",
+    title: "Import without the pain",
     description:
-      "Upload mBank or Erste CSV and PDF statements, or VeloBank PDFs. Possible duplicates are shown side by side so you decide what to keep.",
+      "Bring your history from your bank in seconds. Double entries get caught, so your numbers stay clean.",
   },
   {
     title: "Categorize in minutes",
     description:
-      "Work through a simple queue and choose a category for each transaction yourself. Transfers between your own accounts are flagged for you.",
+      "Quick sorting, your categories, your rules. Money moving between your own accounts never pollutes your spending.",
   },
   {
-    title: "Spend vs. your own history",
+    title: "Beat your own average",
     description:
-      "Spend and income donuts and a trend chart show where money goes, and every category is marked above, below or in line with your average.",
+      "Colourful charts show where the money goes, and every category tells you if you're over, under or right on track.",
   },
 ];
 
